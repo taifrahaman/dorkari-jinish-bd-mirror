@@ -1,0 +1,5 @@
+echo "Running type check..."
+pnpm type-check
+
+echo "Running build check..."
+pnpm build
