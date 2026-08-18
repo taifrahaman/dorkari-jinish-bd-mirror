@@ -1,0 +1,27 @@
+{
+  "common": {
+    "brandName": "Dorkari Jinish BD",
+    "tagline": "Your trusted marketplace for essential items",
+    "search": "Search",
+    "cart": "Cart",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "language": "Language"
+  },
+  "home": {
+    "heroTitle": "Everything You Need",
+    "heroSubtitle": "All in one place",
+    "shopNow": "Shop Now",
+    "sellNow": "Sell Now",
+    "featuredProducts": "Featured Products",
+    "categories": "Categories"
+  },
+  "navigation": {
+    "home": "Home",
+    "products": "Products",
+    "categories": "Categories",
+    "about": "About Us",
+    "contact": "Contact"
+  }
+}

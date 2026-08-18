@@ -1,0 +1,27 @@
+{
+  "common": {
+    "brandName": "দরকারি জিনিস বিডি",
+    "tagline": "আপনার প্রয়োজনীয় জিনিসপত্রের বিশ্বস্ত মার্কেটপ্লেস",
+    "search": "খুঁজুন",
+    "cart": "কার্ট",
+    "login": "লগইন",
+    "register": "রেজিস্টার",
+    "logout": "লগআউট",
+    "language": "ভাষা"
+  },
+  "home": {
+    "heroTitle": "আপনার প্রয়োজনীয় জিনিস",
+    "heroSubtitle": "সবকিছু এক জায়গায়",
+    "shopNow": "কেনাকাটা শুরু করুন",
+    "sellNow": "বিক্রি করুন",
+    "featuredProducts": "জনপ্রিয় পণ্য",
+    "categories": "ক্যাটাগরি"
+  },
+  "navigation": {
+    "home": "হোম",
+    "products": "পণ্য",
+    "categories": "ক্যাটাগরি",
+    "about": "আমাদের সম্পর্কে",
+    "contact": "যোগাযোগ"
+  }
+}
