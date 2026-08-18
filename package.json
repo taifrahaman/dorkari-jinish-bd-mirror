@@ -10,7 +10,9 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "context": "pnpm dlx repomix --copy || cat repomix-output.xml | clip.exe",
+    "context:mini": "pnpm dlx repomix --compress --copy || cat repomix-output.xml | clip.exe"
   },
   "type": "module",
   "dependencies": {
