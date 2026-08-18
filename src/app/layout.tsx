@@ -2,6 +2,9 @@
 
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, DM_Sans, Atma, Hind_Siliguri } from "next/font/google";
+
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -33,6 +36,7 @@ const hindSiliguri = Hind_Siliguri({
 export const metadata: Metadata = {
   title: "Dorkari Jinish BD",
   description: "আপনার প্রয়োজনীয় জিনিসপত্রের বিশ্বস্ত মার্কেটপ্লেস",
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -53,6 +57,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${dmSans.variable} ${atma.variable} ${hindSiliguri.variable}`}
       >
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
