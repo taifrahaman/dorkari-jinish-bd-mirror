@@ -1,3 +1,5 @@
+// src/lib/mongodb.ts
+
 // src/lib/mongoose.ts
 
 import mongoose from "mongoose";
@@ -16,7 +18,6 @@ type MongooseCache = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache | undefined;
 }
 

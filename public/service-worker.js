@@ -1,7 +1,5 @@
 // public/service-worker.js
 
-// Basic service worker for offline support
-
 const CACHE_NAME = "dorkari-jinish-bd-v1";
 const STATIC_ASSETS = [
   "/",
@@ -37,17 +35,21 @@ self.addEventListener("activate", (event) => {
 // Fetch event: cache-first strategy for static assets, network-first for navigation
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  // Ignore non-GET requests
-  if (request.method !== "GET") return;
+  // Ignore non-GET requests and unsupported protocols (like chrome-extension://)
+  if (request.method !== "GET" || !url.protocol.startsWith("http")) return;
 
   // For navigation requests (HTML), use network-first
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          // Only cache successful standard responses
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
           return response;
         })
         .catch(() => {
@@ -64,8 +66,11 @@ self.addEventListener("fetch", (event) => {
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        // Cache opaque responses (e.g. cross-origin) or successful 200 OK responses
+        if (response.status === 200 || response.type === "opaque") {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
       });
     }),
