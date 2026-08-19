@@ -32,6 +32,9 @@ importers:
       use-intl:
         specifier: ^4.13.6
         version: 4.13.6(react@19.2.8)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@commitlint/cli':
         specifier: ^21.2.2

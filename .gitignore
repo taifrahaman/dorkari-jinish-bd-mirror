@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Repomix output
 repomix-output.xml
+
+# vs code
+.vscode/settings.local.json

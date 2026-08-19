@@ -23,7 +23,8 @@
     "next-intl": "^4.13.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "use-intl": "^4.13.6"
+    "use-intl": "^4.13.6",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
