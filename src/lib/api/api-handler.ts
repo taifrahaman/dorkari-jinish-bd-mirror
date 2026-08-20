@@ -1,7 +1,7 @@
-// src/lib/api-handler.ts
+// src/lib/api/api-handler.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "./mongodb";
+import { connectToDatabase } from "@/lib/db";
 
 export type ApiHandler = (
   request: NextRequest,

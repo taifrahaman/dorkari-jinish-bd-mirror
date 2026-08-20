@@ -1,0 +1,27 @@
+# Translations & Localization
+**/messages/*.json
+**/locales/**
+
+# Manifest & App Icons/Assets
+**/manifest.json
+**/manifest.webmanifest
+public/icons/**
+public/favicon.ico
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build outputs & dependencies
+.next/
+dist/
+node_modules/
+
+# Images and media
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+*.webp

@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { verifyJwt, type AuthPayload } from "@/lib/auth";
 import { User } from "@/models";
 import { UnauthorizedError, ForbiddenError } from "@/lib/errors";
-import { getClientIp } from "@/lib/request";
+import { getClientIp } from "@/lib/api";
 
 /**
  * Extract JWT token from cookies or Authorization header.

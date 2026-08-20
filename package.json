@@ -11,8 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "context": "pnpm dlx repomix --copy || cat repomix-output.xml | clip.exe",
-    "context:mini": "pnpm dlx repomix --compress --copy || cat repomix-output.xml | clip.exe"
+    "context": "pnpm dlx repomix --copy || cat repomix-output.xml",
+    "context:mini": "pnpm dlx repomix --compress --copy || cat repomix-output.xml"
   },
   "type": "module",
   "dependencies": {
@@ -20,6 +20,7 @@
     "jose": "^6.2.9",
     "mongoose": "^9.9.2",
     "next": "16.3.1",
+    "next-auth": "^4.24.15",
     "next-intl": "^4.13.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",

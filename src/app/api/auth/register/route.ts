@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { registerUser } from "@/services/auth.service";
 import { handleApiError, ValidationError } from "@/lib/errors";
 import { z } from "zod";
-import { withDb } from "@/lib/api-handler";
+import { withDb } from "@/lib/api";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
