@@ -1,0 +1,101 @@
+/* src/components/navigation/mobile/language/LanguageSwitcher.module.css */
+
+.switcher {
+  /* --- Neumorphic tokens (override at the parent if you want) --- */
+  --neu-bg: #e6e9ef;
+  --neu-light: rgba(255, 255, 255, 0.95);
+  --neu-dark: rgba(163, 177, 198, 0.55);
+  --neu-accent: var(--brand-accent, #6b5b95);
+
+  /* --- Geometry --- */
+  --neu-track-w: 64px;
+  --neu-track-h: 32px;
+  --neu-pad: 3px;
+  --neu-thumb-w: calc((var(--neu-track-w) - var(--neu-pad) * 2) / 2);
+  --neu-thumb-h: calc(var(--neu-track-h) - var(--neu-pad) * 2);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  width: var(--neu-track-w);
+  height: var(--neu-track-h);
+  padding: var(--neu-pad);
+
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--neu-bg);
+
+  box-shadow:
+    -2px -2px 5px var(--neu-light),
+    2px 2px 5px var(--neu-dark);
+
+  transition: box-shadow 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.switcher:active {
+  box-shadow:
+    inset -1.5px -1.5px 3px var(--neu-light),
+    inset 1.5px 1.5px 3px var(--neu-dark);
+}
+
+/* --- Sliding thumb --- */
+.thumb {
+  position: absolute;
+  top: var(--neu-pad);
+  left: var(--neu-pad);
+
+  width: var(--neu-thumb-w);
+  height: var(--neu-thumb-h);
+  border-radius: 999px;
+  background: var(--neu-bg);
+
+  box-shadow:
+    -1.5px -1.5px 3px var(--neu-light),
+    1.5px 1.5px 3px var(--neu-dark);
+
+  transition: transform 280ms cubic-bezier(0.6, 0, 0.4, 1);
+  will-change: transform;
+  z-index: 1;
+}
+
+.switcher[data-locale="bn"] .thumb {
+  transform: translateX(var(--neu-thumb-w));
+}
+
+/* --- Labels --- */
+.option {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 50%;
+  text-align: center;
+
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+
+  color: rgba(60, 60, 60, 0.4);
+  transition: color 200ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.switcher[data-locale="en"] .option[data-lang="en"],
+.switcher[data-locale="bn"] .option[data-lang="bn"] {
+  color: var(--neu-accent);
+}
+
+/* --- Dark mode --- */
+:global(.dark) .switcher {
+  --neu-bg: #2a2d34;
+  --neu-light: rgba(255, 255, 255, 0.06);
+  --neu-dark: rgba(0, 0, 0, 0.55);
+  --neu-accent: #c9b6ff;
+}
+
+:global(.dark) .option {
+  color: rgba(255, 255, 255, 0.35);
+}

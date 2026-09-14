@@ -1,0 +1,69 @@
+/* src/components/home/MobileHero.module.css */
+
+.hero {
+  width: 100%;
+  padding: 1.5rem 1rem 0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.textBlock {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* --- Static brand mark --- */
+/* --- Static brand mark --- */
+.brand {
+  display: block;
+  font-family: var(--font-heading, inherit);
+  font-size: 1.6rem;
+  font-weight: 900;
+
+  text-transform: uppercase;
+  line-height: 1.1;
+
+  color: var(--color-brand-accent-hover, #d97706);
+}
+/* --- Rotating tagline --- */
+.headline {
+  margin: 0;
+  font-family: var(--font-heading, inherit);
+  font-size: clamp(1.5rem, 6.5vw, 2rem);
+  line-height: 1.25;
+
+  /* ⬇️ THIN — 300 is Light. Try 200 for ExtraLight if your font supports it. */
+  font-weight: 300;
+
+  /* Thin strokes look cramped with tight tracking, so relax it. */
+  letter-spacing: -0.005em;
+
+  color: var(--brand-text-primary, #111111);
+
+  /* line-height went 1.2 → 1.25, so 3 lines = 3.75em */
+  min-height: 3.75em;
+
+  overflow: visible;
+}
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    display: none;
+  }
+}

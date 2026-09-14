@@ -1,13 +1,12 @@
 {
   "rest-client.environmentVariables": {
-    "local": {
-      "baseUrl": "http://localhost:3000"
-    },
-    "staging": {
-      "baseUrl": "https://staging.yourdomain.com"
-    },
-    "production": {
-      "baseUrl": "https://yourdomain.com"
-    }
-  }
+    "local": { "baseUrl": "http://localhost:3000" },
+    "staging": { "baseUrl": "https://yourdomain.com" },
+    "production": { "baseUrl": "https://yourdomain.com" }
+  },
+  "files.associations": {
+    "*.css": "tailwindcss",
+    "*.module.css": "tailwindcss"
+  },
+  "css.lint.unknownAtRules": "ignore"
 }

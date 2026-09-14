@@ -1,11 +1,20 @@
 // src/app/layout.tsx
 
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, DM_Sans, Atma, Hind_Siliguri } from "next/font/google";
+import {
+  Space_Grotesk,
+  DM_Sans,
+  Atma,
+  Hind_Siliguri,
+  Geist,
+} from "next/font/google";
 
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -52,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html>
+    <html className={cn("font-sans", geist.variable)}>
       <body
         className={`${spaceGrotesk.variable} ${dmSans.variable} ${atma.variable} ${hindSiliguri.variable}`}
       >
