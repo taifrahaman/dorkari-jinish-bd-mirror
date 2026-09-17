@@ -1,0 +1,55 @@
+/* src/components/hero/Hero.module.css */
+
+.region {
+  position: relative;
+  isolation: isolate; /* keep the background's z-index inside this section */
+
+  /* Push content below the fixed navbar */
+  padding-top: calc(var(--nav-h-mobile) + var(--nav-top-mobile) + 48px);
+  padding-inline: 20px;
+  padding-bottom: 120px;
+
+  min-height: 70vh;
+}
+
+@media (min-width: 1024px) {
+  .region {
+    padding-top: calc(var(--nav-h-desktop) + var(--nav-top-desktop) + 96px);
+    padding-inline: 48px;
+    padding-bottom: 180px;
+    min-height: 78vh;
+  }
+}
+
+.content {
+  position: relative;
+  z-index: 1; /* above the background */
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.brand {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  color: var(--color-brand-teal);
+  margin: 0 0 22px;
+}
+
+@media (min-width: 1024px) {
+  .brand {
+    font-size: 2rem;
+
+    margin-bottom: 32px;
+  }
+}
+
+:global([lang="bn"]) .brand {
+  font-family: var(--font-heading-bn);
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  text-transform: none; /* Bangla doesn't do uppercase */
+}

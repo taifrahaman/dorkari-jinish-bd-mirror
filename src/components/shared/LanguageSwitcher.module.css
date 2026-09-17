@@ -1,0 +1,78 @@
+/* src/components/shared/LanguageSwitcher.module.css */
+.switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+
+  /* Opaque — required for neumorphism to read correctly on glass */
+  background: var(--neumo-bg);
+  box-shadow: var(--neumo-shadow);
+
+  transition: box-shadow 180ms ease;
+}
+.switcher:active {
+  box-shadow: var(--neumo-shadow-pressed);
+}
+.switcher:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #172642);
+  outline-offset: 2px;
+}
+
+.thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #e8ecf2);
+  box-shadow:
+    2px 2px 6px rgba(0, 0, 0, 0.12),
+    -2px -2px 6px rgba(255, 255, 255, 0.9);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.switcher[data-locale="bn"] .thumb {
+  transform: translateX(100%);
+}
+
+/* Flex sized — no more fixed width clipping the Bengali label */
+.option {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 100%;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  opacity: 0.45;
+  transition: opacity 200ms ease;
+  white-space: nowrap;
+}
+.switcher[data-locale="en"] .option[data-lang="en"],
+.switcher[data-locale="bn"] .option[data-lang="bn"] {
+  opacity: 1;
+}
+
+:global(.dark) .thumb {
+  background: linear-gradient(180deg, #2a2d33, #1c1f24);
+  box-shadow:
+    2px 2px 6px rgba(0, 0, 0, 0.5),
+    -2px -2px 6px rgba(255, 255, 255, 0.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}

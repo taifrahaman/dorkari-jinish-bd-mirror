@@ -1,0 +1,87 @@
+/* src/components/navigation/MobileNav.module.css */
+.root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 10px;
+  gap: 8px;
+}
+@media (min-width: 1024px) {
+  .root {
+    display: none;
+  }
+}
+
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  z-index: 1; /* keep buttons above logo if they ever overlap */
+}
+
+/* Logo is absolutely centered — true viewport center */
+.logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 75%;
+  text-decoration: none;
+  color: var(--foreground);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+.logoMark {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.logoText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hide the wordmark on very narrow phones — logo mark stays */
+@media (max-width: 380px) {
+  .logoText {
+    display: none;
+  }
+}
+
+/* Ghost buttons — no neumorphism on glass */
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.iconButton:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+:global(.dark) .iconButton:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #172642);
+  outline-offset: 2px;
+}

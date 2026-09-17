@@ -4,9 +4,22 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
+
+  /* Navbar height on desktop — used to push content below fixed header */
+  --desktop-navbar-h: 68px;
 }
 
 .heroContent {
   position: relative;
   z-index: 1;
+}
+
+/* Desktop: push hero content below the fixed navbar.
+   No padding-top on .heroRegion itself — instead we push .heroContent,
+   so the background gradient still starts at the very top of the page
+   and tucks behind the navbar naturally (like professional ecommerce). */
+@media (min-width: 768px) {
+  .heroContent {
+    padding-top: var(--desktop-navbar-h);
+  }
 }

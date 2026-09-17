@@ -1,0 +1,128 @@
+/* src/components/navigation/CategoryMenu.module.css */
+.panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 240px;
+  padding: 8px;
+  border-radius: 16px;
+
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur))
+    saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+  z-index: 10;
+}
+.panel[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.item {
+  position: relative;
+}
+
+.itemLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: background 160ms ease;
+}
+.itemLink:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+:global(.dark) .itemLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.arrow {
+  opacity: 0.5;
+  font-size: 1.25rem;
+  line-height: 1;
+  transform: translateX(0);
+  transition: transform 160ms ease;
+}
+.item:hover .arrow {
+  transform: translateX(2px);
+}
+
+/* Nested submenu — appears to the right on hover */
+.submenu {
+  position: absolute;
+  top: -8px;
+  left: calc(100% + 6px);
+  min-width: 220px;
+  padding: 8px;
+  border-radius: 14px;
+
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur))
+    saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  z-index: 11;
+}
+.item:hover .submenu,
+.item:focus-within .submenu {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.submenu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subLink {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background 160ms ease;
+}
+.subLink:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+:global(.dark) .subLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .submenu {
+    transition: none;
+  }
+}

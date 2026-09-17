@@ -1,0 +1,52 @@
+/* src/components/hero/HeroHeadline.module.css */
+
+.headline {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  margin: 0;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+@media (min-width: 1024px) {
+  .headline {
+    font-size: clamp(2.75rem, 5.5vw, 5.5rem);
+    font-weight: 300;
+    line-height: 1.06;
+    letter-spacing: -0.035em;
+    max-width: 16ch;
+  }
+}
+
+/* ---- Line mask — generous room so nothing clips ---- */
+.lineMask {
+  overflow: hidden;
+  padding-block: 0.35em;
+  margin-block: -0.35em;
+}
+
+/* Bangla needs way more headroom (matra line, reph, hasanta) */
+:global([lang="bn"]) .lineMask {
+  padding-block: 0.6em;
+  margin-block: -0.6em;
+}
+
+/* ---- Bangla — different font, looser metrics ---- */
+:global([lang="bn"]) .headline {
+  font-family: var(--font-heading-bn);
+  letter-spacing: 0;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  :global([lang="bn"]) .headline {
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+}

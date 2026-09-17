@@ -1,0 +1,132 @@
+/* src/components/navigation/DesktopNav.module.css */
+.root {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .root {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    height: 100%;
+    padding: 0 20px;
+    gap: 20px;
+  }
+}
+
+/* ---- Logo ---- */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.logoMark {
+  border-radius: 8px;
+}
+
+/* ---- Center nav ---- */
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: center;
+}
+
+.navLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 180ms ease;
+  white-space: nowrap;
+}
+.navLink:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+:global(.dark) .navLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.navLink:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.navLink[data-active="true"] {
+  color: var(--color-brand-primary, var(--foreground));
+  font-weight: 600;
+}
+
+.chevron {
+  transition: transform 200ms ease;
+}
+.chevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* ---- Right actions ---- */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  justify-self: end;
+}
+
+/* Ghost buttons — no neumorphism on glass */
+.iconButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.iconButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+:global(.dark) .iconButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-brand-primary, #e11d48);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}

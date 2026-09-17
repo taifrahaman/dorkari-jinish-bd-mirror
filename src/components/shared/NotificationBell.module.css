@@ -1,0 +1,36 @@
+/* src/components/shared/NotificationBell.module.css */
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+:global(.dark) .button:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.button:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #172642);
+  outline-offset: 2px;
+}
+
+.dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-brand-accent, #fba705); /* amber from logo */
+  box-shadow: 0 0 0 2px var(--glass-bg);
+}

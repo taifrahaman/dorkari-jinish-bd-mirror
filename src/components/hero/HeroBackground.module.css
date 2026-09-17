@@ -1,0 +1,159 @@
+/* src/components/hero/HeroBackground.module.css */
+
+/* ============================================================
+ * Wrapper — fills the hero, fades into page background
+ * ============================================================ */
+
+.wrapper {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--hero-bg-height, 100%);
+  min-height: 100%;
+
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+
+  /* Bottom fade — reveals the page background (white/cream) */
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.7) 68%,
+    rgba(0, 0, 0, 0.25) 86%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.7) 68%,
+    rgba(0, 0, 0, 0.25) 86%,
+    transparent 100%
+  );
+}
+
+/* ============================================================
+ * Blur layer — full-width, centers the ellipse
+ * ============================================================ */
+
+.blur {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  filter: blur(45px);
+}
+
+/* ============================================================
+ * Ellipse — full-bleed wash, clips the spinning gradients
+ * ============================================================ */
+
+.ellipse {
+  position: relative;
+  width: 180vw;
+  height: min(70vw, 820px);
+  border-radius: 50%;
+  overflow: hidden;
+  opacity: 0.95;
+}
+
+/* ============================================================
+ * Spinning layers — counter-rotating, pastel palette
+ * ============================================================ */
+
+.spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160%;
+  aspect-ratio: 1;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* ---- Layer A: cool tones — pale teal + whisper of navy ---- */
+.spinA {
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: spinCW 32s linear infinite;
+
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in oklab, var(--color-brand-teal) 55%, white),
+    color-mix(in oklab, var(--color-brand-primary) 18%, white) 22%,
+    color-mix(in oklab, var(--color-brand-teal) 70%, white) 42%,
+    color-mix(in oklab, var(--color-brand-primary) 12%, white) 65%,
+    color-mix(in oklab, var(--color-brand-teal) 60%, white) 85%,
+    color-mix(in oklab, var(--color-brand-teal) 55%, white)
+  );
+}
+
+/* ---- Layer B: warm accent — pale amber, counter-rotating ---- */
+.spinB {
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: spinCCW 48s linear infinite;
+
+  background: conic-gradient(
+    from 90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--color-brand-accent) 42%, white) 20%,
+    transparent 42%,
+    color-mix(in oklab, var(--color-brand-accent) 30%, white) 68%,
+    transparent 90%
+  );
+}
+
+/* ============================================================
+ * Keyframes
+ * ============================================================ */
+
+@keyframes spinCW {
+  to {
+    transform: translate(-50%, -50%) rotate(1turn);
+  }
+}
+
+@keyframes spinCCW {
+  to {
+    transform: translate(-50%, -50%) rotate(-1turn);
+  }
+}
+
+/* ============================================================
+ * Desktop — slightly slower, softer, bigger
+ * ============================================================ */
+
+@media (min-width: 1024px) {
+  .blur {
+    filter: blur(85px);
+    top: 42%;
+  }
+
+  .ellipse {
+    width: 160vw;
+    height: min(60vw, 900px);
+    opacity: 0.9;
+  }
+
+  .spinA {
+    animation-duration: 42s;
+  }
+
+  .spinB {
+    animation-duration: 60s;
+  }
+}
+
+/* ============================================================
+ * Accessibility
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

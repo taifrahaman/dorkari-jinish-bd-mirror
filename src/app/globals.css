@@ -6,32 +6,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * ============================================================
- * DORKARI JINISH — DESIGN TOKENS
- * ============================================================
- */
+/* ============================================================
+ * 1. BRAND TOKENS — colors pulled from the logo
+ * ============================================================ */
 
 @theme {
-  /* Brand */
-  --color-brand-primary: #1e293b;
-  --color-brand-primary-dark: #0b0f17;
+  /* Brand — from logo palette */
+  --color-brand-primary: #172642; /* deep navy   */
+  --color-brand-primary-dark: #0f1a2e; /* hover/press */
+  --color-brand-teal: #599088; /* secondary   */
+  --color-brand-accent: #fba705; /* amber       */
+  --color-brand-accent-light: #fff8e8; /* amber tint  */
+  --color-brand-accent-hover: #e09400; /* amber hover */
+  --color-brand-ink: #000000; /* black       */
 
-  --color-brand-accent: #f59e0b;
-  --color-brand-accent-light: #fffbeb;
-  --color-brand-accent-hover: #d97706;
-  --color-brand-accent-glow: #fef3c7;
-
-  /* Brand Surfaces */
+  /* Brand surfaces */
   --color-brand-background: #faf8f5;
   --color-brand-navbar: #f1e9e7;
   --color-brand-surface: #ffffff;
 
-  /* Brand Text */
+  /* Brand text */
   --color-brand-text: #0f172a;
   --color-brand-text-secondary: #334155;
 
-  /* Brand Border */
+  /* Brand border */
   --color-brand-border: #e2e8f0;
 
   /* Fonts */
@@ -41,11 +39,9 @@
   --font-body-bn: var(--font-hind-siliguri);
 }
 
-/*
- * ============================================================
- * LANGUAGE TYPOGRAPHY
- * ============================================================
- */
+/* ============================================================
+ * 2. LANGUAGE TYPOGRAPHY
+ * ============================================================ */
 
 :root[lang="bn"] {
   --font-heading: var(--font-heading-bn);
@@ -57,15 +53,9 @@
   --font-body: var(--font-body-en);
 }
 
-/*
- * ============================================================
- * SHADCN / SEMANTIC TOKENS
- *
- * Keep these separate from brand tokens.
- * Components using bg-background, text-foreground,
- * text-accent, etc. will use this system.
- * ============================================================
- */
+/* ============================================================
+ * 3. SEMANTIC (shadcn) — Tailwind bridge
+ * ============================================================ */
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -89,7 +79,6 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
-
   --color-destructive: var(--destructive);
 
   --color-accent-foreground: var(--accent-foreground);
@@ -122,13 +111,12 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/*
- * ============================================================
- * LIGHT THEME
- * ============================================================
- */
+/* ============================================================
+ * 4. LIGHT THEME
+ * ============================================================ */
 
 :root {
+  /* --- Semantic (shadcn) --- */
   --background: #faf8f5;
   --foreground: #0f172a;
 
@@ -138,7 +126,7 @@
   --popover: #ffffff;
   --popover-foreground: #0f172a;
 
-  --primary: #1e293b;
+  --primary: #172642;
   --primary-foreground: #ffffff;
 
   --secondary: #f1e9e7;
@@ -147,45 +135,62 @@
   --muted: #f1e9e7;
   --muted-foreground: #64748b;
 
-  /*
-   * IMPORTANT:
-   * This is the shadcn semantic accent.
-   * Keep it separate from brand-accent.
-   */
-  --accent: #f59e0b;
-  --accent-foreground: #ffffff;
+  --accent: #fba705;
+  --accent-foreground: #172642;
 
   --destructive: #dc2626;
 
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #f59e0b;
+  --ring: #fba705;
 
-  --chart-1: #f59e0b;
-  --chart-2: #d97706;
-  --chart-3: #1e293b;
-  --chart-4: #334155;
+  --chart-1: #fba705;
+  --chart-2: #e09400;
+  --chart-3: #172642;
+  --chart-4: #599088;
   --chart-5: #64748b;
 
   --radius: 0.625rem;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #0f172a;
-  --sidebar-primary: #1e293b;
+  --sidebar-primary: #172642;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f1e9e7;
   --sidebar-accent-foreground: #0f172a;
   --sidebar-border: #e2e8f0;
-  --sidebar-ring: #f59e0b;
+  --sidebar-ring: #fba705;
+
+  /* --- Navbar geometry --- */
+  --nav-h-desktop: 68px;
+  --nav-h-mobile: 56px;
+  --nav-top-desktop: 16px;
+  --nav-top-mobile: 12px;
+
+  /* --- Glass surface --- */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg-strong: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-blur: 16px;
+  --glass-saturate: 160%;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  /* --- Neumorphic control --- */
+  --neumo-bg: #eef0f4;
+  --neumo-light: rgba(255, 255, 255, 0.95);
+  --neumo-dark: rgba(163, 177, 198, 0.45);
+  --neumo-shadow:
+    4px 4px 10px var(--neumo-dark), -4px -4px 10px var(--neumo-light);
+  --neumo-shadow-pressed:
+    inset 3px 3px 6px var(--neumo-dark), inset -3px -3px 6px var(--neumo-light);
 }
 
-/*
- * ============================================================
- * DARK THEME
- * ============================================================
- */
+/* ============================================================
+ * 5. DARK THEME
+ * ============================================================ */
 
 .dark {
+  /* --- Semantic (shadcn) --- */
   --background: #0b0f17;
   --foreground: #f8fafc;
 
@@ -204,36 +209,45 @@
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
 
-  --accent: #f59e0b;
+  --accent: #fba705;
   --accent-foreground: #0b0f17;
 
   --destructive: #ef4444;
 
   --border: #ffffff1a;
   --input: #ffffff26;
-  --ring: #f59e0b;
+  --ring: #fba705;
 
-  --chart-1: #f59e0b;
-  --chart-2: #d97706;
-  --chart-3: #64748b;
+  --chart-1: #fba705;
+  --chart-2: #e09400;
+  --chart-3: #599088;
   --chart-4: #334155;
   --chart-5: #1e293b;
 
   --sidebar: #111827;
   --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #f59e0b;
+  --sidebar-primary: #fba705;
   --sidebar-primary-foreground: #0b0f17;
   --sidebar-accent: #1e293b;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #ffffff1a;
-  --sidebar-ring: #f59e0b;
+  --sidebar-ring: #fba705;
+
+  /* --- Glass surface --- */
+  --glass-bg: rgba(18, 18, 20, 0.62);
+  --glass-bg-strong: rgba(18, 18, 20, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* --- Neumorphic control --- */
+  --neumo-bg: #1e2024;
+  --neumo-light: rgba(255, 255, 255, 0.04);
+  --neumo-dark: rgba(0, 0, 0, 0.5);
 }
 
-/*
- * ============================================================
- * BASE
- * ============================================================
- */
+/* ============================================================
+ * 6. BASE
+ * ============================================================ */
 
 @layer base {
   * {
@@ -260,16 +274,13 @@
   }
 }
 
-/*
- * ============================================================
- * TYPOGRAPHY UTILITIES
- * ============================================================
- */
+/* ============================================================
+ * 7. TYPOGRAPHY UTILITIES
+ * ============================================================ */
 
 .font-heading {
   font-family: var(--font-heading);
 }
-
 .font-body {
   font-family: var(--font-body);
 }

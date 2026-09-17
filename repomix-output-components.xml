@@ -1,0 +1,702 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/node_modules/**, **/.next/**, **/dist/**, **/build/**, pnpm-lock.yaml, package-lock.json, yarn.lock, *.png, *.jpg, *.jpeg, *.svg, *.ico, *.webp
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Content has been compressed - code blocks are separated by ⋮---- delimiter
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+hero/
+  Hero.module.css
+  Hero.tsx
+  HeroBackground.module.css
+  HeroBackground.tsx
+  HeroHeadline.module.css
+  HeroHeadline.tsx
+  messages.ts
+navigation/
+  CategoryDrawer.module.css
+  CategoryDrawer.tsx
+  CategoryMenu.module.css
+  CategoryMenu.tsx
+  DesktopNav.module.css
+  DesktopNav.tsx
+  MobileBottomNav.module.css
+  MobileBottomNav.tsx
+  MobileNav.module.css
+  MobileNav.tsx
+  Navbar.module.css
+  Navbar.tsx
+  navItems.ts
+  NavSearch.module.css
+  NavSearch.tsx
+  useNavVisibility.ts
+shared/
+  LanguageSwitcher.module.css
+  LanguageSwitcher.tsx
+  NotificationBell.module.css
+  NotificationBell.tsx
+ui/
+  badge.tsx
+  button.tsx
+  command.tsx
+  dialog.tsx
+  input-group.tsx
+  input.tsx
+  navigation-menu.tsx
+  sheet.tsx
+  skeleton.tsx
+  textarea.tsx
+ServiceWorkerRegistration.tsx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="hero/Hero.module.css">
+
+</file>
+
+<file path="hero/Hero.tsx">
+
+</file>
+
+<file path="hero/HeroBackground.module.css">
+
+</file>
+
+<file path="hero/HeroBackground.tsx">
+
+</file>
+
+<file path="hero/HeroHeadline.module.css">
+
+</file>
+
+<file path="hero/HeroHeadline.tsx">
+
+</file>
+
+<file path="hero/messages.ts">
+
+</file>
+
+<file path="navigation/CategoryDrawer.module.css">
+/* src/components/navigation/CategoryDrawer.module.css */
+.backdrop {
+.backdrop[data-open="true"] { opacity: 1; pointer-events: auto; }
+⋮----
+.drawer {
+.drawer[data-open="true"] { transform: translateX(0); }
+⋮----
+.header {
+.title { font-weight: 700; font-size: 1rem; }
+⋮----
+.close {
+.close:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .close:hover { background: rgba(255, 255, 255, 0.07); }
+⋮----
+.body {
+⋮----
+.sectionLabel {
+⋮----
+.list { list-style: none; margin: 0; padding: 0; }
+.item { border-radius: 12px; overflow: hidden; }
+⋮----
+.row {
+.row:hover { background: rgba(0, 0, 0, 0.04); }
+:global(.dark) .row:hover { background: rgba(255, 255, 255, 0.06); }
+⋮----
+.chev {
+.chev[data-open="true"] { transform: rotate(180deg); }
+⋮----
+.sublist {
+⋮----
+.sublink {
+.sublink:hover {
+:global(.dark) .sublink:hover { background: rgba(255, 255, 255, 0.06); }
+⋮----
+.backdrop, .drawer, .chev { transition: none; }
+</file>
+
+<file path="navigation/CategoryDrawer.tsx">
+// src/components/navigation/CategoryDrawer.tsx
+⋮----
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { ChevronDown, X } from "lucide-react";
+import type { CategoryNode, NavLink } from "./navItems";
+import styles from "./CategoryDrawer.module.css";
+⋮----
+type Props = {
+    open: boolean;
+    onClose: () => void;
+    categories: CategoryNode[];
+    links: NavLink[];
+};
+⋮----
+// Portal target only exists client-side
+⋮----
+// Escape closes
+⋮----
+const onKey = (e: KeyboardEvent) =>
+⋮----
+// Lock body scroll while open
+⋮----
+onClick=
+</file>
+
+<file path="navigation/CategoryMenu.module.css">
+/* src/components/navigation/CategoryMenu.module.css */
+.panel {
+.panel[data-open="true"] {
+⋮----
+.list { list-style: none; margin: 0; padding: 0; }
+.item { position: relative; }
+⋮----
+.itemLink {
+.itemLink:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .itemLink:hover { background: rgba(255, 255, 255, 0.06); }
+⋮----
+.arrow {
+.item:hover .arrow { transform: translateX(2px); }
+⋮----
+/* Nested submenu — appears to the right on hover */
+.submenu {
+.item:hover .submenu,
+⋮----
+.submenu ul { list-style: none; margin: 0; padding: 0; }
+⋮----
+.subLink {
+.subLink:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .subLink:hover { background: rgba(255, 255, 255, 0.06); }
+⋮----
+.panel, .submenu { transition: none; }
+</file>
+
+<file path="navigation/CategoryMenu.tsx">
+// src/components/navigation/CategoryMenu.tsx
+⋮----
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+import type { CategoryNode } from "./navItems";
+import styles from "./CategoryMenu.module.css";
+⋮----
+type Props = {
+    open: boolean;
+    categories: CategoryNode[];
+    onClose: () => void;
+};
+⋮----
+export default function CategoryMenu(
+⋮----
+// Close on Escape. Click-outside is handled by DesktopNav wrapper's onMouseLeave.
+⋮----
+const onKey = (e: KeyboardEvent) =>
+</file>
+
+<file path="navigation/DesktopNav.module.css">
+/* src/components/navigation/DesktopNav.module.css */
+.root { display: none; }
+⋮----
+.root {
+⋮----
+/* ---- Logo ---- */
+.logo {
+.logoMark { border-radius: 8px; }
+⋮----
+/* ---- Center nav ---- */
+.nav {
+⋮----
+.navLink {
+.navLink:hover { background: rgba(0, 0, 0, 0.04); }
+:global(.dark) .navLink:hover { background: rgba(255, 255, 255, 0.06); }
+.navLink:focus-visible {
+⋮----
+.navLink[data-active="true"] {
+⋮----
+.chevron { transition: transform 200ms ease; }
+.chevron[data-open="true"] { transform: rotate(180deg); }
+⋮----
+/* ---- Right actions ---- */
+.actions {
+⋮----
+/* Ghost buttons — no neumorphism on glass */
+.iconButton {
+.iconButton:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .iconButton:hover { background: rgba(255, 255, 255, 0.07); }
+.iconButton:focus-visible {
+⋮----
+.badge {
+</file>
+
+<file path="navigation/DesktopNav.tsx">
+// src/components/navigation/DesktopNav.tsx
+⋮----
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { ChevronDown, ShoppingCart, User } from "lucide-react";
+import { useState } from "react";
+⋮----
+import CategoryMenu from "./CategoryMenu";
+import NavSearch from "./NavSearch";
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import NotificationBell from "@/components/shared/NotificationBell";
+import { primaryNavLinks, categoryTree } from "./navItems";
+import { useHydration } from "@/lib/stores/useHydration";
+import { useCartStore } from "@/lib/stores/useCartStore";
+import styles from "./DesktopNav.module.css";
+⋮----
+const isActive = (href: string)
+⋮----
+{/* Logo */}
+⋮----
+{/* Center nav */}
+⋮----
+onMouseEnter=
+⋮----
+{/* Right cluster */}
+</file>
+
+<file path="navigation/MobileBottomNav.module.css">
+/* src/components/navigation/MobileBottomNav.module.css */
+.nav {
+⋮----
+.nav { display: none; }
+⋮----
+.list {
+⋮----
+.item { display: flex; }
+⋮----
+.link {
+.link:focus-visible {
+⋮----
+.link[data-active="true"] {
+:global(.dark) .link[data-active="true"] {
+⋮----
+.iconWrap {
+⋮----
+.label {
+</file>
+
+<file path="navigation/MobileBottomNav.tsx">
+// src/components/navigation/MobileBottomNav.tsx
+⋮----
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Search, ShoppingCart, MessageCircle, User } from "lucide-react";
+import { bottomNavItems } from "./navItems";
+import styles from "./MobileBottomNav.module.css";
+</file>
+
+<file path="navigation/MobileNav.module.css">
+/* src/components/navigation/MobileNav.module.css */
+.root {
+⋮----
+.root { display: none; }
+⋮----
+.left,
+⋮----
+z-index: 1; /* keep buttons above logo if they ever overlap */
+⋮----
+/* Logo is absolutely centered — true viewport center */
+.logo {
+⋮----
+.logoMark {
+⋮----
+.logoText {
+⋮----
+/* Hide the wordmark on very narrow phones — logo mark stays */
+⋮----
+.logoText { display: none; }
+⋮----
+/* Ghost buttons — no neumorphism on glass */
+.iconButton {
+.iconButton:active { background: rgba(0, 0, 0, 0.06); }
+:global(.dark) .iconButton:active { background: rgba(255, 255, 255, 0.08); }
+.iconButton:focus-visible {
+</file>
+
+<file path="navigation/MobileNav.tsx">
+// src/components/navigation/MobileNav.tsx
+⋮----
+import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
+import { Menu } from "lucide-react";
+⋮----
+import NotificationBell from "@/components/shared/NotificationBell";
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import CategoryDrawer from "./CategoryDrawer";
+import { categoryTree, primaryNavLinks } from "./navItems";
+import styles from "./MobileNav.module.css";
+</file>
+
+<file path="navigation/Navbar.module.css">
+/* src/components/navigation/Navbar.module.css */
+⋮----
+/* Shell = positioning context + transparent top strip. */
+.shell {
+⋮----
+pointer-events: none; /* strip doesn't block scroll/clicks */
+⋮----
+/* The visible bar. Re-enables pointer events. */
+.bar {
+⋮----
+/* Hidden state: slide fully above the viewport; strip stays empty. */
+.shell[data-visible="false"] .bar {
+⋮----
+/* Respect reduced-motion */
+⋮----
+.bar { transition: none; }
+</file>
+
+<file path="navigation/Navbar.tsx">
+// src/components/navigation/Navbar.tsx
+⋮----
+import { useNavVisibility } from "./useNavVisibility";
+import DesktopNav from "./DesktopNav";
+import MobileNav from "./MobileNav";
+import styles from "./Navbar.module.css";
+⋮----
+export default function Navbar()
+</file>
+
+<file path="navigation/navItems.ts">
+// src/components/navigation/navItems.ts
+⋮----
+export type NavLink = {
+  id: string;
+  label: string;
+  href: string;
+};
+⋮----
+export type CategoryNode = {
+  id: string;
+  label: string;
+  href: string;
+  children?: { id: string; label: string; href: string }[];
+};
+⋮----
+/** Top-level links (desktop nav + mobile drawer footer) */
+⋮----
+/** Dummy appliance / electrical categories — swap for backend later. */
+⋮----
+/** Mobile bottom nav — glass, stays 5 items. */
+</file>
+
+<file path="navigation/NavSearch.module.css">
+/* src/components/navigation/NavSearch.module.css */
+.root {
+⋮----
+.trigger {
+.trigger:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .trigger:hover { background: rgba(255, 255, 255, 0.07); }
+.trigger:focus-visible {
+⋮----
+/* GSAP animates width/opacity; this is the resting state. */
+.inputWrap {
+⋮----
+.input {
+.input:focus {
+.input::placeholder {
+:global(.dark) .input {
+:global(.dark) .input:focus {
+⋮----
+/* Hide native search-cancel button to keep the row tidy */
+.input::-webkit-search-cancel-button { display: none; }
+⋮----
+.trigger, .input { transition: none; }
+</file>
+
+<file path="navigation/NavSearch.tsx">
+// src/components/navigation/NavSearch.tsx
+⋮----
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { Search, X } from "lucide-react";
+import styles from "./NavSearch.module.css";
+⋮----
+// Animate width / opacity on open/close
+⋮----
+// Escape to close + click-outside to close
+⋮----
+const onKey = (e: KeyboardEvent) =>
+const onDoc = (e: MouseEvent) =>
+</file>
+
+<file path="navigation/useNavVisibility.ts">
+// src/components/navigation/useNavVisibility.ts
+⋮----
+import { useEffect, useState } from "react";
+⋮----
+/**
+ * Navbar visibility driven purely by scroll position.
+ * - scrollY <= threshold → visible
+ * - scrollY >  threshold → hidden
+ * rAF-throttled so mobile stays smooth.
+ */
+export function useNavVisibility(threshold = 8)
+⋮----
+const onScroll = () =>
+</file>
+
+<file path="shared/LanguageSwitcher.module.css">
+/* src/components/shared/LanguageSwitcher.module.css */
+.switcher {
+⋮----
+/* Opaque — required for neumorphism to read correctly on glass */
+⋮----
+.switcher:active { box-shadow: var(--neumo-shadow-pressed); }
+.switcher:focus-visible {
+⋮----
+.thumb {
+.switcher[data-locale="bn"] .thumb { transform: translateX(100%); }
+⋮----
+/* Flex sized — no more fixed width clipping the Bengali label */
+.option {
+.switcher[data-locale="en"] .option[data-lang="en"],
+⋮----
+:global(.dark) .thumb {
+⋮----
+.thumb { transition: none; }
+</file>
+
+<file path="shared/LanguageSwitcher.tsx">
+// src/components/shared/LanguageSwitcher.tsx
+⋮----
+import { usePathname, useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+import { useTransition } from "react";
+import styles from "./LanguageSwitcher.module.css";
+⋮----
+export default function LanguageSwitcher()
+⋮----
+const toggle = () =>
+⋮----
+// segments[0] is "" (leading slash), segments[1] is the locale
+</file>
+
+<file path="shared/NotificationBell.module.css">
+/* src/components/shared/NotificationBell.module.css */
+.button {
+.button:hover { background: rgba(0, 0, 0, 0.05); }
+:global(.dark) .button:hover { background: rgba(255, 255, 255, 0.07); }
+.button:focus-visible {
+⋮----
+.dot {
+⋮----
+background: var(--brand-accent, #FBA705); /* amber from logo */
+</file>
+
+<file path="shared/NotificationBell.tsx">
+// src/components/shared/NotificationBell.tsx
+⋮----
+import { Bell } from "lucide-react";
+import styles from "./NotificationBell.module.css";
+⋮----
+export default function NotificationBell()
+</file>
+
+<file path="ui/badge.tsx">
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
+import { cva, type VariantProps } from "class-variance-authority";
+⋮----
+import { cn } from "@/lib/utils";
+⋮----
+function Badge({
+  className,
+  variant = "default",
+  render,
+  ...props
+}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>)
+</file>
+
+<file path="ui/button.tsx">
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { cva, type VariantProps } from "class-variance-authority";
+⋮----
+import { cn } from "@/lib/utils";
+⋮----
+className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
+</file>
+
+<file path="ui/command.tsx">
+import { Command as CommandPrimitive } from "cmdk";
+⋮----
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
+import { SearchIcon, CheckIcon } from "lucide-react";
+⋮----
+className=
+⋮----
+function CommandInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof CommandPrimitive.Input>)
+⋮----
+function CommandItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof CommandPrimitive.Item>)
+⋮----
+function CommandShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">)
+</file>
+
+<file path="ui/dialog.tsx">
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+⋮----
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XIcon } from "lucide-react";
+⋮----
+className=
+</file>
+
+<file path="ui/input-group.tsx">
+import { cva, type VariantProps } from "class-variance-authority";
+⋮----
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+⋮----
+className=
+⋮----
+if ((e.target as HTMLElement).closest("button"))
+</file>
+
+<file path="ui/input.tsx">
+import { Input as InputPrimitive } from "@base-ui/react/input";
+⋮----
+import { cn } from "@/lib/utils";
+⋮----
+function Input(
+⋮----
+className=
+</file>
+
+<file path="ui/navigation-menu.tsx">
+import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
+import { cva } from "class-variance-authority";
+⋮----
+import { cn } from "@/lib/utils";
+import { ChevronDownIcon } from "lucide-react";
+⋮----
+function NavigationMenu({
+  align = "start",
+  className,
+  children,
+  ...props
+}: NavigationMenuPrimitive.Root.Props &
+Pick<NavigationMenuPrimitive.Positioner.Props, "align">)
+⋮----
+function NavigationMenuList({
+  className,
+  ...props
+}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.List>)
+⋮----
+function NavigationMenuTrigger({
+  className,
+  children,
+  ...props
+}: NavigationMenuPrimitive.Trigger.Props)
+⋮----
+function NavigationMenuContent({
+  className,
+  ...props
+}: NavigationMenuPrimitive.Content.Props)
+⋮----
+className=
+⋮----
+function NavigationMenuLink({
+  className,
+  ...props
+}: NavigationMenuPrimitive.Link.Props)
+</file>
+
+<file path="ui/sheet.tsx">
+import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
+⋮----
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XIcon } from "lucide-react";
+⋮----
+className=
+</file>
+
+<file path="ui/skeleton.tsx">
+import { cn } from "@/lib/utils";
+⋮----
+className=
+</file>
+
+<file path="ui/textarea.tsx">
+import { cn } from "@/lib/utils";
+⋮----
+className=
+</file>
+
+<file path="ServiceWorkerRegistration.tsx">
+// src/components/ServiceWorkerRegistration.tsx
+⋮----
+import { useEffect } from "react";
+⋮----
+export default function ServiceWorkerRegistration()
+</file>
+
+</files>

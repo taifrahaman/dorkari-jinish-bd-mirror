@@ -1,0 +1,408 @@
+/* src/components/hero/HeroSearch.module.css */
+
+/* ============================================================
+ * Root — matches the navbar width exactly
+ * ============================================================ */
+
+.root {
+  position: relative;
+  width: 100%;
+  margin-top: 44px;
+  margin-inline: -8px;
+}
+
+@media (min-width: 1024px) {
+  .root {
+    margin-inline: 0;
+    margin-top: 60px;
+  }
+}
+
+/* ============================================================
+ * Bar — glass pill floating on the gradient
+ * ============================================================ */
+
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 6px;
+  padding-left: 8px;
+
+  /* Glass: translucent white + heavy backdrop blur */
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+
+  border-radius: 22px;
+
+  /* Depth via shadows only — no white rim */
+  box-shadow:
+    0 20px 45px -12px rgba(15, 23, 42, 0.12),
+    0 8px 20px -6px rgba(15, 23, 42, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.4) inset;
+
+  transition:
+    transform 260ms cubic-bezier(0.34, 1.32, 0.64, 1),
+    background 220ms ease,
+    box-shadow 260ms ease;
+}
+
+.bar:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 24px 55px -12px rgba(15, 23, 42, 0.16),
+    0 10px 24px -6px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.bar:focus-within {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    0 24px 55px -12px rgba(15, 23, 42, 0.16),
+    0 10px 24px -6px rgba(15, 23, 42, 0.08),
+    0 0 0 4px color-mix(in oklab, var(--color-brand-accent) 22%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.bar:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 24px 55px -12px rgba(15, 23, 42, 0.16),
+    0 10px 24px -6px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bar:focus-within {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.68);
+  border-color: color-mix(in oklab, var(--color-brand-accent) 55%, transparent);
+  box-shadow:
+    0 24px 55px -12px rgba(15, 23, 42, 0.16),
+    0 10px 24px -6px rgba(15, 23, 42, 0.08),
+    0 0 0 4px color-mix(in oklab, var(--color-brand-accent) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    height: 72px;
+    padding: 8px;
+    padding-left: 10px;
+    border-radius: 999px;
+  }
+}
+
+/* ============================================================
+ * Filter chip (left)
+ * ============================================================ */
+
+.filterWrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+.filter:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+.filter:focus-visible {
+  outline: 2px solid var(--color-brand-accent);
+  outline-offset: 2px;
+}
+
+.filterLabel {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .filterLabel {
+    display: none;
+  }
+  .filter {
+    padding: 0 10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .filter {
+    height: 52px;
+    padding: 0 20px;
+    font-size: 1rem;
+  }
+}
+
+.chev {
+  opacity: 0.55;
+  transition: transform 220ms cubic-bezier(0.34, 1.32, 0.64, 1);
+}
+.filter[data-open="true"] .chev {
+  transform: rotate(180deg);
+  opacity: 0.85;
+}
+
+/* Divider */
+.divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 24px;
+  margin: 0 8px;
+  background: rgba(15, 23, 42, 0.14);
+}
+@media (max-width: 640px) {
+  .divider {
+    margin: 0 4px;
+  }
+}
+@media (min-width: 1024px) {
+  .divider {
+    height: 30px;
+    margin: 0 14px;
+  }
+}
+
+/* ============================================================
+ * Input
+ * ============================================================ */
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--foreground);
+  opacity: 0.45;
+}
+
+@media (min-width: 1024px) {
+  .input {
+    padding: 0 18px;
+    font-size: 1.0625rem;
+  }
+}
+
+/* ============================================================
+ * Submit button
+ * ============================================================ */
+
+.submit {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--color-brand-primary);
+
+  background: linear-gradient(145deg, #ffc62b 0%, #fba705 48%, #e09400 100%);
+  box-shadow:
+    0 6px 14px rgba(224, 148, 0, 0.35),
+    0 2px 4px rgba(224, 148, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+
+  transition:
+    transform 200ms cubic-bezier(0.34, 1.32, 0.64, 1),
+    box-shadow 200ms ease;
+}
+
+.submit:hover {
+  transform: translateY(-1.5px) scale(1.03);
+  box-shadow:
+    0 10px 22px rgba(224, 148, 0, 0.45),
+    0 4px 8px rgba(224, 148, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.submit:active {
+  transform: translateY(0.5px) scale(0.98);
+  box-shadow:
+    inset 2px 2px 6px rgba(150, 100, 0, 0.35),
+    inset -2px -2px 6px rgba(255, 230, 170, 0.5);
+}
+
+.submit:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  .submit {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ============================================================
+ * Filter dropdown panel — same glass treatment
+ * ============================================================ */
+
+.panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  min-width: 240px;
+  padding: 8px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow:
+    0 24px 55px -12px rgba(15, 23, 42, 0.18),
+    0 8px 20px -6px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top left;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 240ms cubic-bezier(0.34, 1.32, 0.64, 1);
+  z-index: 20;
+}
+.panel[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.panelList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.panelItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+.panelItem:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.panelItem[data-active="true"] {
+  color: var(--color-brand-primary);
+  font-weight: 700;
+  background: color-mix(in oklab, var(--color-brand-accent) 16%, transparent);
+}
+
+.panelCheck {
+  color: var(--color-brand-accent);
+  opacity: 0;
+}
+.panelItem[data-active="true"] .panelCheck {
+  opacity: 1;
+}
+
+/* ============================================================
+ * Dark mode
+ * ============================================================ */
+
+:global(.dark) .bar {
+  background: rgba(22, 24, 29, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 20px 45px -12px rgba(0, 0, 0, 0.5),
+    0 8px 20px -6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+:global(.dark) .bar:hover {
+  background: rgba(22, 24, 29, 0.65);
+}
+:global(.dark) .bar:focus-within {
+  background: rgba(22, 24, 29, 0.72);
+}
+
+:global(.dark) .filter:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+:global(.dark) .divider {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+:global(.dark) .panel {
+  background: rgba(26, 28, 34, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 24px 55px -12px rgba(0, 0, 0, 0.6),
+    0 8px 20px -6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+:global(.dark) .panelItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+ * Reduced motion
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .chev,
+  .submit,
+  .panel,
+  .bar {
+    transition: none;
+  }
+  .bar:hover,
+  .bar:focus-within {
+    transform: none;
+  }
+}
