@@ -1,11 +1,12 @@
 // src/app/[locale]/page.tsx
 import Hero from "@/components/hero/Hero";
+import { ProductHero } from "@/components/product-hero";
 
 export default function HomePage() {
   return (
     <main>
       <Hero />
-
+      <ProductHero />
       {/* Temporary spacer so you can scroll and test the sticky navbar */}
       <section
         style={{

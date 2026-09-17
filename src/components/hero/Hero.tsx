@@ -20,6 +20,7 @@ export default function Hero() {
       <div className={styles.content}>
         <p className={styles.brand}>{brand}</p>
         <HeroHeadline items={headlines} />
+
         <HeroSearch />
       </div>
     </section>

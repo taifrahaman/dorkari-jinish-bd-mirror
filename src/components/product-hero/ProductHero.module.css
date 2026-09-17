@@ -1,0 +1,1317 @@
+/* src/components/product-hero/ProductHero.module.css */
+
+.root {
+  --color-brand-primary: #172642;
+  --color-brand-primary-dark: #0f1a2e;
+  --color-brand-teal: #599088;
+  --color-brand-accent: #fba705;
+  --color-brand-accent-light: #fff8e8;
+  --color-brand-accent-hover: #e09400;
+  --color-brand-ink: #000000;
+
+  position: relative;
+  width: 100%;
+
+  height: 590px;
+  min-height: 590px;
+  max-height: 590px;
+
+  overflow: hidden;
+  isolation: isolate;
+
+  background: var(--color-brand-primary);
+  color: #fff;
+}
+
+/* ============================================================
+   BACKGROUND
+   ============================================================ */
+
+.backgroundLayer {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+
+  background:
+    radial-gradient(circle at 18% 20%, var(--hero-primary), transparent 37%),
+    radial-gradient(circle at 82% 68%, var(--hero-secondary), transparent 42%),
+    radial-gradient(circle at 50% 110%, var(--hero-tertiary), transparent 40%),
+    linear-gradient(125deg, var(--hero-base), var(--hero-base));
+
+  opacity: 0;
+  transform: scale(1.02);
+
+  will-change: opacity, transform;
+
+  pointer-events: none;
+}
+
+.backgroundVignette {
+  position: absolute;
+  inset: 0;
+  z-index: -5;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(15, 26, 46, 0.28),
+      transparent 45%,
+      rgba(15, 26, 46, 0.14)
+    ),
+    radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.22));
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.inner {
+  position: relative;
+  z-index: 2;
+
+  width: min(1380px, calc(100% - 72px));
+
+  height: 100%;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(390px, 0.78fr)
+    minmax(650px, 1.22fr);
+
+  gap: 35px;
+
+  align-items: center;
+}
+
+/* ============================================================
+   LEFT CONTENT
+   ============================================================ */
+
+.content {
+  position: relative;
+  z-index: 30;
+
+  width: 100%;
+  max-width: 570px;
+
+  min-width: 0;
+}
+
+.copyViewport {
+  position: relative;
+
+  width: 100%;
+  height: 350px;
+
+  overflow: visible;
+}
+
+.copyPanel {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  min-width: 0;
+
+  visibility: hidden;
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+/* ============================================================
+   EYEBROW
+   ============================================================ */
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  margin-bottom: 16px;
+
+  font-size: 11px;
+  line-height: 1;
+
+  font-weight: 700;
+
+  letter-spacing: 0.17em;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  will-change: transform, opacity;
+}
+
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  background: var(--color-brand-accent);
+
+  box-shadow: 0 0 12px rgba(251, 167, 5, 0.55);
+}
+
+/* ============================================================
+   HEADLINE
+   ============================================================ */
+
+.headline {
+  width: 100%;
+  max-width: 560px;
+
+  min-width: 0;
+
+  margin: 0;
+
+  font-size: clamp(42px, 4vw, 62px);
+
+  line-height: 0.97;
+
+  letter-spacing: -0.045em;
+
+  font-weight: 700;
+
+  color: #fff;
+
+  overflow-wrap: anywhere;
+}
+
+.lineMask {
+  display: block;
+
+  height: 1.02em;
+
+  max-width: 100%;
+
+  overflow: hidden;
+}
+
+.headlineLine {
+  display: block;
+
+  max-width: 100%;
+
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   DESCRIPTION
+   ============================================================ */
+
+.description {
+  width: 100%;
+  max-width: 480px;
+
+  min-height: 47px;
+
+  margin: 20px 0 0;
+
+  font-size: 13px;
+
+  line-height: 1.72;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  overflow-wrap: anywhere;
+
+  word-break: normal;
+
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   PRICE / CTA
+   ============================================================ */
+
+.offer {
+  display: flex;
+  align-items: center;
+
+  gap: 24px;
+
+  margin-top: 24px;
+
+  min-width: 0;
+
+  will-change: transform, opacity;
+}
+
+.priceBlock {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  min-width: 0;
+}
+
+.priceLabel {
+  font-size: 9px;
+
+  line-height: 1;
+
+  font-weight: 700;
+
+  letter-spacing: 0.16em;
+
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.price {
+  font-size: 25px;
+
+  line-height: 1;
+
+  color: var(--color-brand-accent);
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+.cta {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  min-height: 42px;
+
+  padding: 0 19px;
+
+  border: 1px solid var(--color-brand-accent);
+
+  border-radius: 999px;
+
+  background: var(--color-brand-accent);
+
+  color: var(--color-brand-ink);
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.11em;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  pointer-events: auto;
+
+  box-shadow: 0 8px 24px rgba(251, 167, 5, 0.18);
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cta:hover {
+  background: var(--color-brand-accent-hover);
+
+  border-color: var(--color-brand-accent-hover);
+
+  color: #fff;
+
+  transform: translateX(3px);
+
+  box-shadow: 0 10px 28px rgba(251, 167, 5, 0.28);
+}
+
+.cta svg {
+  flex: 0 0 auto;
+
+  transition: transform 180ms ease;
+}
+
+.cta:hover svg {
+  transform: translateX(3px);
+}
+
+/* ============================================================
+   RIGHT SHOWCASE
+   ============================================================ */
+
+.showcase {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   PRODUCT VIEWPORT
+   ============================================================ */
+
+.productViewport {
+  --card-size: clamp(190px, 18vw, 250px);
+
+  --card-gap: 14px;
+
+  position: relative;
+  z-index: 5;
+
+  width: min(100%, calc(var(--card-size) * 3 + var(--card-gap) * 2));
+
+  height: 450px;
+
+  overflow: hidden;
+
+  touch-action: pan-y;
+
+  user-select: none;
+}
+
+/* ============================================================
+   PRODUCT TRACK
+   ============================================================ */
+
+.track {
+  position: absolute;
+
+  left: 0;
+  top: 50%;
+
+  height: 410px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: var(--card-gap);
+
+  transform: translate3d(0, -50%, 0);
+
+  will-change: transform;
+
+  cursor: grab;
+
+  user-select: none;
+
+  touch-action: pan-y;
+}
+
+.track:active {
+  cursor: grabbing;
+}
+
+/* ============================================================
+   PRODUCT CARD
+   ============================================================ */
+
+.card {
+  position: relative;
+
+  flex: 0 0 var(--card-size);
+
+  width: var(--card-size);
+
+  height: 390px;
+
+  padding: 0;
+  margin: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #fff;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  overflow: visible;
+
+  appearance: none;
+
+  will-change: transform, opacity;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   PRODUCT CIRCLE
+   ============================================================ */
+
+.productCircle {
+  position: relative;
+
+  width: var(--card-size);
+  height: var(--card-size);
+
+  flex: 0 0 var(--card-size);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  overflow: hidden;
+
+  background: radial-gradient(
+    circle at 38% 30%,
+    rgba(255, 255, 255, 0.2),
+    rgba(89, 144, 136, 0.14) 48%,
+    rgba(23, 38, 66, 0.3) 100%
+  );
+
+  border: 1px solid rgba(89, 144, 136, 0.28);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 15px 45px rgba(0, 0, 0, 0.16);
+}
+
+/* ============================================================
+   CIRCLE GLOW
+   ============================================================ */
+
+.circleGlow {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 0;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.08),
+    transparent 68%
+  );
+
+  pointer-events: none;
+}
+
+/* ============================================================
+   PRODUCT IMAGE
+   ============================================================ */
+
+.productImage {
+  position: relative;
+
+  z-index: 2;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  max-width: none;
+  max-height: none;
+
+  object-fit: cover;
+
+  object-position: center;
+
+  transform: scale(1.02) translate3d(0, 0, 0);
+
+  pointer-events: none;
+
+  user-select: none;
+}
+
+/* ============================================================
+   PRODUCT META
+   ============================================================ */
+
+.productMeta {
+  position: relative;
+
+  z-index: 5;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 12px;
+
+  min-width: 0;
+
+  max-width: 100%;
+}
+
+.productName {
+  max-width: 100%;
+
+  font-size: 11px;
+
+  line-height: 1.1;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.productPrice {
+  font-size: 12px;
+
+  line-height: 1;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  color: rgba(255, 255, 255, 0.36);
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+
+.controls {
+  position: absolute;
+
+  right: 0;
+  bottom: 38px;
+
+  z-index: 40;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+}
+
+.navButton {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(251, 167, 5, 0.38);
+
+  border-radius: 50%;
+
+  background: rgba(251, 167, 5, 0.08);
+
+  color: var(--color-brand-accent);
+
+  cursor: pointer;
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.navButton:hover {
+  background: var(--color-brand-accent);
+
+  border-color: var(--color-brand-accent);
+
+  color: var(--color-brand-ink);
+
+  transform: scale(1.05);
+}
+
+.counter {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-width: 55px;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.counter span:first-child {
+  color: var(--color-brand-accent);
+}
+
+.counter i {
+  width: 15px;
+  height: 1px;
+
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .inner {
+    width: calc(100% - 48px);
+
+    grid-template-columns:
+      minmax(340px, 0.8fr)
+      minmax(520px, 1.2fr);
+
+    gap: 20px;
+  }
+
+  .headline {
+    font-size: clamp(38px, 4.5vw, 54px);
+  }
+
+  .productViewport {
+    --card-size: 175px;
+    --card-gap: 9px;
+  }
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 760px) {
+  /*
+   * Switch from:
+   *
+   * TEXT | PRODUCTS
+   *
+   * to:
+   *
+   * TEXT
+   * PRODUCTS
+   */
+
+  .root {
+    height: 680px;
+    min-height: 680px;
+    max-height: 680px;
+  }
+
+  .inner {
+    width: calc(100% - 28px);
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    justify-content: flex-start;
+
+    gap: 0;
+
+    padding-top: 60px;
+  }
+
+  /* ==========================================================
+     MOBILE TEXT
+     ========================================================== */
+
+  .content {
+    width: 100%;
+
+    max-width: 100%;
+
+    min-width: 0;
+
+    flex: 0 0 auto;
+  }
+
+  .copyViewport {
+    width: 100%;
+
+    height: 255px;
+
+    min-width: 0;
+  }
+
+  .copyPanel {
+    justify-content: flex-start;
+  }
+
+  .eyebrow {
+    gap: 7px;
+
+    margin-bottom: 11px;
+
+    font-size: 9px;
+
+    letter-spacing: 0.14em;
+  }
+
+  .eyebrowDot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .headline {
+    width: 100%;
+
+    max-width: 620px;
+
+    font-size: clamp(34px, 9vw, 48px);
+
+    line-height: 0.96;
+
+    letter-spacing: -0.045em;
+  }
+
+  .description {
+    width: 100%;
+
+    max-width: 520px;
+
+    min-height: 0;
+
+    margin-top: 14px;
+
+    font-size: 11px;
+
+    line-height: 1.6;
+  }
+
+  .offer {
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin-top: 17px;
+
+    flex-wrap: nowrap;
+  }
+
+  .priceBlock {
+    flex: 0 1 auto;
+
+    min-width: 0;
+  }
+
+  .priceLabel {
+    font-size: 7px;
+
+    letter-spacing: 0.13em;
+  }
+
+  .price {
+    font-size: 21px;
+  }
+
+  .cta {
+    flex: 0 0 auto;
+
+    min-height: 38px;
+
+    padding: 0 15px;
+
+    gap: 7px;
+
+    font-size: 8px;
+
+    letter-spacing: 0.09em;
+  }
+
+  .cta svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ==========================================================
+     MOBILE PRODUCT AREA
+     ========================================================== */
+
+  .showcase {
+    position: relative;
+
+    width: 100%;
+
+    height: 365px;
+
+    min-height: 365px;
+
+    flex: 0 0 365px;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: center;
+  }
+
+  /*
+   * Three-card viewport:
+   *
+   * PREVIOUS | ACTIVE | NEXT
+   */
+
+  .productViewport {
+    --card-size: clamp(150px, 42vw, 205px);
+
+    --card-gap: 10px;
+
+    position: relative;
+
+    width: min(100%, calc(var(--card-size) * 3 + var(--card-gap) * 2));
+
+    height: 315px;
+
+    overflow: hidden;
+
+    margin-top: 0;
+  }
+
+  .track {
+    top: 50%;
+
+    height: 300px;
+
+    gap: var(--card-gap);
+  }
+
+  .card {
+    flex: 0 0 var(--card-size);
+
+    width: var(--card-size);
+
+    height: 290px;
+  }
+
+  .productCircle {
+    width: var(--card-size);
+
+    height: var(--card-size);
+
+    flex: 0 0 var(--card-size);
+  }
+
+  .productMeta {
+    gap: 4px;
+
+    margin-top: 10px;
+
+    max-width: var(--card-size);
+  }
+
+  .productName {
+    max-width: var(--card-size);
+
+    font-size: 9px;
+  }
+
+  .productPrice {
+    font-size: 10px;
+  }
+
+  /* ==========================================================
+     MOBILE CONTROLS
+     ========================================================== */
+
+  .controls {
+    right: 50%;
+
+    bottom: 32px;
+
+    transform: translateX(50%);
+
+    gap: 9px;
+  }
+
+  .navButton {
+    width: 34px;
+    height: 34px;
+  }
+
+  .navButton svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .counter {
+    min-width: 48px;
+
+    gap: 6px;
+
+    font-size: 8px;
+  }
+
+  .counter i {
+    width: 12px;
+  }
+}
+
+/* ============================================================
+   SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 430px) {
+  .root {
+    height: 650px;
+    min-height: 650px;
+    max-height: 650px;
+  }
+
+  .inner {
+    width: calc(100% - 20px);
+
+    padding-top: 25px;
+  }
+
+  /* ==========================================================
+     TEXT
+     ========================================================== */
+
+  .copyViewport {
+    height: 235px;
+  }
+
+  .eyebrow {
+    margin-bottom: 9px;
+
+    font-size: 8px;
+  }
+
+  .headline {
+    font-size: clamp(31px, 9.5vw, 42px);
+  }
+
+  .description {
+    margin-top: 12px;
+
+    font-size: 10px;
+
+    line-height: 1.55;
+
+    max-width: 420px;
+  }
+
+  .offer {
+    gap: 12px;
+
+    margin-top: 14px;
+  }
+
+  .priceLabel {
+    font-size: 6.5px;
+  }
+
+  .price {
+    font-size: 19px;
+  }
+
+  .cta {
+    min-height: 36px;
+
+    padding: 0 13px;
+
+    font-size: 7.5px;
+  }
+
+  /* ==========================================================
+     PRODUCTS
+     ========================================================== */
+
+  .showcase {
+    height: 350px;
+
+    min-height: 350px;
+
+    flex-basis: 350px;
+  }
+
+  .productViewport {
+    --card-size: clamp(135px, 43vw, 185px);
+
+    --card-gap: 8px;
+
+    height: 305px;
+  }
+
+  .track {
+    height: 290px;
+  }
+
+  .card {
+    height: 275px;
+  }
+
+  .productCircle {
+    width: var(--card-size);
+
+    height: var(--card-size);
+
+    flex-basis: var(--card-size);
+  }
+
+  .productMeta {
+    margin-top: 8px;
+  }
+
+  .productName {
+    font-size: 8px;
+  }
+
+  .productPrice {
+    font-size: 9px;
+  }
+
+  /* ==========================================================
+     CONTROLS
+     ========================================================== */
+
+  .controls {
+    bottom: 4px;
+
+    gap: 7px;
+  }
+
+  .navButton {
+    width: 31px;
+    height: 31px;
+  }
+
+  .navButton svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .counter {
+    min-width: 43px;
+
+    font-size: 7px;
+  }
+}
+
+/* ============================================================
+   VERY SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 360px) {
+  .root {
+    height: 620px;
+    min-height: 620px;
+    max-height: 620px;
+  }
+
+  .inner {
+    width: calc(100% - 16px);
+
+    padding-top: 22px;
+  }
+
+  /* ==========================================================
+     TEXT
+     ========================================================== */
+
+  .copyViewport {
+    height: 220px;
+  }
+
+  .eyebrow {
+    font-size: 7px;
+
+    margin-bottom: 8px;
+  }
+
+  .headline {
+    font-size: 28px;
+  }
+
+  .description {
+    font-size: 9px;
+
+    line-height: 1.5;
+
+    margin-top: 10px;
+  }
+
+  .offer {
+    gap: 9px;
+
+    margin-top: 12px;
+  }
+
+  .price {
+    font-size: 17px;
+  }
+
+  .cta {
+    min-height: 33px;
+
+    padding: 0 11px;
+
+    font-size: 7px;
+
+    gap: 5px;
+  }
+
+  .cta svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* ==========================================================
+     PRODUCTS
+     ========================================================== */
+
+  .showcase {
+    height: 340px;
+
+    min-height: 340px;
+
+    flex-basis: 340px;
+  }
+
+  .productViewport {
+    --card-size: 125px;
+
+    --card-gap: 7px;
+
+    height: 295px;
+  }
+
+  .track {
+    height: 280px;
+  }
+
+  .card {
+    height: 265px;
+  }
+
+  .productCircle {
+    width: 125px;
+
+    height: 125px;
+
+    flex-basis: 125px;
+  }
+
+  .productMeta {
+    margin-top: 7px;
+
+    gap: 3px;
+  }
+
+  .productName {
+    font-size: 7px;
+  }
+
+  .productPrice {
+    font-size: 8px;
+  }
+
+  /* ==========================================================
+     CONTROLS
+     ========================================================== */
+
+  .controls {
+    bottom: 2px;
+
+    gap: 6px;
+  }
+
+  .navButton {
+    width: 29px;
+    height: 29px;
+  }
+
+  .navButton svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .counter {
+    min-width: 40px;
+
+    gap: 4px;
+
+    font-size: 6.5px;
+  }
+
+  .counter i {
+    width: 9px;
+  }
+}
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+.card:focus-visible {
+  outline: 2px solid var(--color-brand-accent);
+
+  outline-offset: 4px;
+}
+
+.navButton:focus-visible,
+.cta:focus-visible {
+  outline: 2px solid var(--color-brand-accent);
+
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .cta svg,
+  .navButton {
+    transition: none;
+  }
+}
