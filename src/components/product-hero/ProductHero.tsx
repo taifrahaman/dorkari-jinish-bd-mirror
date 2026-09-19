@@ -19,6 +19,8 @@ import gsap from "gsap";
 
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useLocale } from "next-intl";
+
 import { productHeroSlides } from "./productHeroData";
 
 import styles from "./ProductHero.module.css";
@@ -27,11 +29,16 @@ const TOTAL = productHeroSlides.length;
 const COPIES = 3;
 const MIDDLE_COPY_START = TOTAL;
 
+type ProductHeroLocale = "en" | "bn";
+
 const modulo = (value: number, length: number) => {
   return ((value % length) + length) % length;
 };
 
 export default function ProductHero() {
+  const locale = useLocale() as ProductHeroLocale;
+  const isBangla = locale === "bn";
+
   const [activeIndex, setActiveIndex] = useState(0);
 
   /* ==========================================================
@@ -52,10 +59,6 @@ export default function ProductHero() {
 
   /* ==========================================================
        PANEL REFS
-       
-       IMPORTANT:
-       These are separate refs so JSX never needs to read
-       panelRefs.current during render.
        ========================================================== */
 
   const panelRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -221,10 +224,6 @@ export default function ProductHero() {
 
       const nextPhysical = requestedPhysicalIndex;
 
-      /* --------------------------------------------------------
-               Same card
-               -------------------------------------------------------- */
-
       if (nextPhysical === currentPhysical) {
         const target = getTargetX(nextPhysical);
 
@@ -237,10 +236,6 @@ export default function ProductHero() {
 
         return;
       }
-
-      /* --------------------------------------------------------
-               Indexes
-               -------------------------------------------------------- */
 
       const currentLogical = getLogicalIndex(currentPhysical);
 
@@ -340,10 +335,6 @@ export default function ProductHero() {
           currentBackgroundRef.current =
             currentBackgroundRef.current === 0 ? 1 : 0;
 
-          /* -----------------------------------------------
-                           Infinite-loop reset
-                           ----------------------------------------------- */
-
           let resetPhysical = nextPhysical;
 
           if (nextPhysical < TOTAL) {
@@ -361,10 +352,6 @@ export default function ProductHero() {
 
             physicalIndexRef.current = resetPhysical;
 
-            /*
-             * Keep the same logical product focused
-             * after the invisible infinite-loop reset.
-             */
             focusCard(resetPhysical, true);
           } else {
             focusCard(nextPhysical, true);
@@ -760,15 +747,9 @@ export default function ProductHero() {
 
     if (!track) return;
 
-    const setTrackX = gsap.quickSetter(track, "x", "px") as unknown as (
+    trackSetterRef.current = gsap.quickSetter(track, "x", "px") as (
       value: number,
     ) => void;
-
-    trackSetterRef.current = setTrackX;
-
-    /* --------------------------------------------------------
-           Backgrounds
-           -------------------------------------------------------- */
 
     setBackgroundColors(backgroundARef.current, 0);
 
@@ -783,10 +764,6 @@ export default function ProductHero() {
       autoAlpha: 0,
       scale: 1.04,
     });
-
-    /* --------------------------------------------------------
-           Panels
-           -------------------------------------------------------- */
 
     panelRefs.current.forEach((panel, index) => {
       if (!panel) return;
@@ -808,7 +785,9 @@ export default function ProductHero() {
         gsap.set(
           [
             eyebrowRefs.current[index],
+
             descriptionRefs.current[index],
+
             offerRefs.current[index],
           ],
           {
@@ -818,10 +797,6 @@ export default function ProductHero() {
         );
       }
     });
-
-    /* --------------------------------------------------------
-           Initial centered product
-           -------------------------------------------------------- */
 
     const frame = requestAnimationFrame(() => {
       const startX = getTargetX(MIDDLE_COPY_START);
@@ -839,6 +814,25 @@ export default function ProductHero() {
       gsap.killTweensOf(track);
     };
   }, [focusCard, getTargetX, setBackgroundColors]);
+
+  /* ==========================================================
+       LOCALE CHANGE
+       ========================================================== */
+
+  useEffect(() => {
+    const currentLogical = activeIndexRef.current;
+
+    const currentPanel = panelRefs.current[currentLogical];
+
+    if (!currentPanel) {
+      return;
+    }
+
+    gsap.set(currentPanel, {
+      autoAlpha: 1,
+      pointerEvents: "auto",
+    });
+  }, [locale]);
 
   /* ==========================================================
        RESIZE
@@ -904,6 +898,12 @@ export default function ProductHero() {
   }
 
   /* ==========================================================
+       LOCALE CLASS HELPERS
+       ========================================================== */
+
+  const banglaClass = isBangla ? styles.banglaText : "";
+
+  /* ==========================================================
        RENDER
        ========================================================== */
 
@@ -911,7 +911,7 @@ export default function ProductHero() {
     <section
       ref={rootRef}
       className={styles.root}
-      aria-label="Featured products"
+      aria-label={locale === "bn" ? "নির্বাচিত পণ্যসমূহ" : "Featured products"}
     >
       <div ref={backgroundARef} className={styles.backgroundLayer} />
 
@@ -920,103 +920,103 @@ export default function ProductHero() {
       <div className={styles.backgroundVignette} />
 
       <div className={styles.inner}>
-        {/* ====================================================
-            CONTENT
-            ==================================================== */}
-
         <div className={styles.content}>
           <div className={styles.copyViewport}>
-            {productHeroSlides.map((product, index) => (
-              <div
-                key={product.id}
-                ref={(element) => {
-                  panelRefs.current[index] = element;
-                }}
-                className={styles.copyPanel}
-              >
-                {/* ------------------------------------------
-                      EYEBROW
-                      ------------------------------------------ */}
+            {productHeroSlides.map((product, index) => {
+              const title = product.title[locale];
 
+              return (
                 <div
+                  key={product.id}
                   ref={(element) => {
-                    eyebrowRefs.current[index] = element;
+                    panelRefs.current[index] = element;
                   }}
-                  className={styles.eyebrow}
+                  className={styles.copyPanel}
                 >
-                  <span className={styles.eyebrowDot} />
+                  {/* EYEBROW */}
 
-                  {product.eyebrow}
-                </div>
+                  <div
+                    ref={(element) => {
+                      eyebrowRefs.current[index] = element;
+                    }}
+                    className={`${styles.eyebrow} ${banglaClass}`}
+                  >
+                    <span className={styles.eyebrowDot} />
 
-                {/* ------------------------------------------
-                      HEADLINE
-                      ------------------------------------------ */}
-
-                <h2 className={styles.headline}>
-                  {product.title.split("\n").map((line, lineIndex) => (
-                    <span
-                      key={`${product.id}-${lineIndex}`}
-                      className={styles.lineMask}
-                    >
-                      <span
-                        ref={(element) => {
-                          if (!lineRefs.current[index]) {
-                            lineRefs.current[index] = [];
-                          }
-
-                          lineRefs.current[index][lineIndex] = element;
-                        }}
-                        className={styles.headlineLine}
-                      >
-                        {line}
-                      </span>
-                    </span>
-                  ))}
-                </h2>
-
-                {/* ------------------------------------------
-                      DESCRIPTION
-                      ------------------------------------------ */}
-
-                <p
-                  ref={(element) => {
-                    descriptionRefs.current[index] = element;
-                  }}
-                  className={styles.description}
-                >
-                  {product.description}
-                </p>
-
-                {/* ------------------------------------------
-                      OFFER
-                      ------------------------------------------ */}
-
-                <div
-                  ref={(element) => {
-                    offerRefs.current[index] = element;
-                  }}
-                  className={styles.offer}
-                >
-                  <div className={styles.priceBlock}>
-                    <span className={styles.priceLabel}>STARTING FROM</span>
-
-                    <strong className={styles.price}>{product.price}</strong>
+                    {product.eyebrow[locale]}
                   </div>
 
-                  <a href={product.href} className={styles.cta}>
-                    SHOP NOW
-                    <ArrowRight size={16} />
-                  </a>
+                  {/* HEADLINE */}
+
+                  <h2 className={`${styles.headline} ${banglaClass}`}>
+                    {title.split("\n").map((line, lineIndex) => (
+                      <span
+                        key={`${product.id}-${locale}-${lineIndex}`}
+                        className={`${styles.lineMask} ${
+                          isBangla ? styles.banglaLineMask : ""
+                        }`}
+                      >
+                        <span
+                          ref={(element) => {
+                            if (!lineRefs.current[index]) {
+                              lineRefs.current[index] = [];
+                            }
+
+                            lineRefs.current[index][lineIndex] = element;
+                          }}
+                          className={`${styles.headlineLine} ${banglaClass}`}
+                        >
+                          {line}
+                        </span>
+                      </span>
+                    ))}
+                  </h2>
+
+                  {/* DESCRIPTION */}
+
+                  <p
+                    ref={(element) => {
+                      descriptionRefs.current[index] = element;
+                    }}
+                    className={`${styles.description} ${banglaClass}`}
+                  >
+                    {product.description[locale]}
+                  </p>
+
+                  {/* OFFER */}
+
+                  <div
+                    ref={(element) => {
+                      offerRefs.current[index] = element;
+                    }}
+                    className={styles.offer}
+                  >
+                    <div className={styles.priceBlock}>
+                      <span className={`${styles.priceLabel} ${banglaClass}`}>
+                        {locale === "bn" ? "শুরু হচ্ছে" : "STARTING FROM"}
+                      </span>
+
+                      <strong className={`${styles.price} ${banglaClass}`}>
+                        {product.price[locale]}
+                      </strong>
+                    </div>
+
+                    <a
+                      href={product.href}
+                      className={`${styles.cta} ${banglaClass}`}
+                    >
+                      {locale === "bn" ? "এখনই কিনুন" : "SHOP NOW"}
+
+                      <ArrowRight size={16} />
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* ====================================================
-            PRODUCTS
-            ==================================================== */}
+        {/* PRODUCTS */}
 
         <div className={styles.showcase}>
           <div
@@ -1041,6 +1041,10 @@ export default function ProductHero() {
 
                   const product = productHeroSlides[logicalIndex];
 
+                  const productName = product.shortName[locale];
+
+                  const productPrice = product.price[locale];
+
                   return (
                     <button
                       key={`${product.id}-${physicalIndex}`}
@@ -1056,7 +1060,11 @@ export default function ProductHero() {
 
                         goToProduct(logicalIndex);
                       }}
-                      aria-label={`View ${product.shortName}`}
+                      aria-label={
+                        locale === "bn"
+                          ? `${productName} দেখুন`
+                          : `View ${productName}`
+                      }
                     >
                       <span className={styles.productCircle}>
                         <span className={styles.circleGlow} />
@@ -1065,7 +1073,7 @@ export default function ProductHero() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={product.image}
-                            alt={product.shortName}
+                            alt={productName}
                             className={styles.productImage}
                             draggable={false}
                           />
@@ -1073,12 +1081,10 @@ export default function ProductHero() {
                       </span>
 
                       <span className={styles.productMeta}>
-                        <span className={styles.productName}>
-                          {product.shortName}
-                        </span>
-
-                        <span className={styles.productPrice}>
-                          {product.price}
+                        <span
+                          className={`${styles.productName} ${banglaClass}`}
+                        >
+                          {productName}
                         </span>
                       </span>
                     </button>
@@ -1088,16 +1094,14 @@ export default function ProductHero() {
             </div>
           </div>
 
-          {/* ==================================================
-              CONTROLS
-              ================================================== */}
+          {/* CONTROLS */}
 
           <div className={styles.controls}>
             <button
               type="button"
               className={styles.navButton}
               onClick={previousSlide}
-              aria-label="Previous product"
+              aria-label={locale === "bn" ? "আগের পণ্য" : "Previous product"}
             >
               <ChevronLeft size={18} />
             </button>
@@ -1114,7 +1118,7 @@ export default function ProductHero() {
               type="button"
               className={styles.navButton}
               onClick={nextSlide}
-              aria-label="Next product"
+              aria-label={locale === "bn" ? "পরের পণ্য" : "Next product"}
             >
               <ChevronRight size={18} />
             </button>
