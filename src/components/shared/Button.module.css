@@ -1,0 +1,72 @@
+/* src/components/shared/Button.module.css */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  min-height: 42px;
+
+  padding: 0 22px;
+
+  border: 1.5px solid var(--color-brand-accent, #fba705);
+  border-radius: 999px;
+
+  background: var(--color-brand-primary-dark, #0f1a2e);
+  color: var(--color-brand-accent, #fba705);
+
+  font-size: 14px; /* default — override via `fontSize` prop */
+  font-weight: 800;
+  letter-spacing: 0.11em;
+
+  text-decoration: none;
+  white-space: nowrap;
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.button:hover {
+  background: var(--color-brand-accent, #fba705);
+  border-color: var(--color-brand-accent, #fba705);
+  color: var(--color-brand-primary-dark, #0f1a2e);
+
+  transform: translateX(3px);
+
+  box-shadow: 0 10px 28px rgba(251, 167, 5, 0.4);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-brand-accent, #fba705);
+  outline-offset: 3px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.icon {
+  flex: 0 0 auto;
+  transition: transform 180ms ease;
+}
+
+.button:hover .icon {
+  transform: translateX(3px);
+}
+
+/* Bangla helper — removes wide English tracking */
+.bangla {
+  letter-spacing: 0;
+}

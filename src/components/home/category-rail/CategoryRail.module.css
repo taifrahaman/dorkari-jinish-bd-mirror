@@ -1,0 +1,274 @@
+/* src/components/home/category-rail/CategoryRail.module.css */
+
+/* ------------------------------------------------------------
+   Sizing
+   The rail bleeds off the right edge of the screen so the next
+   card is always cut off ("peek"). Card width is solved so that
+
+     k full cards + k gaps + one partial card  ===  visible width
+
+   Tune these per breakpoint:
+     --peek : how much of the next card shows (0.35 = 35%)
+     --gap  : space between cards
+   ------------------------------------------------------------ */
+
+.section {
+  container-type: inline-size; /* lets us use cqw = width of the section, minus scrollbar quirks of vw */
+
+  /* brand tokens (fall back to the logo hex if a theme variable isn't emitted) */
+  --brand-navy: var(--color-brand-primary, #172642);
+  --brand-amber: var(--color-brand-accent, #fba705);
+  --bg: var(
+    --color-brand-background,
+    #faf8f5
+  ); /* MUST match the section background (bg-brand-background) */
+
+  --gutter: 1.25rem;
+  --gap: 0.75rem;
+  --peek: 0.25;
+
+  /* mobile: one card + a sliver of the next */
+  --card-w: min(76cqw, 20rem);
+}
+
+/* tablet: 2 cards + peek */
+@media (min-width: 640px) {
+  .section {
+    --gutter: 2rem;
+    --gap: 1rem;
+    --peek: 0.35;
+    --card-w: min(
+      calc((100cqw - var(--gutter) - var(--gap) * 2) / (2 + var(--peek))),
+      22rem
+    );
+  }
+}
+
+/* small desktop: 3 cards + peek */
+@media (min-width: 1024px) {
+  .section {
+    /* left edge lines up with the 1440px content column on wide screens */
+    --gutter: max(3rem, calc((100cqw - 1440px) / 2 + 3rem));
+    --gap: 1.25rem;
+    --peek: 0.4;
+    --card-w: calc(
+      (100cqw - var(--gutter) - var(--gap) * 3) / (3 + var(--peek))
+    );
+  }
+}
+
+/* desktop: 4 cards + peek of the 5th */
+@media (min-width: 1280px) {
+  .section {
+    --peek: 0.35;
+    --card-w: calc(
+      (100cqw - var(--gutter) - var(--gap) * 4) / (4 + var(--peek))
+    );
+  }
+}
+
+/* ------------------------------------------------------------
+   Header
+   ------------------------------------------------------------ */
+
+.head {
+  padding-inline: var(--gutter);
+}
+
+/* ------------------------------------------------------------
+   Rail
+   ------------------------------------------------------------ */
+
+.railWrap {
+  position: relative;
+}
+
+/* soft fade on the right edge: hints that there is more to scroll to.
+   (The left side has no fade: cards are clipped at the gutter line instead.) */
+.railWrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(24px, 5cqw, 72px);
+  pointer-events: none;
+  opacity: 1;
+  background: linear-gradient(
+    to left,
+    var(--bg),
+    color-mix(in srgb, var(--bg) 0%, transparent)
+  );
+  transition: opacity 300ms ease;
+}
+
+.railWrap[data-end="true"]::after {
+  opacity: 0;
+}
+
+.rail {
+  position: relative; /* offsetParent for snap-point maths */
+  display: flex;
+  gap: var(--gap);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* vertical room so the cards' drop shadows aren't clipped */
+  padding-block: 8px 28px;
+  padding-inline-start: var(--gutter);
+  scroll-padding-inline-start: var(--gutter);
+  /* cards never travel into the left margin: everything left of the gutter
+     line (where the title starts) is cut off. 2px slack keeps the first
+     card's hairline ring and shadow intact at rest. */
+  clip-path: inset(0 0 0 calc(var(--gutter) - 2px));
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain; /* stops the browser's swipe-back gesture */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* trailing space so the last card can rest on the same gutter as the title */
+.rail::after {
+  content: "";
+  flex: none;
+  width: max(0px, calc(var(--gutter) - var(--gap)));
+}
+
+.rail:focus-visible {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: -2px;
+  border-radius: 16px;
+}
+
+/* touch: native, crisp one-card-at-a-time snapping */
+@media (pointer: coarse) {
+  .rail {
+    scroll-snap-type: x mandatory;
+    cursor: auto;
+  }
+}
+
+/* snapping is switched off while JS is driving the scroll position,
+   otherwise the browser fights every frame */
+.rail[data-dragging="true"],
+.rail[data-animating="true"] {
+  scroll-snap-type: none;
+}
+
+.rail[data-dragging="true"],
+.rail[data-dragging="true"] * {
+  cursor: grabbing !important;
+}
+
+/* no hover states / accidental link presses while dragging */
+.rail[data-dragging="true"] .item {
+  pointer-events: none;
+}
+
+.item {
+  flex: none;
+  width: var(--card-w);
+  scroll-snap-align: start;
+
+  /* one orchestrated entrance: cards rise in, staggered (first few only) */
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+}
+
+.revealed .item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1) calc(min(var(--i), 5) * 80ms),
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1) calc(min(var(--i), 5) * 80ms);
+}
+
+/* ------------------------------------------------------------
+   Scrollbar (progress + draggable thumb)
+   ------------------------------------------------------------ */
+
+.bar {
+  display: flex;
+  align-items: center;
+  height: 28px; /* fixed, so growing the track on hover never shifts layout */
+  margin-top: -6px;
+  padding-inline: var(--gutter);
+  cursor: pointer;
+  transition: opacity 300ms ease;
+}
+
+.bar[data-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.track {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-navy) 12%, transparent);
+  transition: height 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bar:hover .track,
+.bar[data-active="true"] .track {
+  height: 6px;
+}
+
+.thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%; /* real width is set from JS */
+  border-radius: inherit;
+  background: var(--brand-navy);
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+  transition: background-color 200ms ease;
+}
+
+/* amber lights up while the bar is hovered or being dragged */
+.bar:hover .thumb,
+.bar[data-active="true"] .thumb {
+  background: var(--brand-amber);
+}
+
+/* larger invisible hit area so the thumb is easy to grab */
+.thumb::before {
+  content: "";
+  position: absolute;
+  inset: -12px 0;
+}
+
+.bar[data-active="true"] .thumb {
+  cursor: grabbing;
+}
+
+/* ------------------------------------------------------------
+   Reduced motion: no entrance, no easing (JS also skips its
+   animations and jumps straight to the target)
+   ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    opacity: 1;
+    transform: none;
+  }
+
+  .revealed .item,
+  .track,
+  .thumb,
+  .railWrap::after {
+    transition: none;
+  }
+}

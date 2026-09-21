@@ -1,0 +1,450 @@
+/* src/components/shared/ProductCard.module.css */
+
+/* ------------------------------------------------------------
+   Layout: image tile with a notch cut into its bottom-right corner.
+     - inside the tile, bottom-left:  colour options + rating chips
+     - inside the notch:              wishlist + cart buttons
+     - under the tile:                brand / name  ·  price
+
+   No grid. Everything is positioned against the tile or the bar
+   using a handful of variables, so the corners never stretch.
+   ------------------------------------------------------------ */
+
+.shape {
+  /* ---- brand tokens (from globals.css) ----
+     Each one falls back to the logo hex, so the card still looks right
+     even if Tailwind doesn't emit a theme variable. */
+  --brand-navy: var(--color-brand-primary, #172642);
+  --brand-navy-dark: var(--color-brand-primary-dark, #0f1a2e);
+  --brand-teal: var(--color-brand-teal, #599088);
+  --brand-blush: var(--color-brand-navbar, #f1e9e7);
+  --brand-surface: var(--color-brand-surface, #ffffff);
+
+  /* teal darkened toward navy so small text passes contrast on white */
+  --brand-teal-ink: color-mix(
+    in srgb,
+    var(--brand-teal) 72%,
+    var(--brand-navy)
+  );
+
+  /* ---- knobs (change these, nothing else) ---- */
+  --r: 20px; /* radius of the image tile and the bar          */
+  --rt: 16px; /* radius of the tab's top corners               */
+  --g: 10px; /* gutter between the tile and the notch content */
+  --pad: 0px; /* space around the buttons inside the tab       */
+  --pill-h: 44px; /* height of the notch buttons                   */
+  --tab-w: max(
+    40%,
+    96px
+  ); /* notch button area: 40% of the card, never under 96px */
+  --bar: var(
+    --brand-surface
+  ); /* colour of the bar + tab                       */
+  --gutter: var(
+    --brand-surface
+  ); /* MUST match the card background (bg-brand-surface) */
+
+  /* product image: space kept clear above / below it */
+  --img-top: 38px;
+  --img-bottom: calc(
+    var(--notch-h) + 4px
+  ); /* stops just above the notch so the curve stays visible */
+
+  /* ---- derived (don't touch) ---- */
+  --poke: calc(
+    var(--pad) + var(--pill-h)
+  ); /* how far the tab rises into the image */
+  --tab-h: calc(
+    var(--poke) + var(--g)
+  ); /* tab height, ends exactly at the bar  */
+  --notch-w: calc(
+    var(--tab-w) + var(--g)
+  ); /* tab + gutter                         */
+  --notch-h: calc(var(--poke) + var(--g));
+  --notch-r: calc(
+    var(--rt) + var(--g)
+  ); /* keeps the gutter an even width       */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--g);
+
+  /* body font for everything; the name and price switch to the heading font below */
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+/* tile colours, picked by the `palette` prop — all derived from the logo */
+.cream {
+  --tile: var(--brand-blush); /* brand navbar tone */
+}
+
+.sage {
+  --tile: color-mix(
+    in srgb,
+    var(--brand-teal) 15%,
+    var(--brand-surface)
+  ); /* teal tint */
+}
+
+.neutral {
+  --tile: color-mix(
+    in srgb,
+    var(--brand-navy) 8%,
+    var(--brand-surface)
+  ); /* navy tint */
+}
+
+.slate {
+  --tile: color-mix(
+    in srgb,
+    var(--brand-navy) 15%,
+    var(--brand-teal) 10%,
+    var(--brand-surface)
+  ); /* soft dusty blue-gray tint */
+}
+
+/* ------------------------------------------------------------
+   Image tile
+   ------------------------------------------------------------ */
+
+.frame {
+  position: relative;
+}
+
+.media {
+  position: relative;
+  isolation: isolate; /* keeps everything inside the tile underneath the notch */
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--tile);
+  border-radius: var(--r);
+}
+
+.imageLink {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.image {
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: var(--img-top) 12px var(--img-bottom);
+}
+
+/* ---------- overlays inside the tile ---------- */
+
+/* discount + tag, top-left */
+.pills {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+/* colour options + rating, bottom-left, in the space beside the notch.
+   Top edge lines up with the top of the notch buttons. */
+.chips {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  right: calc(var(--notch-w) + 8px);
+  display: flex;
+  gap: 6px;
+  height: calc(var(--pill-h) - 8px);
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px; /* 8px inset + 12px = the tile's 20px corner, so they stay concentric */
+  box-shadow: 0 1px 2px rgba(23, 38, 66, 0.06);
+}
+
+/* ---------- colour options ---------- */
+
+.colors {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+  overflow: hidden;
+}
+
+.swatch {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 100%; /* full chip height = comfortable tap target */
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14); /* keeps white/light swatches visible */
+  transition: transform 160ms ease;
+}
+
+.swatch:hover .dot {
+  transform: scale(1.15);
+}
+
+.swatch[aria-pressed="true"] .dot {
+  outline: 1.5px solid var(--brand-navy);
+  outline-offset: 1.5px;
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.more {
+  flex: none;
+  padding: 0 2px;
+  color: color-mix(in srgb, var(--brand-navy) 60%, transparent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ---------- rating (star over number) ---------- */
+
+.rating {
+  flex: none;
+  flex-direction: column;
+  gap: 3px;
+  width: 40px;
+  color: var(--brand-navy);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------
+   The notch: a gutter-coloured block over the tile's bottom-right
+   corner. Its top-left corner is rounded, and two small corner
+   pieces (::before / ::after) round the tile's edges beside it.
+   Each piece overlaps its neighbour by 1px to avoid hairline seams.
+   ------------------------------------------------------------ */
+
+.notch {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  box-sizing: border-box;
+  width: calc(var(--notch-w) + 1px);
+  height: calc(var(--notch-h) + 1px);
+  background: var(--gutter);
+  border-top-left-radius: var(--notch-r);
+  pointer-events: none;
+}
+
+.notch::before,
+.notch::after {
+  content: "";
+  position: absolute;
+  background: radial-gradient(
+    circle at 0 0,
+    transparent calc(var(--r) - 0.5px),
+    var(--gutter) var(--r)
+  );
+}
+
+/* rounds the image corner sitting directly above the notch */
+.notch::before {
+  right: 1px;
+  bottom: calc(100% - 1px);
+  width: var(--r);
+  height: calc(var(--r) + 1px);
+}
+
+/* rounds the image corner sitting directly left of the notch */
+.notch::after {
+  right: calc(100% - 1px);
+  bottom: 1px;
+  width: calc(var(--r) + 1px);
+  height: var(--r);
+}
+
+/* ------------------------------------------------------------
+   Bar (brand, name, price) + the tab that holds the buttons
+   ------------------------------------------------------------ */
+
+.bar {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px 0 4px;
+  color: var(--brand-navy);
+  background: var(--bar);
+  border-radius: var(--r) 0 var(--r) var(--r); /* top-right is square: it flows into the tab */
+}
+
+/* Sits on top of the bar and rises into the notch. */
+.tab {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - 1px); /* 1px overlap into the bar */
+  box-sizing: border-box;
+  width: var(--tab-w);
+  height: calc(var(--tab-h) + 1px);
+  padding: var(--pad) var(--pad) 0;
+  background: var(--bar);
+  border-radius: var(--rt) var(--rt) 0 0;
+}
+
+/* Concave fillet where the tab's left edge meets the bar's top edge. */
+.tab::after {
+  content: "";
+  position: absolute;
+  right: calc(100% - 1px);
+  bottom: 0;
+  width: calc(var(--g) + 1px);
+  height: calc(var(--g) + 1px);
+  background: radial-gradient(
+    circle at 0 0,
+    transparent calc(var(--g) - 0.5px),
+    var(--bar) var(--g)
+  );
+}
+
+/* ---------- wishlist + cart ---------- */
+
+.tabActions {
+  display: flex;
+  gap: 6px;
+  height: var(--pill-h);
+}
+
+.tabBtn {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  color: var(--brand-navy);
+  cursor: pointer;
+  background: var(--tile); /* same tint as the image tile */
+  border: 0;
+  border-radius: 14px;
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.tabBtn:hover {
+  filter: brightness(0.96);
+}
+
+.tabBtn:active {
+  transform: scale(0.96);
+}
+
+.tabBtn:focus-visible {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: 2px;
+}
+
+/* cart button: the primary action, solid brand navy.
+   Hover uses background-color (not filter) so the white icon isn't dimmed. */
+.tabBtnPrimary {
+  color: #fff;
+  background: var(--brand-navy);
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.tabBtnPrimary:hover {
+  filter: none;
+  background: var(--brand-navy-dark);
+}
+
+/* ---------- brand / name / price ---------- */
+
+.info {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand {
+  margin: 0 0 2px;
+  overflow: hidden;
+  color: var(--brand-teal-ink);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Bangla has no letter case, and letter-spacing breaks its conjuncts.
+   Bengali glyphs are taller than Latin ones, so the line-height is a
+   little more generous to stop overflow:hidden clipping the marks. */
+.shape[data-locale="bn"] .brand {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+}
+
+.name {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-heading, var(--font-body, system-ui, sans-serif));
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.shape[data-locale="bn"] .name {
+  line-height: 1.45;
+}
+
+.priceBlock {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.was {
+  color: color-mix(in srgb, var(--brand-navy) 50%, transparent);
+  font-size: 12px;
+  line-height: 1.2;
+  text-decoration: line-through;
+}
+
+.now {
+  font-family: var(--font-heading, var(--font-body, system-ui, sans-serif));
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
