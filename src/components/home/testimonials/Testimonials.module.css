@@ -1,0 +1,480 @@
+/* src/components/home/testimonials/Testimonials.module.css */
+
+/* =========================================================
+   TESTIMONIALS
+   ========================================================= */
+
+.reveal {
+  opacity: 0;
+}
+
+/* =========================================================
+   AURORA BACKGROUND
+   Soft, heavily-blurred color blobs sitting behind the whole
+   section. Two purposes:
+   1) A flat white section gives glassmorphism nothing to blur
+      against — backdrop-filter needs color/light variance behind
+      it to read as "glass" at all.
+   2) A gentle white -> color -> white blend instead of a hard
+      color block. Blur radius is large enough that each blob
+      dissolves into the page background well before it reaches
+      the edges of the section.
+
+   Teal carries most of the color (it's otherwise unused in this
+   section) with a touch of navy for depth. Accent gets only a
+   small, faint third blob so it doesn't compete with the amber
+   icon blobs in TestimonialsTrust.
+   ========================================================= */
+
+.auroraBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  pointer-events: none;
+
+  /* Layered radial-gradients instead of offset blurred circles.
+       This is inherently soft (falloff is defined by the gradient
+       stops themselves, not by a blur filter), and every gradient
+       is centered *inside* the visible area, so nothing gets
+       clipped into a hard edge by the section's overflow-hidden. */
+  background-image:
+    radial-gradient(
+      60% 55% at 18% 22%,
+      color-mix(in oklab, var(--color-brand-teal, #599088) 26%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      55% 50% at 85% 78%,
+      color-mix(in oklab, var(--color-brand-primary, #172642) 16%, transparent)
+        0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      42% 38% at 62% 32%,
+      color-mix(in oklab, var(--color-brand-accent, #fba705) 14%, transparent)
+        0%,
+      transparent 72%
+    );
+}
+
+/* =========================================================
+   FULL-WIDTH MARQUEE
+   ========================================================= */
+
+.marqueeViewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+}
+
+.marqueeRow {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
+  will-change: transform;
+}
+
+/* =========================================================
+   TESTIMONIAL CARD
+   ========================================================= */
+
+.card {
+  width: 340px;
+  min-width: 340px;
+  height: 238px;
+
+  position: relative; /* anchor for the .card::before grain layer */
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  padding: 24px;
+
+  /* --- glass surface (bg/blur reuse global tokens; border and
+       shadow are overridden here because --glass-border is white,
+       meant for glass sitting on a photo/saturated background —
+       on this pale page a white border is invisible) --- */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur))
+    saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+
+  border: 1px solid rgba(23, 38, 66, 0.1);
+  border-radius: 18px;
+
+  box-shadow:
+    0 1px 2px rgba(15, 26, 46, 0.04),
+    0 16px 32px -20px rgba(15, 26, 46, 0.18);
+
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 320ms ease,
+    background 320ms ease;
+}
+
+/* --- grain texture overlay (self-contained SVG noise, no external asset) --- */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* keep real card content above the grain layer */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-5px);
+
+  background: var(--glass-bg-strong);
+  border-color: rgba(15, 26, 46, 0.16);
+
+  box-shadow:
+    0 22px 45px -28px rgba(15, 26, 46, 0.28),
+    0 4px 12px rgba(15, 26, 46, 0.035);
+}
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 32px;
+
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   QUOTE MARK
+   ========================================================= */
+
+.quoteMark {
+  flex-shrink: 0;
+
+  color: rgba(15, 26, 46, 0.09);
+
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 300ms ease;
+}
+
+.card:hover .quoteMark,
+.card:focus-within .quoteMark {
+  color: rgba(251, 167, 5, 0.25);
+
+  transform: scale(1.08) rotate(-4deg);
+}
+
+/* =========================================================
+   STAR RATING
+   ========================================================= */
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  flex-shrink: 0;
+}
+
+.rating svg {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   REVIEW TEXT
+   ========================================================= */
+
+.reviewText {
+  width: 100%;
+
+  height: 104px;
+  min-height: 104px;
+
+  margin: 12px 0 0;
+
+  overflow: hidden;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+
+  font-size: 14.5px;
+  line-height: 1.65;
+  font-weight: 400;
+
+  color: rgba(0, 0, 0, 0.72);
+}
+
+/* =========================================================
+   CUSTOMER
+   ========================================================= */
+
+.customer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 40px;
+
+  margin-top: auto;
+  padding-top: 8px;
+
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   AVATAR
+   ========================================================= */
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* =========================================================
+   CUSTOMER INFO
+   ========================================================= */
+
+.customerInfo {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* =========================================================
+   CUSTOMER NAME
+   ========================================================= */
+
+.customerNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  min-width: 0;
+}
+
+.customerName {
+  min-width: 0;
+
+  margin: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: #172642 !important;
+  opacity: 1 !important;
+
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
+
+  letter-spacing: -0.01em;
+}
+
+/* =========================================================
+   VERIFIED ICON
+   ========================================================= */
+
+.verifiedIcon {
+  width: 14px;
+  height: 14px;
+
+  flex-shrink: 0;
+
+  color: #599088 !important;
+}
+
+/* =========================================================
+   CUSTOMER CITY
+   ========================================================= */
+
+.customerCity {
+  margin: 3px 0 0;
+
+  color: rgba(0, 0, 0, 0.42);
+
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+/* =========================================================
+   AVATAR PALETTES
+   ========================================================= */
+
+.avatar-cream {
+  background: #efeae1;
+  color: #6b5f45;
+}
+
+.avatar-sage {
+  background: #e9ede2;
+  color: #4f5d3f;
+}
+
+.avatar-neutral {
+  background: #e8e8e6;
+  color: #3f3f3d;
+}
+
+.avatar-amber {
+  background: #f5e6cf;
+  color: #7a5417;
+}
+
+.avatar-clay {
+  background: #f1ded4;
+  color: #7a4530;
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+  }
+
+  .marqueeViewport {
+    overflow-x: auto;
+
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .marqueeRow {
+    transform: none !important;
+  }
+
+  .card,
+  .quoteMark {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .marqueeViewport {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #000 3%,
+      #000 97%,
+      transparent 100%
+    );
+
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #000 3%,
+      #000 97%,
+      transparent 100%
+    );
+  }
+
+  .card {
+    width: 320px;
+    min-width: 320px;
+    height: 232px;
+
+    padding: 22px;
+  }
+
+  .reviewText {
+    height: 100px;
+    min-height: 100px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 479px) {
+  .marqueeViewport {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .card {
+    width: 290px;
+    min-width: 290px;
+    height: 228px;
+
+    padding: 20px;
+
+    border-radius: 16px;
+  }
+
+  .reviewText {
+    height: 98px;
+    min-height: 98px;
+
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .customer {
+    gap: 10px;
+  }
+}

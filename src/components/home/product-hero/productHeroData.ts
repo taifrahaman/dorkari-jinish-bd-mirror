@@ -56,11 +56,13 @@ export const productHeroSlides: ProductHeroSlide[] = [
     image: "/banner/product-01.png",
     href: "#",
 
+    // STEAM / STEEL
+    // Deep cobalt with a brighter electric-blue highlight.
     atmosphere: {
-      base: "#100D22",
-      primary: "#39215E",
-      secondary: "#172E61",
-      tertiary: "#5A315F",
+      base: "#071326",
+      primary: "#174a8a",
+      secondary: "#167c9c",
+      tertiary: "#0c294f",
     },
   },
 
@@ -95,11 +97,14 @@ export const productHeroSlides: ProductHeroSlide[] = [
     image: "/banner/product-02.png",
     href: "#",
 
+    // CLEAN / PRECISION
+    // Clearly separated from the kettle:
+    // graphite + indigo/violet rather than blue/teal.
     atmosphere: {
-      base: "#0C1721",
-      primary: "#123E5D",
-      secondary: "#245D66",
-      tertiary: "#17324E",
+      base: "#100f1d",
+      primary: "#33265f",
+      secondary: "#51409a",
+      tertiary: "#201c3a",
     },
   },
 
@@ -134,11 +139,13 @@ export const productHeroSlides: ProductHeroSlide[] = [
     image: "/banner/product-03.png",
     href: "#",
 
+    // WARM / CRISPY
+    // Keep this one because it already has a distinct identity.
     atmosphere: {
-      base: "#19120D",
-      primary: "#5B321F",
-      secondary: "#713F2E",
-      tertiary: "#33201B",
+      base: "#170f08",
+      primary: "#6b451c",
+      secondary: "#8a5a1f",
+      tertiary: "#331f0f",
     },
   },
 
@@ -173,11 +180,13 @@ export const productHeroSlides: ProductHeroSlide[] = [
     image: "/banner/product-04.png",
     href: "#",
 
+    // COMFORT / FRESH
+    // Much greener than the original teal.
     atmosphere: {
-      base: "#0C1B1C",
-      primary: "#18524F",
-      secondary: "#285C70",
-      tertiary: "#183A3E",
+      base: "#071612",
+      primary: "#155c45",
+      secondary: "#3b8766",
+      tertiary: "#12382d",
     },
   },
 
@@ -212,11 +221,14 @@ export const productHeroSlides: ProductHeroSlide[] = [
     image: "/banner/product-05.png",
     href: "#",
 
+    // BAKING / DESSERT
+    // Replaces the muddy amber + teal combination with
+    // a distinctive deep plum / berry atmosphere.
     atmosphere: {
-      base: "#17121F",
-      primary: "#452C67",
-      secondary: "#283E71",
-      tertiary: "#5A365D",
+      base: "#180d1b",
+      primary: "#55204f",
+      secondary: "#8a3f75",
+      tertiary: "#2d1632",
     },
   },
 ];

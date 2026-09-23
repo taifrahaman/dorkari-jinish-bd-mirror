@@ -1,13 +1,16 @@
 // src/app/[locale]/page.tsx
 
 import Hero from "@/components/hero/Hero";
-import { ProductHero } from "@/components/product-hero";
+import { ProductHero } from "@/components/home/product-hero";
 import { DealsOfTheWeek } from "@/components/home/deals-of-the-week";
 import CategoryRail from "@/components/home/category-rail/CategoryRail";
 import {
   dummyKitchenProducts,
   dummyCoolingProducts,
+  dummyDiscountProducts,
 } from "@/components/home/category-rail/dummyCategoryRailData";
+import CountdownBanner from "@/components/home/countdown/Countdownbanner";
+import Testimonials from "@/components/home/testimonials/Testimonials";
 
 type Locale = "en" | "bn";
 
@@ -28,7 +31,7 @@ export default async function HomePage({
       {/* Kitchen Category Rail */}
       <CategoryRail
         locale={locale}
-        palette="cream"
+        palette="sage"
         title={{
           en: "Kitchen Essentials",
           bn: "কিচেন এসেনশিয়ালস",
@@ -44,7 +47,7 @@ export default async function HomePage({
       {/* Cooling & Comfort Category Rail */}
       <CategoryRail
         locale={locale}
-        palette="slate"
+        palette="cream"
         title={{
           en: "Cooling & Comfort",
           bn: "কুলিং ও কমফোর্ট",
@@ -56,6 +59,33 @@ export default async function HomePage({
         shopHref={`/${locale}/shop?category=cooling`}
         products={dummyCoolingProducts}
       />
+      <CountdownBanner
+        locale={locale}
+        title={{ en: "Kitchen Week is on", bn: "কিচেন উইক চলছে" }}
+        description={{
+          en: "Up to 30% off cookware and small appliances.",
+          bn: "কুকওয়্যার ও ছোট যন্ত্রপাতিতে ৩০% পর্যন্ত ছাড়।",
+        }}
+        ctaLabel={{ en: "Shop the sale", bn: "অফার দেখুন" }}
+        ctaHref={`/${locale}/shop?sale=kitchen-week`}
+        endsAt="2026-10-15T23:59:59+06:00"
+      />
+      <CategoryRail
+        locale={locale}
+        palette="neutral"
+        title={{
+          en: "Special Discounted Products",
+          bn: "বিশেষ ডিসকাউন্টেড পণ্য",
+        }}
+        description={{
+          en: "Grab your favorite home appliances at amazing promotional prices.",
+          bn: "দারুণ সব প্রমোশনাল মূল্যে আপনার পছন্দের হোম অ্যাপ্লায়েন্স লুফে নিন।",
+        }}
+        shopHref={`/${locale}/shop?category=discounted-products`}
+        products={dummyDiscountProducts}
+      />
+
+      <Testimonials locale={locale} />
     </main>
   );
 }
