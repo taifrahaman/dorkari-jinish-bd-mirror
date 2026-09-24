@@ -2,18 +2,38 @@
 
 import mongoose, { Schema, Document, Model } from "mongoose";
 import Category, { ICategory } from "./Category.model";
+import { IBrand } from "./Brand.model";
+
+interface ILocalizedText {
+  en: string;
+  bn: string;
+}
+
+export interface IProductColor {
+  hex: string;
+  name?: {
+    en: string;
+    bn: string;
+  };
+}
 
 export interface IProduct extends Document {
-  name: string;
+  name: ILocalizedText;
   slug: string;
-  description?: string;
+  description?: {
+    en?: string;
+    bn?: string;
+  };
   price: number;
+  /** Original/list price shown struck through when the product is on sale. */
+  compareAtPrice?: number;
   category: mongoose.Types.ObjectId | ICategory;
   mainCategory: mongoose.Types.ObjectId | ICategory; // denormalized root
+  brand?: mongoose.Types.ObjectId | IBrand;
   stock: number;
   images: Array<{ url: string; publicId: string }>;
+  colors: IProductColor[];
   sku: string;
-  brand?: string;
   weight?: string;
   dimensions?: string;
   specifications?: Record<string, unknown>;
@@ -26,12 +46,30 @@ export interface IProduct extends Document {
   updatedAt: Date;
 }
 
+const ProductColorSchema = new Schema<IProductColor>(
+  {
+    hex: { type: String, required: true },
+    name: {
+      en: { type: String },
+      bn: { type: String },
+    },
+  },
+  { _id: false },
+);
+
 const ProductSchema = new Schema<IProduct>(
   {
-    name: { type: String, required: true, trim: true },
+    name: {
+      en: { type: String, required: true, trim: true },
+      bn: { type: String, required: true, trim: true },
+    },
     slug: { type: String, required: true, unique: true, trim: true },
-    description: { type: String, trim: true },
+    description: {
+      en: { type: String, trim: true },
+      bn: { type: String, trim: true },
+    },
     price: { type: Number, required: true, min: 0 },
+    compareAtPrice: { type: Number, min: 0 },
     category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
@@ -42,6 +80,12 @@ const ProductSchema = new Schema<IProduct>(
       ref: "Category",
       required: true,
     },
+    // Optional for now to match the previous free-text field's behavior —
+    // make this `required: true` once every product is expected to carry a brand.
+    brand: {
+      type: Schema.Types.ObjectId,
+      ref: "Brand",
+    },
     stock: { type: Number, default: 0, min: 0 },
     images: [
       {
@@ -49,8 +93,8 @@ const ProductSchema = new Schema<IProduct>(
         publicId: { type: String, required: true },
       },
     ],
+    colors: [ProductColorSchema],
     sku: { type: String, unique: true, sparse: true, trim: true },
-    brand: { type: String, trim: true },
     weight: { type: String, trim: true },
     dimensions: { type: String, trim: true },
     specifications: { type: Schema.Types.Mixed, default: {} },
@@ -68,6 +112,7 @@ ProductSchema.index({ slug: 1 }, { unique: true });
 ProductSchema.index({ sku: 1 }, { unique: true, sparse: true });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ mainCategory: 1 });
+ProductSchema.index({ brand: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ isFeatured: 1 });
 ProductSchema.index({ isActive: 1 });

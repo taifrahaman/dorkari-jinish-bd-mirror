@@ -5,6 +5,7 @@ import { routing } from "@/i18n/routing";
 
 import Navbar from "@/components/navigation/Navbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { Footer } from "@/components/footer";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -25,6 +26,7 @@ export default async function LocaleLayout({
       <Navbar />
       {children}
       <MobileBottomNav />
+      <Footer />
     </NextIntlClientProvider>
   );
 }

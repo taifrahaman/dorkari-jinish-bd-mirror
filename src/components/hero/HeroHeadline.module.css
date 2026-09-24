@@ -16,7 +16,7 @@
   .headline {
     font-size: clamp(2.75rem, 5.5vw, 5.5rem);
     font-weight: 300;
-    line-height: 1.06;
+    line-height: 0.8;
     letter-spacing: -0.035em;
     max-width: 16ch;
   }

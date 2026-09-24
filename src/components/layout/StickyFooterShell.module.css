@@ -1,0 +1,41 @@
+/* src/components/layout/StickyFooterShell.module.css */
+
+.pageWrapper {
+  position: relative;
+  z-index: 1;
+
+  border-radius: 0 0 32px 32px;
+  /* clip, not hidden: content with its own background (e.g. a
+       full-bleed section right before the footer) would otherwise
+       render as a sharp rectangle straight through the rounded
+       corner, defeating the peel effect. */
+  overflow: clip;
+
+  /*
+     * Safari-specific: without a persistent 3D transform here, the
+     * z-index stacking between this box and the sticky footer behind
+     * it can visibly glitch for a frame or two while scrolling —
+     * documented at https://piccalil.li/blog/sticky-revealing-footer/.
+     * translateZ(0) forces a stable compositor layer.
+     *
+     * Note this also makes pageWrapper the containing block for any
+     * `position: fixed` element inside `children` (a sticky header,
+     * a floating WhatsApp/cart button, a cookie banner) — such an
+     * element will position itself relative to this box instead of
+     * the viewport. Worth checking for if anything like that exists
+     * on the page.
+     */
+  transform: translateZ(0);
+}
+
+.footerSticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 0;
+}
+
+@media (max-width: 640px) {
+  .pageWrapper {
+    border-radius: 0 0 20px 20px;
+  }
+}
