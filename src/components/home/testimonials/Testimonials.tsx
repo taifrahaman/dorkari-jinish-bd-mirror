@@ -30,7 +30,7 @@ export default function Testimonials({ locale = "en" }: Props) {
 
       {/* Full-width marquee */}
       <div className="relative z-10 mt-12 w-full sm:mt-14 lg:mt-16">
-        <TestimonialsMarquee locale={locale} />
+        <TestimonialsMarquee />
       </div>
     </section>
   );
