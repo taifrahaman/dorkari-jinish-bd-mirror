@@ -10,10 +10,6 @@ import type { Testimonial } from "./testimonialsData";
 import { testimonials } from "./testimonialsData";
 import styles from "./Testimonials.module.css";
 
-type Props = {
-  locale: "en" | "bn";
-};
-
 function getInitials(name: string) {
   return name
     .trim()
@@ -94,7 +90,7 @@ function TestimonialCard({
   );
 }
 
-export default function TestimonialsMarquee({ locale }: Props) {
+export default function TestimonialsMarquee() {
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const half = Math.ceil(testimonials.length / 2);

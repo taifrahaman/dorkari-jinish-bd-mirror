@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 
 import { testimonials } from "./testimonialsData";
@@ -44,35 +44,38 @@ export default function TestimonialsStats({ locale }: Props) {
         )
       : 0;
 
-  const stats: Stat[] = [
-    {
-      value: averageRating,
-      decimals: 1,
-      suffix: "/5",
-      label: {
-        en: "Average rating",
-        bn: "গড় রেটিং",
+  const stats = useMemo<Stat[]>(
+    () => [
+      {
+        value: averageRating,
+        decimals: 1,
+        suffix: "/5",
+        label: {
+          en: "Average rating",
+          bn: "গড় রেটিং",
+        },
       },
-    },
-    {
-      value: totalReviews,
-      decimals: 0,
-      suffix: "",
-      label: {
-        en: "Customer reviews",
-        bn: "কাস্টমার রিভিউ",
+      {
+        value: totalReviews,
+        decimals: 0,
+        suffix: "",
+        label: {
+          en: "Customer reviews",
+          bn: "কাস্টমার রিভিউ",
+        },
       },
-    },
-    {
-      value: fiveStarPercentage,
-      decimals: 0,
-      suffix: "%",
-      label: {
-        en: "5-star ratings",
-        bn: "৫-স্টার রেটিং",
+      {
+        value: fiveStarPercentage,
+        decimals: 0,
+        suffix: "%",
+        label: {
+          en: "5-star ratings",
+          bn: "৫-স্টার রেটিং",
+        },
       },
-    },
-  ];
+    ],
+    [averageRating, totalReviews, fiveStarPercentage],
+  );
 
   useEffect(() => {
     const animations: gsap.core.Tween[] = [];

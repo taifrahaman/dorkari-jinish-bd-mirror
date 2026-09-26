@@ -33,10 +33,12 @@ function getDirectories(
         }
       } catch (e) {
         // Skip unreadable files/folders
+        console.log(e);
       }
     });
   } catch (e) {
     // Skip unreadable root dir
+    console.log(e);
   }
   return results;
 }

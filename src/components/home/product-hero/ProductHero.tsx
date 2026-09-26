@@ -1,4 +1,4 @@
-// src/components/product-hero/ProductHero.tsx
+// src/components/home/product-hero/ProductHero.tsx
 
 "use client";
 
@@ -1042,8 +1042,6 @@ export default function ProductHero() {
                   const product = productHeroSlides[logicalIndex];
 
                   const productName = product.shortName[locale];
-
-                  const productPrice = product.price[locale];
 
                   return (
                     <button

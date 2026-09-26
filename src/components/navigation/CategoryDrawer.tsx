@@ -15,12 +15,7 @@ type Props = {
   links: NavLink[];
 };
 
-export default function CategoryDrawer({
-  open,
-  onClose,
-  categories,
-  links,
-}: Props) {
+export default function CategoryDrawer({ open, onClose, categories }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
