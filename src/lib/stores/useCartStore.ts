@@ -10,6 +10,12 @@ export type CartItem = {
   quantity: number;
   image?: string;
   slug?: string; // for quick navigation
+  // Added for color-variant support:
+  colorName?: string;
+  colorHex?: string;
+  originalPrice?: number;
+  stock?: "in-stock" | "low-stock" | "out-of-stock";
+  stockCount?: number;
 };
 
 type CartState = {

@@ -4,10 +4,13 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useProductDetail } from "@/hooks/use-product-detail";
 import { DUMMY_PRODUCTS } from "@/lib/shop/dummy-products";
 import type { Locale } from "@/lib/shop/types";
+import { useCartStore } from "@/lib/stores/useCartStore";
+import { makeCartKey } from "@/lib/cart/cart-key";
 
 import Breadcrumb from "./Breadcrumb";
 import ProductGallery from "./ProductGallery";
@@ -29,6 +32,8 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
     null,
   );
   const infoTopRef = useRef<HTMLDivElement>(null!);
+  const router = useRouter();
+  const addItem = useCartStore((s) => s.addItem);
 
   if (isLoading) return <ProductDetailSkeleton />;
 
@@ -54,20 +59,25 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
 
   const related = DUMMY_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
 
-  // Stub handlers — wire these up to real cart/checkout state when it exists.
   const handleAddToCart = (quantity: number) => {
-    console.log("add to cart", {
-      productId: product.id,
-      variant: activeVariant.id,
+    addItem({
+      productId: makeCartKey(product.id, activeVariant.id),
+      name: product.name[locale],
+      price: product.price,
+      image: activeVariant.images[0]?.src,
+      slug: product.slug,
+      colorName: activeVariant.name[locale],
+      colorHex: activeVariant.hex,
+      originalPrice: product.originalPrice,
+      stock: product.stock,
+      stockCount: product.stockCount,
       quantity,
     });
   };
+
   const handleBuyNow = (quantity: number) => {
-    console.log("buy now", {
-      productId: product.id,
-      variant: activeVariant.id,
-      quantity,
-    });
+    handleAddToCart(quantity);
+    router.push("/cart");
   };
 
   return (
