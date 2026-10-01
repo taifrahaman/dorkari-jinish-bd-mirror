@@ -3,7 +3,7 @@
 import { User } from "@/models";
 import { signJwt, verifyJwt, hashPassword, comparePassword } from "@/lib/auth";
 import { randomUUID } from "crypto";
-import { ConflictError } from "@/lib/errors";
+import { ConflictError, UnauthorizedError } from "@/lib/errors";
 
 /**
  * Register a new user
@@ -98,4 +98,40 @@ export async function getUserFromToken(token: string) {
   } catch {
     return null;
   }
+}
+
+const ADMIN_ROLES = ["admin", "moderator"] as const;
+
+// Admin-only login. Rejects customers even with valid credentials.
+export async function loginAdmin(email: string, password: string) {
+  const user = await User.findOne({
+    email,
+    role: { $in: ADMIN_ROLES },
+    status: "active",
+    deletedAt: null,
+  });
+
+  // Same message for "no such user" and "wrong password" — no enumeration
+  if (!user || !user.password) {
+    throw new UnauthorizedError("Invalid credentials");
+  }
+
+  const ok = await comparePassword(password, user.password);
+  if (!ok) {
+    throw new UnauthorizedError("Invalid credentials");
+  }
+
+  user.lastLogin = new Date();
+  await user.save();
+
+  const token = await signJwt({
+    userId: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+
+  const userWithoutPassword = user.toObject();
+  delete userWithoutPassword.password;
+
+  return { user: userWithoutPassword, token };
 }

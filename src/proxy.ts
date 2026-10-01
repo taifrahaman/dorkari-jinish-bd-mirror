@@ -6,14 +6,14 @@ import { adminMiddleware } from "./middlewares/admin";
 import intlMiddleware from "./middlewares/intl";
 
 export default async function proxy(request: NextRequest) {
-  // Run admin middleware first – protects /admin/* routes
-  const adminResponse = await adminMiddleware(request);
+  const { pathname } = request.nextUrl;
 
-  if (adminResponse.status !== 200) {
-    return adminResponse;
+  // Admin routes: our own guard, no i18n
+  if (pathname.startsWith("/admin")) {
+    return adminMiddleware(request);
   }
 
-  // Then run internationalization middleware
+  // Everything else: locale routing
   return intlMiddleware(request);
 }
 
