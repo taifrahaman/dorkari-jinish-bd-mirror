@@ -1,8 +1,47 @@
-import { NextResponse } from "next/server";
+// src/app/api/admin/orders/route.ts
 
-export async function GET() {
-  return NextResponse.json(
-    { success: false, error: { message: "Not implemented yet" } },
-    { status: 501 },
-  );
-}
+import { NextRequest, NextResponse } from "next/server";
+import { withDb } from "@/lib/api/api-handler";
+import { handleApiError, BadRequestError } from "@/lib/errors";
+import { verifyAuth, requireRole } from "@/middlewares/auth";
+import {
+  createOrderSchema,
+  orderListQuerySchema,
+} from "@/lib/validations/order.schema";
+import { createOrder, listOrders } from "@/services/order.service";
+
+export const GET = withDb(async (request: NextRequest) => {
+  try {
+    const payload = await verifyAuth(request);
+    requireRole(payload, ["admin", "moderator"]);
+
+    const raw = Object.fromEntries(request.nextUrl.searchParams);
+    const query = orderListQuerySchema.parse(raw);
+
+    const data = await listOrders(query);
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return handleApiError(err);
+  }
+});
+
+export const POST = withDb(async (request: NextRequest) => {
+  try {
+    const payload = await verifyAuth(request);
+    requireRole(payload, ["admin", "moderator"]);
+
+    let json: unknown;
+    try {
+      json = await request.json();
+    } catch {
+      throw new BadRequestError("Invalid JSON body");
+    }
+
+    const input = createOrderSchema.parse(json);
+    const data = await createOrder(input, payload.userId);
+
+    return NextResponse.json({ success: true, data }, { status: 201 });
+  } catch (err) {
+    return handleApiError(err);
+  }
+});

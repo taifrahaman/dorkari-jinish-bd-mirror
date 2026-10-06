@@ -6,15 +6,13 @@ import type {
 } from "@/lib/validations/category.schema";
 import type { ProductListQuery } from "@/lib/validations/product.schema";
 import type { ColorListQuery } from "@/lib/validations/color.schema";
+import type { OrderListQuery } from "@/lib/validations/order.schema";
 
 /* ============================================================
  * Query key factory
  * ============================================================ */
 
 export const adminKeys = {
-  /* ----------------------------------------------------------
-   * Root
-   * ---------------------------------------------------------- */
   all: ["admin"] as const,
 
   /* ----------------------------------------------------------
@@ -32,14 +30,14 @@ export const adminKeys = {
 
     detail: (id: string) => [...adminKeys.products.details(), id] as const,
 
+    stats: (id: string, range: string) =>
+      [...adminKeys.products.detail(id), "stats", range] as const,
+
     suggest: (q: string) =>
       [...adminKeys.products.all(), "suggest", q] as const,
 
     import: (sessionId: string) =>
       [...adminKeys.products.all(), "import", sessionId] as const,
-
-    stats: (id: string, range: string) =>
-      [...adminKeys.products.detail(id), "stats", range] as const,
 
     specSuggestions: (q: string, category?: string) =>
       [
@@ -94,6 +92,25 @@ export const adminKeys = {
   },
 
   /* ----------------------------------------------------------
+   * Orders
+   * ---------------------------------------------------------- */
+  orders: {
+    all: () => [...adminKeys.all, "orders"] as const,
+
+    lists: () => [...adminKeys.orders.all(), "list"] as const,
+
+    list: (params: Partial<OrderListQuery> = {}) =>
+      [...adminKeys.orders.lists(), normalizeParams(params)] as const,
+
+    details: () => [...adminKeys.orders.all(), "detail"] as const,
+
+    detail: (id: string) => [...adminKeys.orders.details(), id] as const,
+
+    stats: (range: string) =>
+      [...adminKeys.orders.all(), "stats", range] as const,
+  },
+
+  /* ----------------------------------------------------------
    * Dashboard
    * ---------------------------------------------------------- */
   dashboard: {
@@ -123,9 +140,5 @@ function normalizeParams<T extends Record<string, unknown>>(
 
   return out;
 }
-
-/* ============================================================
- * Type helper
- * ============================================================ */
 
 export type AdminKeys = typeof adminKeys;

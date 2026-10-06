@@ -30,6 +30,12 @@ import type {
   ImportResult,
   ExportFormat,
 } from "@/lib/validations/import.schema";
+import type {
+  CreateOrderInput,
+  UpdateOrderInput,
+  OrderListQuery,
+  OrderResponse,
+} from "@/lib/validations/order.schema";
 
 /* ============================================================
  * Spec suggestion type
@@ -95,6 +101,38 @@ export type ProductStats = {
   buckets: ProductStatsBucket[];
   bucketGranularity: "daily" | "monthly";
   recentOrders: ProductRecentOrderRow[];
+};
+
+/* ============================================================
+ * Order stats types (mirrors order.service.ts getOrderStats)
+ * ============================================================ */
+
+export type OrderStatsRange = "today" | "7d" | "30d" | "all";
+
+export type OrderChannel = "online" | "pos" | "phone" | "walk-in";
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "returned";
+export type PaymentStatus =
+  "pending" | "partial" | "paid" | "failed" | "refunded";
+
+export type OrderStats = {
+  range: OrderStatsRange;
+  from: string | null;
+  to: string;
+  orderCount: number;
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  averageOrderValue: number;
+  byChannel: Record<OrderChannel, number>;
+  byStatus: Record<OrderStatus, number>;
+  byPaymentStatus: Record<PaymentStatus, number>;
 };
 
 /* ============================================================
@@ -563,6 +601,56 @@ export const productsApi = {
     return adminRequest<SpecSuggestion[]>("/products/spec-suggestions", {
       query: { q, category },
       signal,
+    });
+  },
+};
+
+/* ============================================================
+ * Orders API
+ * ============================================================ */
+
+export const ordersApi = {
+  list(
+    params: Partial<OrderListQuery> = {},
+    signal?: AbortSignal,
+  ): Promise<Paginated<OrderResponse>> {
+    return adminRequest<Paginated<OrderResponse>>("/orders", {
+      query: params,
+      signal,
+    });
+  },
+
+  get(id: string, signal?: AbortSignal): Promise<OrderResponse> {
+    return adminRequest<OrderResponse>(`/orders/${id}`, { signal });
+  },
+
+  stats(
+    range: OrderStatsRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<OrderStats> {
+    return adminRequest<OrderStats>("/orders/stats", {
+      query: { range },
+      signal,
+    });
+  },
+
+  create(input: CreateOrderInput): Promise<OrderResponse> {
+    return adminRequest<OrderResponse>("/orders", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  update(id: string, input: UpdateOrderInput): Promise<OrderResponse> {
+    return adminRequest<OrderResponse>(`/orders/${id}`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+
+  archive(id: string): Promise<{ _id: string }> {
+    return adminRequest<{ _id: string }>(`/orders/${id}`, {
+      method: "DELETE",
     });
   },
 };
