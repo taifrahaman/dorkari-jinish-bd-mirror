@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Palette,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,13 +19,10 @@ export type NavChild = {
 };
 
 export type NavItem = {
-  /** Stable id for persisted open-state. */
   id: string;
   label: string;
   icon: LucideIcon;
-  /** Direct link — no children (e.g. Dashboard). */
   href?: string;
-  /** Section — click to expand/collapse. */
   children?: NavChild[];
 };
 
@@ -38,6 +36,15 @@ export const NAV: NavItem[] = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/admin",
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    icon: Receipt,
+    children: [
+      { href: "/admin/orders", label: "All orders" },
+      { href: "/admin/pos", label: "New sale (POS)" },
+    ],
   },
   {
     id: "products",

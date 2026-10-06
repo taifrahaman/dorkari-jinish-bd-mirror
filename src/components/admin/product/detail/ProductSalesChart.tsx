@@ -84,7 +84,7 @@ export function ProductSalesChart({
           </p>
         </div>
       ) : (
-        <div className="flex h-48 items-end gap-1">
+        <div className="flex h-48 items-stretch gap-1">
           {buckets.map((b) => (
             <Bar
               key={b.date}
