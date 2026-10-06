@@ -23,6 +23,7 @@ import type {
   UpdateProductInput,
   ProductListQuery,
   ProductResponse,
+  ProductSupplierInput,
 } from "@/lib/validations/product.schema";
 import type {
   BulkCreateProductInput,
@@ -52,36 +53,56 @@ type PopulatedRef = {
   slug: string;
 };
 
-/** Shape of an image subdoc as stored in MongoDB. */
 type LeanProductImage = {
   url: string;
   publicId: string;
   alt?: string;
 };
 
-/** Shape of a color subdoc as stored in MongoDB. */
 type LeanProductColor = {
   hex: string;
   name?: { en?: string; bn?: string };
+};
+
+type LeanCostHistoryEntry = {
+  cost: number;
+  changedAt: Date;
+  changedBy?: mongoose.Types.ObjectId | null;
+  note?: string;
+};
+
+type LeanSupplier = {
+  name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
 };
 
 type LeanProduct = {
   _id: mongoose.Types.ObjectId;
   name: { en: string; bn: string };
   slug: string;
+  sku?: string;
+  barcode?: string;
   description?: { en?: string; bn?: string };
   price: number;
   compareAtPrice?: number | null;
+  costPrice?: number | null;
+  taxRate?: number;
   category: mongoose.Types.ObjectId | PopulatedRef;
   mainCategory?: mongoose.Types.ObjectId | PopulatedRef;
   brand?: mongoose.Types.ObjectId | PopulatedRef | null;
   stock: number;
+  lowStockThreshold?: number | null;
   images: LeanProductImage[];
   colors: LeanProductColor[];
-  sku?: string;
   weight?: string;
   dimensions?: string;
   specifications?: Record<string, unknown>;
+  supplier?: LeanSupplier | null;
+  costHistory?: LeanCostHistoryEntry[];
+  totalSold?: number;
+  totalRevenue?: number;
   isActive: boolean;
   isFeatured: boolean;
   averageRating: number;
@@ -97,11 +118,6 @@ type ProductSort = Record<string, 1 | -1>;
  * Normalization — DB doc → client shape
  * ============================================================ */
 
-/**
- * Coerce a DB image doc into the client shape. Guarantees `alt`
- * is a string — images stored before the alt field existed come
- * back with `undefined` and are normalized to "".
- */
 function toImageRef(img: LeanProductImage): ImageRef {
   return {
     url: img.url,
@@ -110,11 +126,6 @@ function toImageRef(img: LeanProductImage): ImageRef {
   };
 }
 
-/**
- * Coerce a DB color doc into the client shape. The Zod schema
- * (localizedTextOptionalSchema) makes `en`/`bn` required strings
- * after defaults, so we fill in "" for any missing side.
- */
 function toColorResponse(color: LeanProductColor): {
   hex: string;
   name?: { en: string; bn: string };
@@ -141,11 +152,44 @@ function normalizeRef(
   return { _id: String(ref._id), name, slug: ref.slug };
 }
 
+/**
+ * Trim each field; return undefined when every field is empty.
+ * Service layer enforces "name required if any other field set".
+ */
+function normalizeSupplier(
+  input: ProductSupplierInput | null | undefined,
+): ProductSupplierInput | undefined {
+  if (!input) return undefined;
+
+  const name = (input.name ?? "").trim();
+  const phone = (input.phone ?? "").trim();
+  const email = (input.email ?? "").trim();
+  const address = (input.address ?? "").trim();
+
+  const hasContent = Boolean(name || phone || email || address);
+  if (!hasContent) return undefined;
+
+  if (!name) {
+    throw new BadRequestError(
+      "Supplier name is required when other supplier fields are provided",
+    );
+  }
+
+  return {
+    name,
+    phone: phone || undefined,
+    email: email || undefined,
+    address: address || undefined,
+  };
+}
+
 export function toProductResponse(doc: LeanProduct): ProductResponse {
   return {
     _id: String(doc._id),
     name: doc.name,
     slug: doc.slug,
+    sku: doc.sku,
+    barcode: doc.barcode,
     description: {
       en: doc.description?.en ?? "",
       bn: doc.description?.bn ?? "",
@@ -155,17 +199,45 @@ export function toProductResponse(doc: LeanProduct): ProductResponse {
       doc.compareAtPrice === undefined || doc.compareAtPrice === null
         ? null
         : doc.compareAtPrice,
+    costPrice:
+      doc.costPrice === undefined || doc.costPrice === null
+        ? null
+        : doc.costPrice,
+    taxRate: doc.taxRate ?? 0,
     category: normalizeRef(doc.category) as ProductResponse["category"],
     mainCategory: (normalizeRef(doc.mainCategory) ?? undefined) as
       ProductResponse["mainCategory"] | undefined,
     brand: normalizeRef(doc.brand) as ProductResponse["brand"],
     stock: doc.stock,
+    lowStockThreshold:
+      doc.lowStockThreshold === undefined || doc.lowStockThreshold === null
+        ? undefined
+        : doc.lowStockThreshold,
     images: (doc.images ?? []).map(toImageRef),
     colors: (doc.colors ?? []).map(toColorResponse),
-    sku: doc.sku,
     weight: doc.weight,
     dimensions: doc.dimensions,
     specifications: doc.specifications ?? {},
+    supplier:
+      doc.supplier && doc.supplier.name
+        ? {
+            name: doc.supplier.name,
+            phone: doc.supplier.phone,
+            email: doc.supplier.email,
+            address: doc.supplier.address,
+          }
+        : undefined,
+    costHistory:
+      doc.costHistory?.map((entry) => ({
+        cost: entry.cost,
+        changedAt: entry.changedAt.toISOString(),
+        changedBy: entry.changedBy
+          ? { _id: String(entry.changedBy) }
+          : undefined,
+        note: entry.note,
+      })) ?? [],
+    totalSold: doc.totalSold ?? 0,
+    totalRevenue: doc.totalRevenue ?? 0,
     isActive: doc.isActive,
     isFeatured: doc.isFeatured,
     averageRating: doc.averageRating,
@@ -200,6 +272,8 @@ function buildSort(
       return { "name.en": dir };
     case "price":
       return { price: dir };
+    case "costPrice":
+      return { costPrice: dir };
     case "stock":
       return { stock: dir };
     case "averageRating":
@@ -225,6 +299,7 @@ function buildFilter(query: ProductListQuery): Record<string, unknown> {
       { "name.en": rx },
       { "name.bn": rx },
       { sku: rx },
+      { barcode: rx },
       { "description.en": rx },
       { "description.bn": rx },
     ];
@@ -266,6 +341,26 @@ const POPULATE = [
   { path: "mainCategory", select: "_id name slug" },
   { path: "brand", select: "_id name slug" },
 ];
+
+function mapDuplicateKey(err: unknown): never {
+  if (typeof err === "object" && err !== null && "code" in err) {
+    const e = err as { code?: number; keyPattern?: Record<string, unknown> };
+    if (e.code === 11000) {
+      const key = e.keyPattern ? Object.keys(e.keyPattern)[0] : "";
+      if (key === "barcode") {
+        throw new ConflictError("This barcode is already in use");
+      }
+      if (key === "sku") {
+        throw new ConflictError("This SKU is already in use");
+      }
+      if (key === "slug") {
+        throw new ConflictError("This slug is already in use");
+      }
+      throw new ConflictError("Duplicate value detected");
+    }
+  }
+  throw err;
+}
 
 /* ============================================================
  * List
@@ -343,31 +438,43 @@ export async function createProduct(
 
   const sku = await resolveSku(input.sku, Product);
 
-  const doc = await Product.create({
-    name: input.name,
-    slug,
-    description: input.description ?? { en: "", bn: "" },
-    price: input.price,
-    compareAtPrice: input.compareAtPrice,
-    category: category._id,
-    brand: input.brand,
-    stock: input.stock ?? 0,
-    images: input.images ?? [],
-    colors: input.colors ?? [],
-    sku,
-    weight: input.weight,
-    dimensions: input.dimensions,
-    specifications: input.specifications ?? {},
-    isActive: input.isActive ?? true,
-    isFeatured: input.isFeatured ?? false,
-  });
+  const barcode = input.barcode?.trim() ? input.barcode.trim() : undefined;
+  const supplier = normalizeSupplier(input.supplier);
 
-  const populated = await Product.findById(doc._id)
-    .populate(POPULATE)
-    .lean<LeanProduct>();
-  if (!populated) throw new NotFoundError("Product not found after create");
+  try {
+    const doc = await Product.create({
+      name: input.name,
+      slug,
+      sku,
+      barcode,
+      description: input.description ?? { en: "", bn: "" },
+      price: input.price,
+      compareAtPrice: input.compareAtPrice,
+      costPrice: input.costPrice,
+      taxRate: input.taxRate ?? 0,
+      category: category._id,
+      brand: input.brand,
+      stock: input.stock ?? 0,
+      lowStockThreshold: input.lowStockThreshold,
+      images: input.images ?? [],
+      colors: input.colors ?? [],
+      weight: input.weight,
+      dimensions: input.dimensions,
+      specifications: input.specifications ?? {},
+      supplier,
+      isActive: input.isActive ?? true,
+      isFeatured: input.isFeatured ?? false,
+    });
 
-  return toProductResponse(populated);
+    const populated = await Product.findById(doc._id)
+      .populate(POPULATE)
+      .lean<LeanProduct>();
+    if (!populated) throw new NotFoundError("Product not found after create");
+
+    return toProductResponse(populated);
+  } catch (err) {
+    mapDuplicateKey(err);
+  }
 }
 
 /* ============================================================
@@ -377,6 +484,7 @@ export async function createProduct(
 export async function updateProduct(
   id: string,
   input: UpdateProductInput,
+  changedBy?: string,
 ): Promise<ProductResponse> {
   assertObjectId(id);
 
@@ -425,6 +533,14 @@ export async function updateProduct(
     }
   }
 
+  if (input.barcode !== undefined) {
+    if (input.barcode === null || input.barcode.trim() === "") {
+      doc.barcode = undefined;
+    } else {
+      doc.barcode = input.barcode.trim();
+    }
+  }
+
   if (input.images !== undefined) {
     const previous = (doc.images ?? []).map((i) => ({
       url: i.url,
@@ -447,7 +563,22 @@ export async function updateProduct(
     doc.compareAtPrice =
       input.compareAtPrice === null ? undefined : input.compareAtPrice;
   }
+
+  if (input.costPrice !== undefined) {
+    const incoming = input.costPrice === null ? undefined : input.costPrice;
+    if (incoming !== doc.costPrice) {
+      doc.costPrice = incoming;
+    }
+  }
+
+  if (input.taxRate !== undefined) {
+    doc.taxRate = input.taxRate === null ? 0 : input.taxRate;
+  }
   if (input.stock !== undefined) doc.stock = input.stock;
+  if (input.lowStockThreshold !== undefined) {
+    doc.lowStockThreshold =
+      input.lowStockThreshold === null ? undefined : input.lowStockThreshold;
+  }
   if (input.colors !== undefined) doc.colors = input.colors;
   if (input.weight !== undefined) {
     doc.weight = input.weight === null ? undefined : input.weight;
@@ -458,10 +589,23 @@ export async function updateProduct(
   if (input.specifications !== undefined) {
     doc.specifications = input.specifications;
   }
+  if (input.supplier !== undefined) {
+    const normalized = normalizeSupplier(input.supplier);
+    doc.supplier = normalized;
+  }
   if (input.isActive !== undefined) doc.isActive = input.isActive;
   if (input.isFeatured !== undefined) doc.isFeatured = input.isFeatured;
 
-  await doc.save();
+  if (changedBy) {
+    (doc as unknown as { __changedBy?: mongoose.Types.ObjectId }).__changedBy =
+      new mongoose.Types.ObjectId(changedBy);
+  }
+
+  try {
+    await doc.save();
+  } catch (err) {
+    mapDuplicateKey(err);
+  }
 
   const populated = await Product.findById(doc._id)
     .populate(POPULATE)
@@ -637,7 +781,7 @@ export async function bulkCreateProducts(
 }
 
 /* ============================================================
- * Import (from resolved CreateProductInput[])
+ * Import
  * ============================================================ */
 
 export async function importProducts(
@@ -713,6 +857,7 @@ export async function importProducts(
         existing.description = product.description ?? { en: "", bn: "" };
         existing.price = product.price;
         existing.compareAtPrice = product.compareAtPrice;
+        existing.costPrice = product.costPrice;
         existing.category = category._id as mongoose.Types.ObjectId;
         existing.stock = product.stock ?? 0;
         existing.images = sync.kept;
@@ -799,7 +944,7 @@ export async function importProducts(
 }
 
 /* ============================================================
- * Import with images — server-side orchestration
+ * Import with images
  * ============================================================ */
 
 export type ImportWithImagesRow = {
@@ -813,13 +958,8 @@ export type ImportWithImagesPayload = {
   options: ImportPayload["options"];
 };
 
-/** Placeholder ObjectId used for dry runs where we skip DB lookups. */
 const ZERO_OID = "000000000000000000000000";
 
-/* ------------------------------------------------------------
- * Slug → human-readable title fallback for auto-created names
- * "air-conditioners" → "Air Conditioners"
- * ------------------------------------------------------------ */
 function slugToTitle(slug: string): string {
   return slug
     .split("-")
@@ -846,10 +986,6 @@ export async function importProductsWithImages(
   payload: ImportWithImagesPayload,
 ): Promise<ImportResult> {
   const { rows, options } = payload;
-
-  /* ----------------------------------------------------------
-   * 1. Collect unique category + brand inputs (slug + names)
-   * ---------------------------------------------------------- */
 
   const categoryInputs = new Map<
     string,
@@ -886,10 +1022,6 @@ export async function importProductsWithImages(
     }
   }
 
-  /* ----------------------------------------------------------
-   * 2. Resolve slug → ObjectId maps
-   * ---------------------------------------------------------- */
-
   let categoriesBySlug: Record<string, string> = {};
   let brandsBySlug: Record<string, string> = {};
 
@@ -906,10 +1038,6 @@ export async function importProductsWithImages(
     brandsBySlug = maps.brandsBySlug;
   }
 
-  /* ----------------------------------------------------------
-   * 3. Reserve SKUs
-   * ---------------------------------------------------------- */
-
   const needAutoSku = rows.filter(
     (r) => !r.csvRow.sku || r.csvRow.sku.trim() === "",
   ).length;
@@ -917,10 +1045,6 @@ export async function importProductsWithImages(
   const skuBatch =
     needAutoSku > 0 ? await generateSkuBatch(needAutoSku, Product) : [];
   let skuIdx = 0;
-
-  /* ----------------------------------------------------------
-   * 4. Build products + promote images
-   * ---------------------------------------------------------- */
 
   const preparedProducts: CreateProductInput[] = [];
   const skippedRows: Array<{ rowIndex: number; reason: string }> = [];
@@ -1010,18 +1134,10 @@ export async function importProductsWithImages(
     });
   }
 
-  /* ----------------------------------------------------------
-   * 5. Delegate to importProducts()
-   * ---------------------------------------------------------- */
-
   const result = await importProducts({
     products: preparedProducts,
     options,
   });
-
-  /* ----------------------------------------------------------
-   * 6. Re-map row indices + attach warnings
-   * ---------------------------------------------------------- */
 
   for (let i = 0; i < result.rows.length; i += 1) {
     const original = rows.find(
@@ -1063,6 +1179,7 @@ export async function importProductsWithImages(
 export type ExportRow = {
   _id: string;
   sku: string;
+  barcode: string;
   slug: string;
   name_en: string;
   name_bn: string;
@@ -1070,16 +1187,21 @@ export type ExportRow = {
   description_bn: string;
   price: number;
   compare_at_price: number | "";
+  cost_price: number | "";
+  tax_rate: number;
   category_slug: string;
   category_name: string;
   brand_slug: string;
   stock: number;
+  low_stock_threshold: number | "";
   weight: string;
   dimensions: string;
   is_active: boolean;
   is_featured: boolean;
   images: string;
   specifications: string;
+  supplier_name: string;
+  supplier_phone: string;
   created_at: string;
   updated_at: string;
 };
@@ -1136,6 +1258,7 @@ export async function fetchProductsForExport(
     return {
       _id: String(doc._id),
       sku: doc.sku ?? "",
+      barcode: doc.barcode ?? "",
       slug: doc.slug,
       name_en: doc.name.en,
       name_bn: doc.name.bn,
@@ -1143,10 +1266,13 @@ export async function fetchProductsForExport(
       description_bn: doc.description?.bn ?? "",
       price: doc.price,
       compare_at_price: doc.compareAtPrice ?? "",
+      cost_price: doc.costPrice ?? "",
+      tax_rate: doc.taxRate ?? 0,
       category_slug: catSlug,
       category_name: catName,
       brand_slug: brandSlug,
       stock: doc.stock,
+      low_stock_threshold: doc.lowStockThreshold ?? "",
       weight: doc.weight ?? "",
       dimensions: doc.dimensions ?? "",
       is_active: doc.isActive,
@@ -1155,6 +1281,8 @@ export async function fetchProductsForExport(
       specifications: Object.entries(doc.specifications ?? {})
         .map(([k, v]) => `${k}:${String(v)}`)
         .join("|"),
+      supplier_name: doc.supplier?.name ?? "",
+      supplier_phone: doc.supplier?.phone ?? "",
       created_at: doc.createdAt.toISOString(),
       updated_at: doc.updatedAt.toISOString(),
     };
@@ -1195,8 +1323,6 @@ export async function resolveCategoryAndBrandMaps(
   const createdCategories: string[] = [];
   const createdBrands: string[] = [];
 
-  /* ----- Categories ----- */
-
   for (const input of categories) {
     const slug = input.slug.trim().toLowerCase();
     if (!slug) continue;
@@ -1216,8 +1342,6 @@ export async function resolveCategoryAndBrandMaps(
     }
     if (doc) categoriesBySlug[slug] = String(doc._id);
   }
-
-  /* ----- Brands ----- */
 
   for (const input of brands) {
     const slug = input.slug.trim().toLowerCase();

@@ -48,7 +48,13 @@ export function ProductList() {
     const first = sorting[0];
     if (!first) return "updatedAt" as const;
     return (first.id === "product" ? "name" : first.id) as
-      "name" | "price" | "stock" | "createdAt" | "updatedAt" | "averageRating";
+      | "name"
+      | "price"
+      | "costPrice"
+      | "stock"
+      | "createdAt"
+      | "updatedAt"
+      | "averageRating";
   }, [sorting]);
 
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
@@ -208,14 +214,14 @@ export function ProductList() {
         pageCount={totalPages}
         onPageChange={(p) => setPage(p + 1)}
         onPageSizeChange={handlePageSizeChange}
-        onRowClick={(p) => router.push(`/admin/products/${p._id}/edit`)}
+        onRowClick={(p) => router.push(`/admin/products/${p._id}`)}
         toolbar={(table) => (
           <DataTableToolbar
             table={table}
             search={{
               value: q,
               onChange: handleSearchChange,
-              placeholder: "Search products by name or SKU…",
+              placeholder: "Search products by name, SKU, or barcode…",
             }}
             filters={
               <ProductFilters
@@ -249,7 +255,9 @@ export default ProductList;
  * Helpers
  * ============================================================ */
 
-function flattenTree(nodes: CategoryTreeNode[]): Array<{
+function flattenTree(
+  nodes: CategoryTreeNode[],
+): Array<{
   _id: string;
   name: string;
   path?: string;

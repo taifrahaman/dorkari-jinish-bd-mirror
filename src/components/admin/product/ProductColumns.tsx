@@ -7,6 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   Archive,
   ArchiveRestore,
+  Eye,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -83,7 +84,7 @@ export function getProductColumns(
               {image ? (
                 <img
                   src={image.url}
-                  alt={product.name.en}
+                  alt={image.alt || product.name.en}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -96,7 +97,7 @@ export function getProductColumns(
 
             <div className="min-w-0">
               <Link
-                href={`/admin/products/${product._id}/edit`}
+                href={`/admin/products/${product._id}`}
                 className="block truncate text-sm font-medium text-brand-primary hover:underline"
               >
                 {product.name.en}
@@ -267,63 +268,75 @@ export function getProductColumns(
         const archived = Boolean(product.deletedAt);
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label="Row actions"
-                />
-              }
-            >
-              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-48">
-              <div className="truncate px-2 py-1.5 text-xs font-medium text-brand-text-secondary">
-                {product.name.en}
-              </div>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem onClick={() => actions.onEdit(product)}>
-                <Pencil className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                Edit
-              </DropdownMenuItem>
-
-              {!archived && (
-                <DropdownMenuItem onClick={() => actions.onArchive(product)}>
-                  <Archive className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                  Archive
-                </DropdownMenuItem>
-              )}
-
-              {archived && (
-                <DropdownMenuItem onClick={() => actions.onRestore(product)}>
-                  <ArchiveRestore
-                    className="mr-2 h-3.5 w-3.5"
-                    aria-hidden="true"
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Row actions"
                   />
-                  Restore
-                </DropdownMenuItem>
-              )}
+                }
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+              </DropdownMenuTrigger>
 
-              {archived && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => actions.onPermanentDelete(product)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                    Delete forever
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="truncate px-2 py-1.5 text-xs font-medium text-brand-text-secondary">
+                  {product.name.en}
+                </div>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  render={<Link href={`/admin/products/${product._id}`} />}
+                >
+                  <Eye className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                  View details
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => actions.onEdit(product)}>
+                  <Pencil className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                  Edit
+                </DropdownMenuItem>
+
+                {!archived && (
+                  <DropdownMenuItem onClick={() => actions.onArchive(product)}>
+                    <Archive className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                    Archive
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                )}
+
+                {archived && (
+                  <DropdownMenuItem onClick={() => actions.onRestore(product)}>
+                    <ArchiveRestore
+                      className="mr-2 h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
+                    Restore
+                  </DropdownMenuItem>
+                )}
+
+                {archived && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => actions.onPermanentDelete(product)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                      Delete forever
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },

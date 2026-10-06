@@ -24,6 +24,11 @@ export type PageHeaderProps = {
   backHref?: string;
   /** Right-aligned actions (buttons, dropdowns, etc.). */
   actions?: React.ReactNode;
+  /**
+   * Optional content rendered below the title row. Use for
+   * status badges, metadata chips, tabs, etc.
+   */
+  children?: React.ReactNode;
   /** Extra className on the wrapper. */
   className?: string;
 };
@@ -38,6 +43,7 @@ export function PageHeader({
   breadcrumbs,
   backHref,
   actions,
+  children,
   className,
 }: PageHeaderProps) {
   return (
@@ -113,6 +119,8 @@ export function PageHeader({
           </div>
         )}
       </div>
+
+      {children && <div>{children}</div>}
     </header>
   );
 }

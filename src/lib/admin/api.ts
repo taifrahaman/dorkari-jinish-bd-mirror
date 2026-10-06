@@ -42,6 +42,62 @@ export type SpecSuggestion = {
 };
 
 /* ============================================================
+ * Product stats types (mirrors product-stats.service.ts)
+ * ============================================================ */
+
+export type ProductStatsRange = "7d" | "30d" | "90d" | "1y" | "all";
+
+export type ProductStatsTotals = {
+  unitsSold: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  averagePrice: number;
+  orderCount: number;
+};
+
+export type ProductStatsBucket = {
+  date: string;
+  unitsSold: number;
+  revenue: number;
+  profit: number;
+};
+
+export type ProductRecentOrderRow = {
+  orderId: string;
+  orderNumber: string;
+  channel: "online" | "pos" | "phone" | "walk-in";
+  status: string;
+  paymentStatus: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  orderDate: string;
+};
+
+export type ProductStats = {
+  productId: string;
+  range: ProductStatsRange;
+  from: string | null;
+  to: string;
+  current: {
+    price: number;
+    compareAtPrice: number | null;
+    costPrice: number | null;
+    marginPerUnit: number | null;
+    marginPercent: number | null;
+    stock: number;
+    lowStockThreshold: number | null;
+    stockValue: number | null;
+    potentialRevenue: number | null;
+  };
+  totals: ProductStatsTotals;
+  buckets: ProductStatsBucket[];
+  bucketGranularity: "daily" | "monthly";
+  recentOrders: ProductRecentOrderRow[];
+};
+
+/* ============================================================
  * Error type
  * ============================================================ */
 
@@ -86,19 +142,6 @@ export function isAbortError(error: unknown): boolean {
   return false;
 }
 
-/**
- * React Query owns the AbortController for every query. When it
- * aborts — either because a component unmounted (StrictMode dev
- * double-mount) or because the query key changed — the fetch
- * can reject at TWO points:
- *
- *   1. The initial `fetch(...)` call
- *   2. Reading the response body: `await res.text()` or `.json()`
- *
- * Both must be swallowed. Returning a never-resolving promise
- * here lets React Query discard the query silently instead of
- * surfacing an unhandled rejection to the console.
- */
 function swallowAbort<T>(): Promise<T> {
   return new Promise<T>(() => {
     /* intentionally never resolves */
@@ -146,10 +189,6 @@ export async function adminRequest<T>(
     init.body = JSON.stringify(body);
   }
 
-  /* ----------------------------------------------------------
-   * 1. Initial fetch
-   * ---------------------------------------------------------- */
-
   let res: Response;
   try {
     res = await fetch(url, init);
@@ -166,14 +205,6 @@ export async function adminRequest<T>(
     return undefined as T;
   }
 
-  /* ----------------------------------------------------------
-   * 2. Read the body
-   *
-   * An abort mid-stream rejects here — the initial fetch
-   * succeeded, but the signal was cut before the body finished.
-   * This is the case we missed before.
-   * ---------------------------------------------------------- */
-
   let text: string;
   try {
     text = await res.text();
@@ -185,10 +216,6 @@ export async function adminRequest<T>(
       "BODY_READ_ERROR",
     );
   }
-
-  /* ----------------------------------------------------------
-   * 3. Parse + envelope check
-   * ---------------------------------------------------------- */
 
   let json: unknown;
   try {
@@ -266,7 +293,6 @@ export async function adminDownload(
   const { query, signal } = options;
   const url = buildUrl(path, query);
 
-  /* 1. Initial fetch */
   let res: Response;
   try {
     res = await fetch(url, {
@@ -298,7 +324,6 @@ export async function adminDownload(
     throw new AdminApiError(message, res.status, code);
   }
 
-  /* 2. Read body — abort can happen here too */
   let blob: Blob;
   try {
     blob = await res.blob();
@@ -456,6 +481,17 @@ export const productsApi = {
 
   get(id: string, signal?: AbortSignal): Promise<ProductResponse> {
     return adminRequest<ProductResponse>(`/products/${id}`, { signal });
+  },
+
+  stats(
+    id: string,
+    range: ProductStatsRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<ProductStats> {
+    return adminRequest<ProductStats>(`/products/${id}/stats`, {
+      query: { range },
+      signal,
+    });
   },
 
   create(input: CreateProductInput): Promise<ProductResponse> {

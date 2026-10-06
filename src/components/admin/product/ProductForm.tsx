@@ -2,12 +2,12 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Save, Sparkles, X } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ import { AdminApiError } from "@/lib/admin/api";
 import { createProductSchema } from "@/lib/validations/product.schema";
 import type { ProductResponse } from "@/lib/validations/product.schema";
 import type { ImageRef } from "@/services/cloudinary.service";
+import { formatPrice } from "@/lib/admin/format";
+import { cn } from "@/lib/utils";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/admin";
 
 /* ============================================================
@@ -48,15 +50,20 @@ const CREATE_DEFAULTS: FormInput = {
   description: { en: "", bn: "" },
   price: 0,
   compareAtPrice: undefined,
+  costPrice: undefined,
+  taxRate: 0,
   category: "",
   brand: undefined,
   stock: 0,
+  lowStockThreshold: undefined,
   images: [],
   colors: [],
   sku: undefined,
+  barcode: undefined,
   weight: undefined,
   dimensions: undefined,
   specifications: {},
+  supplier: undefined,
   isActive: true,
   isFeatured: false,
 };
@@ -85,19 +92,40 @@ function buildDefaults(product?: ProductResponse): FormInput {
     },
     price: product.price,
     compareAtPrice: product.compareAtPrice ?? undefined,
+    costPrice: product.costPrice ?? undefined,
+    taxRate: product.taxRate ?? 0,
     category: categoryId,
     brand: brandId,
     stock: product.stock,
+    lowStockThreshold: product.lowStockThreshold,
     images: product.images,
     colors: product.colors ?? [],
     sku: product.sku,
+    barcode: product.barcode,
     weight: product.weight,
     dimensions: product.dimensions,
     specifications: (product.specifications as Record<string, string>) ?? {},
+    supplier: product.supplier,
     isActive: product.isActive,
     isFeatured: product.isFeatured,
   };
 }
+
+/* ============================================================
+ * Numeric coercion for optional number inputs
+ *
+ * An empty <input type="number"> yields "" from the DOM. With
+ * `valueAsNumber: true` that becomes NaN, which Zod rejects.
+ * `setValueAs` lets us turn empty into undefined cleanly.
+ * ============================================================ */
+
+const optionalNumber = {
+  setValueAs: (v: unknown) => {
+    if (v === "" || v === null || v === undefined) return undefined;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isNaN(n) ? undefined : n;
+  },
+};
 
 /* ============================================================
  * Component
@@ -112,6 +140,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  /* Lazy init — stable across renders, avoids Math.random in render body */
   const [draftId] = useState(
     () => `draft-${Math.random().toString(36).slice(2, 10)}`,
   );
@@ -139,62 +168,28 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   }, [product, reset]);
 
   /* ----------------------------------------------------------
-   * Auto-populate spec template on category change
-   *
-   * Only applies in create mode. Tracks which templates have
-   * already been applied (by category id) so re-selecting the
-   * same category doesn't re-add deleted keys.
+   * Live margin preview
    * ---------------------------------------------------------- */
 
-  const currentCategoryId = watch("category");
-  const currentSpecs = watch("specifications");
+  const livePrice = watch("price");
+  const liveCost = watch("costPrice");
 
-  const selectedCategory = useMemo(
-    () => categories.find((c) => c._id === currentCategoryId),
-    [categories, currentCategoryId],
-  );
+  const marginLine = useMemo(() => {
+    const p = typeof livePrice === "number" ? livePrice : Number(livePrice);
+    const c = typeof liveCost === "number" ? liveCost : Number(liveCost);
 
-  const appliedTemplatesRef = useRef<Set<string>>(new Set());
-
-  /* Track which keys were added by the template so we can show
-   * a hint and let the user dismiss them. */
-  const [templateApplied, setTemplateApplied] = useState<{
-    categoryId: string;
-    added: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (isEdit) return;
-    if (!selectedCategory?.specTemplate?.length) return;
-    if (appliedTemplatesRef.current.has(selectedCategory._id)) return;
-
-    const current = currentSpecs ?? {};
-    const next: Record<string, string> = { ...current };
-    let added = 0;
-
-    for (const key of selectedCategory.specTemplate) {
-      if (!(key in next)) {
-        next[key] = "";
-        added += 1;
-      }
+    if (!Number.isFinite(p) || !Number.isFinite(c) || c <= 0 || p <= 0) {
+      return null;
     }
 
-    if (added > 0) {
-      setValue("specifications", next, { shouldDirty: true });
-      setTemplateApplied({
-        categoryId: selectedCategory._id,
-        added,
-      });
-    }
-
-    appliedTemplatesRef.current.add(selectedCategory._id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory?._id, isEdit, setValue]);
-
-  /* Remove all empty template keys when dismissed */
-  const dismissTemplateHint = () => {
-    setTemplateApplied(null);
-  };
+    const margin = p - c;
+    const pct = (margin / p) * 100;
+    return {
+      margin,
+      pct,
+      positive: margin > 0,
+    };
+  }, [livePrice, liveCost]);
 
   /* ----------------------------------------------------------
    * Submit
@@ -224,12 +219,16 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }
   });
 
+  const currentCategoryId = watch("category");
+
   return (
     <form onSubmit={onSubmit} className="space-y-8">
-      {/* Basic info */}
+      {/* ------------------------------------------------------
+       * Basic information
+       * ------------------------------------------------------ */}
       <Section
         title="Basic information"
-        description="Product name, slug, and SKU."
+        description="Product name, slug, SKU, and barcode."
       >
         <div className="grid gap-5 md:grid-cols-2">
           <Field
@@ -275,16 +274,35 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               autoComplete="off"
             />
           </Field>
+
+          <Field
+            label="Barcode"
+            hint="Optional. Must be unique — used for POS scanning."
+            error={errors.barcode?.message}
+          >
+            <Input
+              {...register("barcode")}
+              placeholder="8801234567890"
+              className="font-mono"
+              autoComplete="off"
+            />
+          </Field>
         </div>
       </Section>
 
-      {/* Pricing */}
+      {/* ------------------------------------------------------
+       * Pricing, cost & stock
+       * ------------------------------------------------------ */}
       <Section
-        title="Pricing & stock"
-        description="Set the selling price and inventory level."
+        title="Pricing, cost & stock"
+        description="Selling price, buying cost, and inventory level."
       >
         <div className="grid gap-5 md:grid-cols-3">
-          <Field label="Price (BDT)" required error={errors.price?.message}>
+          <Field
+            label="Selling price (BDT)"
+            required
+            error={errors.price?.message}
+          >
             <Input
               type="number"
               step="0.01"
@@ -303,12 +321,46 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               type="number"
               step="0.01"
               min="0"
-              {...register("compareAtPrice", { valueAsNumber: true })}
+              {...register("compareAtPrice", optionalNumber)}
               placeholder="72000"
             />
           </Field>
 
-          <Field label="Stock" required error={errors.stock?.message}>
+          <Field
+            label="Cost price (buying)"
+            hint="What you paid. Used for profit tracking."
+            error={errors.costPrice?.message}
+          >
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              {...register("costPrice", optionalNumber)}
+              placeholder="55000"
+            />
+          </Field>
+        </div>
+
+        {/* Live margin preview */}
+        {marginLine && (
+          <div
+            className={cn(
+              "rounded-md border px-3 py-2 text-xs",
+              marginLine.positive
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-destructive/30 bg-destructive/10 text-destructive",
+            )}
+          >
+            Margin per unit:{" "}
+            <strong className="tabular-nums">
+              {formatPrice(marginLine.margin)}
+            </strong>{" "}
+            ({marginLine.pct.toFixed(1)}%)
+          </div>
+        )}
+
+        <div className="grid gap-5 md:grid-cols-3">
+          <Field label="Stock quantity" required error={errors.stock?.message}>
             <Input
               type="number"
               min="0"
@@ -316,10 +368,25 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               placeholder="8"
             />
           </Field>
+
+          <Field
+            label="Low stock alert at"
+            hint="Overrides the default of 5."
+            error={errors.lowStockThreshold?.message}
+          >
+            <Input
+              type="number"
+              min="0"
+              {...register("lowStockThreshold", optionalNumber)}
+              placeholder="5"
+            />
+          </Field>
         </div>
       </Section>
 
-      {/* Organization */}
+      {/* ------------------------------------------------------
+       * Organization
+       * ------------------------------------------------------ */}
       <Section
         title="Organization"
         description="Category and visibility settings."
@@ -371,7 +438,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         </div>
       </Section>
 
-      {/* Descriptions */}
+      {/* ------------------------------------------------------
+       * Descriptions
+       * ------------------------------------------------------ */}
       <Section
         title="Descriptions"
         description="Shown on the product detail page."
@@ -401,7 +470,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         </div>
       </Section>
 
-      {/* Shipping */}
+      {/* ------------------------------------------------------
+       * Shipping
+       * ------------------------------------------------------ */}
       <Section title="Shipping" description="Weight and dimensions (optional).">
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Weight" error={errors.weight?.message}>
@@ -413,10 +484,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         </div>
       </Section>
 
-      {/* Images */}
+      {/* ------------------------------------------------------
+       * Images
+       * ------------------------------------------------------ */}
       <Section
         title="Images"
-        description="Drag to reorder is not yet supported. First image is primary."
+        description="First image is the primary. Drag to reorder is coming soon."
       >
         <Controller
           control={control}
@@ -433,7 +506,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         />
       </Section>
 
-      {/* Colors */}
+      {/* ------------------------------------------------------
+       * Colors
+       * ------------------------------------------------------ */}
       <Section
         title="Colors"
         description="Pick from the shared library, or add a custom color."
@@ -454,31 +529,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         />
       </Section>
 
-      {/* Specifications */}
+      {/* ------------------------------------------------------
+       * Specifications
+       * ------------------------------------------------------ */}
       <Section
         title="Specifications"
         description="Type a key to see suggestions from existing products."
       >
-        {templateApplied && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-brand-accent/30 bg-brand-accent-light px-3 py-2 text-xs text-brand-primary">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                Added {templateApplied.added} template key
-                {templateApplied.added === 1 ? "" : "s"} from this category.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={dismissTemplateHint}
-              className="grid h-5 w-5 place-items-center rounded-full text-brand-primary/60 transition-colors hover:bg-brand-primary/10 hover:text-brand-primary"
-              aria-label="Dismiss"
-            >
-              <X className="h-3 w-3" aria-hidden="true" />
-            </button>
-          </div>
-        )}
-
         <SpecificationEditor
           value={watch("specifications") ?? {}}
           onChange={(next) =>
@@ -488,7 +545,56 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         />
       </Section>
 
-      {/* Footer */}
+      {/* ------------------------------------------------------
+       * Supplier
+       * ------------------------------------------------------ */}
+      <Section
+        title="Supplier (optional)"
+        description="Leave every field blank to skip. If you fill any field, the supplier name is required."
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field
+            label="Supplier name"
+            hint="Required only if you fill any other supplier field."
+            error={errors.supplier?.name?.message}
+          >
+            <Input
+              {...register("supplier.name")}
+              placeholder="Walton Plaza"
+              autoComplete="off"
+            />
+          </Field>
+
+          <Field label="Phone" error={errors.supplier?.phone?.message}>
+            <Input
+              {...register("supplier.phone")}
+              placeholder="+880 1XXX-XXXXXX"
+              autoComplete="off"
+            />
+          </Field>
+
+          <Field label="Email" error={errors.supplier?.email?.message}>
+            <Input
+              type="email"
+              {...register("supplier.email")}
+              placeholder="supplier@example.com"
+              autoComplete="off"
+            />
+          </Field>
+
+          <Field label="Address" error={errors.supplier?.address?.message}>
+            <Input
+              {...register("supplier.address")}
+              placeholder="Kawran Bazar, Dhaka"
+              autoComplete="off"
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ------------------------------------------------------
+       * Footer actions
+       * ------------------------------------------------------ */}
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-brand-border pt-5">
         <Button
           type="button"

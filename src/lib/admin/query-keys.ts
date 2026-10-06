@@ -38,6 +38,9 @@ export const adminKeys = {
     import: (sessionId: string) =>
       [...adminKeys.products.all(), "import", sessionId] as const,
 
+    stats: (id: string, range: string) =>
+      [...adminKeys.products.detail(id), "stats", range] as const,
+
     specSuggestions: (q: string, category?: string) =>
       [
         ...adminKeys.products.all(),
