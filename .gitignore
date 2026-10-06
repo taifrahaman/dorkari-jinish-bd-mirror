@@ -42,7 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Repomix output
-repomix-output.xml
+repomix*
 
 # vs code
 .vscode/settings.local.json

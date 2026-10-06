@@ -12,9 +12,15 @@ interface ILocalizedText {
 export interface IProductColor {
   hex: string;
   name?: {
-    en: string;
-    bn: string;
+    en?: string;
+    bn?: string;
   };
+}
+
+export interface IProductImage {
+  url: string;
+  publicId: string;
+  alt: string;
 }
 
 export interface IProduct extends Document {
@@ -25,13 +31,12 @@ export interface IProduct extends Document {
     bn?: string;
   };
   price: number;
-  /** Original/list price shown struck through when the product is on sale. */
   compareAtPrice?: number;
   category: mongoose.Types.ObjectId | ICategory;
-  mainCategory: mongoose.Types.ObjectId | ICategory; // denormalized root
+  mainCategory: mongoose.Types.ObjectId | ICategory;
   brand?: mongoose.Types.ObjectId | IBrand;
   stock: number;
-  images: Array<{ url: string; publicId: string }>;
+  images: IProductImage[];
   colors: IProductColor[];
   sku: string;
   weight?: string;
@@ -53,6 +58,15 @@ const ProductColorSchema = new Schema<IProductColor>(
       en: { type: String },
       bn: { type: String },
     },
+  },
+  { _id: false },
+);
+
+const ProductImageSchema = new Schema<IProductImage>(
+  {
+    url: { type: String, required: true, trim: true },
+    publicId: { type: String, required: true, trim: true },
+    alt: { type: String, default: "", trim: true, maxlength: 200 },
   },
   { _id: false },
 );
@@ -80,19 +94,12 @@ const ProductSchema = new Schema<IProduct>(
       ref: "Category",
       required: true,
     },
-    // Optional for now to match the previous free-text field's behavior —
-    // make this `required: true` once every product is expected to carry a brand.
     brand: {
       type: Schema.Types.ObjectId,
       ref: "Brand",
     },
     stock: { type: Number, default: 0, min: 0 },
-    images: [
-      {
-        url: { type: String, required: true },
-        publicId: { type: String, required: true },
-      },
-    ],
+    images: [ProductImageSchema],
     colors: [ProductColorSchema],
     sku: { type: String, unique: true, sparse: true, trim: true },
     weight: { type: String, trim: true },
@@ -107,7 +114,6 @@ const ProductSchema = new Schema<IProduct>(
   { timestamps: true },
 );
 
-// Indexes
 ProductSchema.index({ slug: 1 }, { unique: true });
 ProductSchema.index({ sku: 1 }, { unique: true, sparse: true });
 ProductSchema.index({ category: 1 });
@@ -117,7 +123,6 @@ ProductSchema.index({ price: 1 });
 ProductSchema.index({ isFeatured: 1 });
 ProductSchema.index({ isActive: 1 });
 
-// Pre-save middleware to auto-populate mainCategory
 ProductSchema.pre("validate", async function () {
   if (this.category) {
     const categoryId = this.category;

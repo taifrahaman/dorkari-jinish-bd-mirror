@@ -1,31 +1,34 @@
-// src/lib/errors.ts
+// src/lib/errors/errors.ts
 
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
-/**
- * Base application error with status code and optional error code
- */
+/* ============================================================
+ * Base application error
+ * ============================================================ */
+
 export class AppError extends Error {
   public status: number;
   public code?: string;
+  public details?: unknown;
 
-  constructor(message: string, status = 500, code?: string) {
+  constructor(message: string, status = 500, code?: string, details?: unknown) {
     super(message);
-
     this.status = status;
     this.code = code;
+    this.details = details;
     this.name = new.target.name;
-
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
-/**
- * Pre-defined error types for common scenarios
- */
+/* ============================================================
+ * Pre-defined error types
+ * ============================================================ */
+
 export class BadRequestError extends AppError {
-  constructor(message = "Bad Request") {
-    super(message, 400, "BAD_REQUEST");
+  constructor(message = "Bad Request", details?: unknown) {
+    super(message, 400, "BAD_REQUEST", details);
   }
 }
 
@@ -48,21 +51,52 @@ export class NotFoundError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message = "Conflict") {
-    super(message, 409, "CONFLICT");
+  constructor(message = "Conflict", details?: unknown) {
+    super(message, 409, "CONFLICT", details);
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = "Validation Error") {
-    super(message, 422, "VALIDATION_ERROR");
+  constructor(message = "Validation Error", details?: unknown) {
+    super(message, 422, "VALIDATION_ERROR", details);
   }
 }
 
-/**
- * API response helper that formats errors consistently
- */
+/* ============================================================
+ * Zod → field errors
+ * ============================================================ */
+
+export function zodToFieldErrors(error: ZodError): Record<string, string[]> {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.length > 0 ? issue.path.join(".") : "_root";
+    if (!fieldErrors[key]) fieldErrors[key] = [];
+    fieldErrors[key].push(issue.message);
+  }
+  return fieldErrors;
+}
+
+/* ============================================================
+ * Unified API error → NextResponse
+ * ============================================================ */
+
 export function handleApiError(error: unknown): NextResponse {
+  // Zod errors — surface field-level details for forms
+  if (error instanceof ZodError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: "Validation failed",
+          code: "VALIDATION_ERROR",
+          status: 422,
+          details: { fieldErrors: zodToFieldErrors(error) },
+        },
+      },
+      { status: 422 },
+    );
+  }
+
   if (error instanceof AppError) {
     return NextResponse.json(
       {
@@ -71,6 +105,7 @@ export function handleApiError(error: unknown): NextResponse {
           message: error.message,
           code: error.code ?? "APP_ERROR",
           status: error.status,
+          details: error.details,
         },
       },
       { status: error.status },
