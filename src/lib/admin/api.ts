@@ -36,6 +36,14 @@ import type {
   OrderListQuery,
   OrderResponse,
 } from "@/lib/validations/order.schema";
+import type {
+  AnalyticsOverview,
+  AnalyticsRange,
+  CategoryBreakdownResult,
+  RecentOrdersResult,
+  RevenueSeries,
+  TopProductsResult,
+} from "@/lib/admin/analytics";
 
 /* ============================================================
  * Spec suggestion type
@@ -48,7 +56,7 @@ export type SpecSuggestion = {
 };
 
 /* ============================================================
- * Product stats types (mirrors product-stats.service.ts)
+ * Product stats types
  * ============================================================ */
 
 export type ProductStatsRange = "7d" | "30d" | "90d" | "1y" | "all";
@@ -104,7 +112,7 @@ export type ProductStats = {
 };
 
 /* ============================================================
- * Order stats types (mirrors order.service.ts getOrderStats)
+ * Order stats types
  * ============================================================ */
 
 export type OrderStatsRange = "today" | "7d" | "30d" | "all";
@@ -120,6 +128,8 @@ export type OrderStatus =
   | "returned";
 export type PaymentStatus =
   "pending" | "partial" | "paid" | "failed" | "refunded";
+export type PaymentMethod =
+  "cash" | "mobile_payment" | "cod" | "card" | "bank_transfer";
 
 export type OrderStats = {
   range: OrderStatsRange;
@@ -134,13 +144,6 @@ export type OrderStats = {
   byStatus: Record<OrderStatus, number>;
   byPaymentStatus: Record<PaymentStatus, number>;
 };
-
-/* ============================================================
- * Order payment method (mirrors order.model.ts)
- * ============================================================ */
-
-export type PaymentMethod =
-  "cash" | "mobile_payment" | "cod" | "card" | "bank_transfer";
 
 /* ============================================================
  * Error type
@@ -658,6 +661,60 @@ export const ordersApi = {
   archive(id: string): Promise<{ _id: string }> {
     return adminRequest<{ _id: string }>(`/orders/${id}`, {
       method: "DELETE",
+    });
+  },
+};
+
+/* ============================================================
+ * Analytics API
+ * ============================================================ */
+
+export const analyticsApi = {
+  overview(
+    range: AnalyticsRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<AnalyticsOverview> {
+    return adminRequest<AnalyticsOverview>("/analytics/overview", {
+      query: { range },
+      signal,
+    });
+  },
+
+  revenue(
+    range: AnalyticsRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<RevenueSeries> {
+    return adminRequest<RevenueSeries>("/analytics/revenue", {
+      query: { range },
+      signal,
+    });
+  },
+
+  topProducts(
+    range: AnalyticsRange = "30d",
+    limit = 8,
+    signal?: AbortSignal,
+  ): Promise<TopProductsResult> {
+    return adminRequest<TopProductsResult>("/analytics/top-products", {
+      query: { range, limit },
+      signal,
+    });
+  },
+
+  categories(
+    range: AnalyticsRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<CategoryBreakdownResult> {
+    return adminRequest<CategoryBreakdownResult>("/analytics/categories", {
+      query: { range },
+      signal,
+    });
+  },
+
+  recentOrders(limit = 8, signal?: AbortSignal): Promise<RecentOrdersResult> {
+    return adminRequest<RecentOrdersResult>("/analytics/recent-orders", {
+      query: { limit },
+      signal,
     });
   },
 };

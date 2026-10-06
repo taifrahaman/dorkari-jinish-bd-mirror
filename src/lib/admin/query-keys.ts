@@ -7,38 +7,24 @@ import type {
 import type { ProductListQuery } from "@/lib/validations/product.schema";
 import type { ColorListQuery } from "@/lib/validations/color.schema";
 import type { OrderListQuery } from "@/lib/validations/order.schema";
-
-/* ============================================================
- * Query key factory
- * ============================================================ */
+import type { AnalyticsRange } from "@/lib/admin/analytics";
 
 export const adminKeys = {
   all: ["admin"] as const,
 
-  /* ----------------------------------------------------------
-   * Products
-   * ---------------------------------------------------------- */
   products: {
     all: () => [...adminKeys.all, "products"] as const,
-
     lists: () => [...adminKeys.products.all(), "list"] as const,
-
     list: (params: Partial<ProductListQuery> = {}) =>
       [...adminKeys.products.lists(), normalizeParams(params)] as const,
-
     details: () => [...adminKeys.products.all(), "detail"] as const,
-
     detail: (id: string) => [...adminKeys.products.details(), id] as const,
-
     stats: (id: string, range: string) =>
       [...adminKeys.products.detail(id), "stats", range] as const,
-
     suggest: (q: string) =>
       [...adminKeys.products.all(), "suggest", q] as const,
-
     import: (sessionId: string) =>
       [...adminKeys.products.all(), "import", sessionId] as const,
-
     specSuggestions: (q: string, category?: string) =>
       [
         ...adminKeys.products.all(),
@@ -47,23 +33,14 @@ export const adminKeys = {
       ] as const,
   },
 
-  /* ----------------------------------------------------------
-   * Categories
-   * ---------------------------------------------------------- */
   categories: {
     all: () => [...adminKeys.all, "categories"] as const,
-
     lists: () => [...adminKeys.categories.all(), "list"] as const,
-
     list: (params: Partial<CategoryListQuery> = {}) =>
       [...adminKeys.categories.lists(), normalizeParams(params)] as const,
-
     details: () => [...adminKeys.categories.all(), "detail"] as const,
-
     detail: (id: string) => [...adminKeys.categories.details(), id] as const,
-
     tree: () => [...adminKeys.categories.all(), "tree"] as const,
-
     suggest: (params: Partial<CategorySuggestQuery>) =>
       [
         ...adminKeys.categories.all(),
@@ -72,47 +49,42 @@ export const adminKeys = {
       ] as const,
   },
 
-  /* ----------------------------------------------------------
-   * Colors
-   * ---------------------------------------------------------- */
   colors: {
     all: () => [...adminKeys.all, "colors"] as const,
-
     lists: () => [...adminKeys.colors.all(), "list"] as const,
-
     list: (params: Partial<ColorListQuery> = {}) =>
       [...adminKeys.colors.lists(), normalizeParams(params)] as const,
-
     details: () => [...adminKeys.colors.all(), "detail"] as const,
-
     detail: (id: string) => [...adminKeys.colors.details(), id] as const,
-
     suggest: (q: string, limit: number) =>
       [...adminKeys.colors.all(), "suggest", { q, limit }] as const,
   },
 
-  /* ----------------------------------------------------------
-   * Orders
-   * ---------------------------------------------------------- */
   orders: {
     all: () => [...adminKeys.all, "orders"] as const,
-
     lists: () => [...adminKeys.orders.all(), "list"] as const,
-
     list: (params: Partial<OrderListQuery> = {}) =>
       [...adminKeys.orders.lists(), normalizeParams(params)] as const,
-
     details: () => [...adminKeys.orders.all(), "detail"] as const,
-
     detail: (id: string) => [...adminKeys.orders.details(), id] as const,
-
     stats: (range: string) =>
       [...adminKeys.orders.all(), "stats", range] as const,
   },
 
-  /* ----------------------------------------------------------
-   * Dashboard
-   * ---------------------------------------------------------- */
+  analytics: {
+    all: () => [...adminKeys.all, "analytics"] as const,
+    overview: (range: AnalyticsRange) =>
+      [...adminKeys.analytics.all(), "overview", range] as const,
+    revenue: (range: AnalyticsRange) =>
+      [...adminKeys.analytics.all(), "revenue", range] as const,
+    topProducts: (range: AnalyticsRange, limit: number) =>
+      [...adminKeys.analytics.all(), "top-products", { range, limit }] as const,
+    categories: (range: AnalyticsRange) =>
+      [...adminKeys.analytics.all(), "categories", range] as const,
+    recentOrders: (limit: number) =>
+      [...adminKeys.analytics.all(), "recent-orders", limit] as const,
+  },
+
   dashboard: {
     all: () => [...adminKeys.all, "dashboard"] as const,
     stats: () => [...adminKeys.dashboard.all(), "stats"] as const,
@@ -120,10 +92,6 @@ export const adminKeys = {
       [...adminKeys.dashboard.all(), "recent-orders"] as const,
   },
 } as const;
-
-/* ============================================================
- * Helpers
- * ============================================================ */
 
 function normalizeParams<T extends Record<string, unknown>>(
   params: T,

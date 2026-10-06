@@ -1,8 +1,28 @@
-import { NextResponse } from "next/server";
+// src/app/api/admin/analytics/top-products/route.ts
 
-export async function GET() {
-  return NextResponse.json(
-    { success: false, error: { message: "Not implemented yet" } },
-    { status: 501 },
-  );
-}
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { withDb } from "@/lib/api/api-handler";
+import { handleApiError } from "@/lib/errors";
+import { verifyAuth, requireRole } from "@/middlewares/auth";
+import { getTopProducts } from "@/services/analytics.service";
+
+const querySchema = z.object({
+  range: z.enum(["today", "7d", "30d", "90d", "1y", "all"]).default("30d"),
+  limit: z.coerce.number().int().min(1).max(20).default(8),
+});
+
+export const GET = withDb(async (request: NextRequest) => {
+  try {
+    const payload = await verifyAuth(request);
+    requireRole(payload, ["admin", "moderator"]);
+
+    const raw = Object.fromEntries(request.nextUrl.searchParams);
+    const { range, limit } = querySchema.parse(raw);
+
+    const data = await getTopProducts(range, limit);
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return handleApiError(err);
+  }
+});
