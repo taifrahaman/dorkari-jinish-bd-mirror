@@ -85,11 +85,24 @@ export const adminKeys = {
       [...adminKeys.analytics.all(), "recent-orders", limit] as const,
   },
 
+  settings: {
+    all: () => [...adminKeys.all, "settings"] as const,
+  },
+
   dashboard: {
     all: () => [...adminKeys.all, "dashboard"] as const,
     stats: () => [...adminKeys.dashboard.all(), "stats"] as const,
     recentOrders: () =>
       [...adminKeys.dashboard.all(), "recent-orders"] as const,
+  },
+
+  reports: {
+    all: () => [...adminKeys.all, "reports"] as const,
+    profit: (range: string) =>
+      [...adminKeys.reports.all(), "profit", range] as const,
+    inventory: (status: string) =>
+      [...adminKeys.reports.all(), "inventory", status] as const,
+    vat: (range: string) => [...adminKeys.reports.all(), "vat", range] as const,
   },
 } as const;
 

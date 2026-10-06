@@ -1,9 +1,21 @@
-export default function PlaceholderPage() {
+// src/app/admin/(dashboard)/settings/page.tsx
+
+import { PageHeader } from "@/components/admin/page-header";
+import { SettingsForm } from "@/components/admin/settings";
+
+export default function SettingsPage() {
   return (
-    <div className="rounded-lg border border-brand-border bg-brand-surface p-8 text-center">
-      <p className="text-sm text-brand-text-secondary">
-        This page is coming soon.
-      </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Settings"
+        description="Store details, VAT configuration, and inventory defaults."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/admin" },
+          { label: "Settings" },
+        ]}
+      />
+
+      <SettingsForm />
     </div>
   );
 }

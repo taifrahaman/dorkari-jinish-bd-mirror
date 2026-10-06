@@ -1,11 +1,13 @@
 // src/components/admin/admin-sidebar/constants.ts
 
 import {
+  BarChart3,
   FolderTree,
   LayoutDashboard,
   Package,
   Palette,
   Receipt,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +75,23 @@ export const NAV: NavItem[] = [
       { href: "/admin/colors", label: "All colors" },
       { href: "/admin/colors/new", label: "New color" },
     ],
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    icon: BarChart3,
+    children: [
+      { href: "/admin/reports", label: "All reports" },
+      { href: "/admin/reports/profit", label: "Profit" },
+      { href: "/admin/reports/inventory", label: "Inventory" },
+      { href: "/admin/reports/vat", label: "VAT" },
+    ],
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    href: "/admin/settings",
   },
 ];
 

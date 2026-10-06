@@ -45,6 +45,14 @@ import type {
   TopProductsResult,
 } from "@/lib/admin/analytics";
 
+import type {
+  InventoryReport,
+  InventoryStatus,
+  ProfitReport,
+  ReportRange,
+  VatReport,
+} from "@/lib/admin/reports";
+
 /* ============================================================
  * Spec suggestion type
  * ============================================================ */
@@ -714,6 +722,39 @@ export const analyticsApi = {
   recentOrders(limit = 8, signal?: AbortSignal): Promise<RecentOrdersResult> {
     return adminRequest<RecentOrdersResult>("/analytics/recent-orders", {
       query: { limit },
+      signal,
+    });
+  },
+};
+
+/* ============================================================
+ * Reports API
+ * ============================================================ */
+
+export const reportsApi = {
+  profit(
+    range: ReportRange = "30d",
+    signal?: AbortSignal,
+  ): Promise<ProfitReport> {
+    return adminRequest<ProfitReport>("/reports/profit", {
+      query: { range },
+      signal,
+    });
+  },
+
+  inventory(
+    status: InventoryStatus = "all",
+    signal?: AbortSignal,
+  ): Promise<InventoryReport> {
+    return adminRequest<InventoryReport>("/reports/inventory", {
+      query: { status },
+      signal,
+    });
+  },
+
+  vat(range: ReportRange = "30d", signal?: AbortSignal): Promise<VatReport> {
+    return adminRequest<VatReport>("/reports/vat", {
+      query: { range },
       signal,
     });
   },

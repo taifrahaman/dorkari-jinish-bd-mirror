@@ -1,9 +1,7 @@
-export default function PlaceholderPage() {
-  return (
-    <div className="rounded-lg border border-brand-border bg-brand-surface p-8 text-center">
-      <p className="text-sm text-brand-text-secondary">
-        This page is coming soon.
-      </p>
-    </div>
-  );
+// src/app/admin/(dashboard)/reports/inventory/page.tsx
+
+import { InventoryReport } from "@/components/admin/reports";
+
+export default function InventoryReportPage() {
+  return <InventoryReport />;
 }

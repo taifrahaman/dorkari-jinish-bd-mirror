@@ -7,4 +7,6 @@ export * from "./use-orders";
 export * from "./use-product-import";
 export * from "./use-product-stats";
 export * from "./use-products";
+export * from "./use-reports";
+export * from "./use-settings";
 export * from "./use-spec-suggestions";
