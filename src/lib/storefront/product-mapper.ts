@@ -24,7 +24,6 @@ export type StorefrontProduct = {
     slug: string;
     name: StorefrontLocalizedName;
   };
-  /** Root ancestor of `category`. Equal to `category` when the product sits on a root. */
   mainCategory: {
     id: string;
     slug: string;
@@ -47,9 +46,18 @@ export type StorefrontProduct = {
   createdAt: string;
 };
 
+/**
+ * Detail-page superset of StorefrontProduct. Adds the fields that
+ * are too heavy for the grid but needed on a single product page.
+ */
+export type StorefrontProductDetail = StorefrontProduct & {
+  specifications: Array<{ key: string; value: string }>;
+  boxContents: Array<{ en: string; bn: string }>;
+};
+
 /* ============================================================
- * Lean doc shape — what listStorefrontProducts() will hand us
- * after .populate(POPULATE).lean().
+ * Lean doc shape — what the service hands us after
+ * .populate(POPULATE).lean().
  * ============================================================ */
 
 type LocalizedName = { en: string; bn: string };
@@ -73,6 +81,8 @@ type LeanStorefrontDoc = {
   stock: number;
   images?: Array<{ url: string; alt?: string }>;
   colors?: Array<{ hex: string; name?: { en?: string; bn?: string } }>;
+  specifications?: Record<string, unknown>;
+  boxContents?: Array<{ en?: string; bn?: string }>;
   isFeatured: boolean;
   averageRating?: number;
   totalReviews?: number;
@@ -80,13 +90,22 @@ type LeanStorefrontDoc = {
 };
 
 /* ============================================================
- * Mapper
+ * Helpers
  * ============================================================ */
 
-function toLocalized(name: LocalizedName | undefined): StorefrontLocalizedName {
+/**
+ * Bidirectional fallback: an empty or missing `en` falls back to `bn`,
+ * and vice versa. Products always have both, but reviews and customer-
+ * submitted content may only fill one side.
+ */
+export function toLocalized(
+  name: { en?: string; bn?: string } | undefined,
+): StorefrontLocalizedName {
+  const en = name?.en ?? "";
+  const bn = name?.bn ?? "";
   return {
-    en: name?.en ?? "",
-    bn: name?.bn ?? name?.en ?? "",
+    en: en || bn,
+    bn: bn || en,
   };
 }
 
@@ -100,6 +119,10 @@ function toRef(
     name: toLocalized(ref.name),
   };
 }
+
+/* ============================================================
+ * List mapper
+ * ============================================================ */
 
 export function toStorefrontProduct(doc: LeanStorefrontDoc): StorefrontProduct {
   return {
@@ -142,5 +165,36 @@ export function toStorefrontProduct(doc: LeanStorefrontDoc): StorefrontProduct {
     averageRating: doc.averageRating ?? 0,
     totalReviews: doc.totalReviews ?? 0,
     createdAt: doc.createdAt.toISOString(),
+  };
+}
+
+/* ============================================================
+ * Detail mapper
+ * ============================================================ */
+
+export function toStorefrontProductDetail(
+  doc: LeanStorefrontDoc,
+): StorefrontProductDetail {
+  const base = toStorefrontProduct(doc);
+
+  const specifications = Object.entries(doc.specifications ?? {}).map(
+    ([key, value]) => ({
+      key,
+      value: typeof value === "string" ? value : String(value),
+    }),
+  );
+
+  const boxContents = (doc.boxContents ?? [])
+    .map((row) => ({
+      en: row.en ?? "",
+      bn: row.bn ?? row.en ?? "",
+    }))
+    // Drop fully-empty rows that a half-filled admin form might leave behind.
+    .filter((row) => row.en.trim() !== "" || row.bn.trim() !== "");
+
+  return {
+    ...base,
+    specifications,
+    boxContents,
   };
 }

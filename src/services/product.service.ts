@@ -44,7 +44,9 @@ import type {
 import { LOW_STOCK_THRESHOLD } from "@/lib/validations/product.schema";
 import {
   toStorefrontProduct,
+  toStorefrontProductDetail,
   type StorefrontProduct,
+  type StorefrontProductDetail,
 } from "@/lib/storefront/product-mapper";
 
 /* ============================================================
@@ -420,6 +422,25 @@ export async function listStorefrontProducts(): Promise<StorefrontProduct[]> {
     .lean<Parameters<typeof toStorefrontProduct>[0][]>();
 
   return docs.map(toStorefrontProduct);
+}
+
+/**
+ * Single product by slug. Returns null on miss so the caller can
+ * distinguish "not found" from an error.
+ */
+export async function getStorefrontProductBySlug(
+  slug: string,
+): Promise<StorefrontProductDetail | null> {
+  const doc = await Product.findOne({
+    slug,
+    isActive: true,
+    deletedAt: null,
+  })
+    .populate(POPULATE)
+    .lean<Parameters<typeof toStorefrontProductDetail>[0] | null>();
+
+  if (!doc) return null;
+  return toStorefrontProductDetail(doc);
 }
 
 /* ============================================================

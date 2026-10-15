@@ -4,15 +4,22 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 
 import { connectToDatabase } from "@/lib/db";
-import { listStorefrontProducts } from "@/services/product.service";
-import { STOREFRONT_PRODUCTS_TAG } from "./cache-tags";
+import {
+  getStorefrontProductBySlug,
+  listStorefrontProducts,
+} from "@/services/product.service";
+import { listProductFaqs } from "@/services/faq.service";
+import { listProductReviews } from "@/services/review.service";
+import { getStorefrontSettings } from "@/services/setting.service";
+import {
+  STOREFRONT_FAQS_TAG,
+  STOREFRONT_PRODUCTS_TAG,
+  STOREFRONT_REVIEWS_TAG,
+  STOREFRONT_SETTINGS_TAG,
+} from "./cache-tags";
 
 /* ============================================================
- * Cached fetch — 1h TTL as a safety net. Primary invalidation
- * is on-demand via revalidateTag(STOREFRONT_PRODUCTS_TAG).
- *
- * Matches the pattern in category-nav.ts: connection happens
- * inside the cached function so it only runs on cache misses.
+ * Product list — the shop grid.
  * ============================================================ */
 
 export const getCachedStorefrontProducts = unstable_cache(
@@ -23,6 +30,71 @@ export const getCachedStorefrontProducts = unstable_cache(
   ["storefront:products"],
   {
     tags: [STOREFRONT_PRODUCTS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * Single product — keyed by slug. Shares the products tag so an
+ * admin product write invalidates both the grid and every detail.
+ * ============================================================ */
+
+export const getCachedStorefrontProductBySlug = unstable_cache(
+  async (slug: string) => {
+    await connectToDatabase();
+    return getStorefrontProductBySlug(slug);
+  },
+  ["storefront:product"],
+  {
+    tags: [STOREFRONT_PRODUCTS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * FAQs — keyed by product id.
+ * ============================================================ */
+
+export const getCachedStorefrontFaqs = unstable_cache(
+  async (productId: string) => {
+    await connectToDatabase();
+    return listProductFaqs(productId);
+  },
+  ["storefront:faqs"],
+  {
+    tags: [STOREFRONT_FAQS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * Reviews — keyed by product id. Only approved reviews.
+ * ============================================================ */
+
+export const getCachedStorefrontReviews = unstable_cache(
+  async (productId: string) => {
+    await connectToDatabase();
+    return listProductReviews(productId);
+  },
+  ["storefront:reviews"],
+  {
+    tags: [STOREFRONT_REVIEWS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * Settings — singleton storefront messaging.
+ * ============================================================ */
+
+export const getCachedStorefrontSettings = unstable_cache(
+  async () => {
+    await connectToDatabase();
+    return getStorefrontSettings();
+  },
+  ["storefront:settings"],
+  {
+    tags: [STOREFRONT_SETTINGS_TAG],
     revalidate: 60 * 60,
   },
 );
