@@ -2,7 +2,6 @@
 
 import mongoose from "mongoose";
 import Order, {
-  type IOrder,
   type IOrderItem,
   type OrderChannel,
   type OrderStatus,
@@ -10,9 +9,14 @@ import Order, {
   type PaymentMethod,
 } from "@/models/Order.model";
 import Product from "@/models/Product.model";
+import User from "@/models/User.model";
 import { NotFoundError, ConflictError, BadRequestError } from "@/lib/errors";
 import { generateOrderNumber } from "@/lib/admin/orders/order-number";
 import { calculateOrderTotals } from "@/lib/admin/orders/calc";
+import {
+  findOrCreateCustomer,
+  channelToSource,
+} from "@/lib/admin/customers/find-or-create";
 import type {
   CreateOrderInput,
   UpdateOrderInput,
@@ -84,18 +88,12 @@ type LeanOrder = {
  * ============================================================ */
 
 const POPULATE = [
-  {
-    path: "items.product",
-    select: "_id name slug images",
-  },
-  {
-    path: "createdBy",
-    select: "_id name email",
-  },
+  { path: "items.product", select: "_id name slug images" },
+  { path: "createdBy", select: "_id name email" },
 ];
 
 /* ============================================================
- * Normalization — doc → client shape
+ * Response mapping
  * ============================================================ */
 
 function toOrderItemResponse(
@@ -304,23 +302,59 @@ export async function getOrderById(id: string): Promise<OrderResponse> {
 
 /* ============================================================
  * Create
- *
- * Steps:
- *   1. Look up each product — abort if any is missing/deleted.
- *   2. Build item snapshots (name, sku, cost) from the current
- *      product state. Prices come from the input — the caller
- *      knows the negotiated price.
- *   3. Compute totals.
- *   4. Generate a unique order number.
- *   5. Insert.
- *   6. (Decrement stock — deferred to Phase B.2)
  * ============================================================ */
 
 export async function createOrder(
   input: CreateOrderInput,
   createdBy?: string,
 ): Promise<OrderResponse> {
-  /* ----- 1. Validate items + gather snapshots ----- */
+  /* ----- 1. Resolve customer ----- */
+
+  let userOid: mongoose.Types.ObjectId | undefined;
+  let customerSnapshot:
+    { name: string; phone?: string; email?: string } | undefined;
+
+  const c = input.customer;
+
+  if (c?.id && mongoose.Types.ObjectId.isValid(c.id)) {
+    // Existing customer by id
+    const user = await User.findById(c.id).select("_id name phone email").lean<{
+      _id: mongoose.Types.ObjectId;
+      name: string;
+      phone?: string;
+      email?: string;
+    } | null>();
+
+    if (user) {
+      userOid = user._id;
+      customerSnapshot = {
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+      };
+    }
+  } else if (c?.name?.trim()) {
+    // Find-or-create by name + phone/email
+    const result = await findOrCreateCustomer({
+      name: c.name,
+      phone: c.phone,
+      email: c.email || undefined,
+      source: channelToSource(input.channel),
+      createdBy,
+    });
+
+    userOid = result.user._id as mongoose.Types.ObjectId;
+    customerSnapshot = {
+      name: result.user.name,
+      phone: result.user.phone,
+      email: result.user.email,
+    };
+  } else {
+    // Fully anonymous walk-in — snapshot only, no User doc
+    customerSnapshot = { name: "Walk-in customer" };
+  }
+
+  /* ----- 2. Validate items + snapshot products ----- */
 
   const productIds = input.items.map(
     (i) => new mongoose.Types.ObjectId(i.product),
@@ -353,8 +387,6 @@ export async function createOrder(
       );
     }
 
-    // Cost snapshot: use the caller's value if provided, else
-    // fall back to the product's current cost.
     const costPriceAtTime =
       item.costPriceAtTime > 0
         ? item.costPriceAtTime
@@ -368,12 +400,11 @@ export async function createOrder(
       priceAtTime: item.priceAtTime,
       costPriceAtTime,
       discount: item.discount ?? 0,
-      // placeholder — recalculated by the model's pre-validate hook
       lineTotal: 0,
     });
   }
 
-  /* ----- 2. Compute totals ----- */
+  /* ----- 3. Totals ----- */
 
   const totals = calculateOrderTotals(
     orderItems.map((i) => ({
@@ -385,25 +416,22 @@ export async function createOrder(
     input.shippingFee ?? 0,
   );
 
-  /* ----- 3. Generate order number ----- */
+  /* ----- 4. Order number ----- */
 
   const orderNumber = await generateOrderNumber(Order);
 
-  /* ----- 4. Insert ----- */
+  /* ----- 5. Insert ----- */
 
-  let createdByOid: mongoose.Types.ObjectId | undefined;
-  if (createdBy && mongoose.Types.ObjectId.isValid(createdBy)) {
-    createdByOid = new mongoose.Types.ObjectId(createdBy);
-  }
+  const createdByOid =
+    createdBy && mongoose.Types.ObjectId.isValid(createdBy)
+      ? new mongoose.Types.ObjectId(createdBy)
+      : undefined;
 
   const doc = await Order.create({
     orderNumber,
     channel: input.channel,
-    user: input.user ? new mongoose.Types.ObjectId(input.user) : undefined,
-    guestEmail: input.guestEmail || undefined,
-    guestName: input.guestName || undefined,
-    guestPhone: input.guestPhone || undefined,
-    customerSnapshot: input.customerSnapshot,
+    user: userOid,
+    customerSnapshot,
     items: orderItems,
     subtotal: totals.subtotal,
     discountTotal: totals.discountTotal,
@@ -431,7 +459,7 @@ export async function createOrder(
 }
 
 /* ============================================================
- * Update — status changes, notes, tracking
+ * Update
  * ============================================================ */
 
 export async function updateOrder(
@@ -467,7 +495,6 @@ export async function updateOrder(
     doc.notes = input.notes === null ? undefined : input.notes;
   }
 
-  // Auto-set deliveredDate when status flips to delivered
   if (input.status === "delivered" && !doc.deliveredDate) {
     doc.deliveredDate = new Date();
   }
@@ -483,7 +510,7 @@ export async function updateOrder(
 }
 
 /* ============================================================
- * Archive / Restore
+ * Archive / Restore / Permanent delete
  * ============================================================ */
 
 export async function archiveOrder(id: string): Promise<{ _id: string }> {
@@ -517,14 +544,6 @@ export async function restoreOrder(id: string): Promise<OrderResponse> {
   return toOrderResponse(populated);
 }
 
-/* ============================================================
- * Permanent delete
- *
- * Orders are financial records — permanent deletion should be
- * rare. We don't delete the referenced product images or any
- * related Cloudinary assets. Just the DB row.
- * ============================================================ */
-
 export async function permanentDeleteOrder(
   id: string,
 ): Promise<{ _id: string }> {
@@ -543,7 +562,7 @@ export async function permanentDeleteOrder(
 }
 
 /* ============================================================
- * Stats — for dashboard widgets (aggregated)
+ * Stats
  * ============================================================ */
 
 export type OrderStatsRange = "today" | "7d" | "30d" | "all";
@@ -649,8 +668,10 @@ export async function getOrderStats(
   const byChannel: Record<OrderChannel, number> = {
     online: 0,
     pos: 0,
-    phone: 0,
     "walk-in": 0,
+    phone: 0,
+    facebook: 0,
+    whatsapp: 0,
   };
   for (const row of byChannelRows) byChannel[row._id] = row.count;
 

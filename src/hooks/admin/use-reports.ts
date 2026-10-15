@@ -5,7 +5,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { reportsApi } from "@/lib/admin/api";
 import { adminKeys } from "@/lib/admin/query-keys";
-import type { InventoryStatus, ReportRange } from "@/lib/admin/reports";
+import type {
+  InventorySort,
+  InventoryStatus,
+  ReportRange,
+} from "@/lib/admin/reports";
 
 /* ============================================================
  * Profit report
@@ -24,10 +28,13 @@ export function useProfitReport(range: ReportRange = "30d") {
  * Inventory report
  * ============================================================ */
 
-export function useInventoryReport(status: InventoryStatus = "all") {
+export function useInventoryReport(
+  status: InventoryStatus = "all",
+  sort: InventorySort = "stock-asc",
+) {
   return useQuery({
-    queryKey: adminKeys.reports.inventory(status),
-    queryFn: ({ signal }) => reportsApi.inventory(status, signal),
+    queryKey: adminKeys.reports.inventory(status, sort),
+    queryFn: ({ signal }) => reportsApi.inventory(status, sort, signal),
     staleTime: 30 * 1000,
     placeholderData: (prev) => prev,
   });

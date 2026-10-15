@@ -11,12 +11,16 @@ import CategoryMenu from "./CategoryMenu";
 import NavSearch from "./NavSearch";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 import NotificationBell from "@/components/shared/NotificationBell";
-import { primaryNavLinks, categoryTree } from "./navItems";
+import { primaryNavLinks, type CategoryNode } from "./navItems";
 import { useHydration } from "@/lib/stores/useHydration";
 import { useCartStore } from "@/lib/stores/useCartStore";
 import styles from "./DesktopNav.module.css";
 
-export default function DesktopNav() {
+type Props = {
+  categories: CategoryNode[];
+};
+
+export default function DesktopNav({ categories }: Props) {
   const pathname = usePathname();
   const [categoryOpen, setCategoryOpen] = useState(false);
   const hydrated = useHydration();
@@ -69,7 +73,7 @@ export default function DesktopNav() {
 
         <CategoryMenu
           open={categoryOpen}
-          categories={categoryTree}
+          categories={categories}
           onClose={() => setCategoryOpen(false)}
         />
       </nav>

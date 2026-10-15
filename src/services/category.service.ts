@@ -17,6 +17,8 @@ import type {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "@/lib/validations/category.schema";
+import { revalidateTag } from "next/cache";
+import { STOREFRONT_CATEGORIES_TAG } from "@/lib/storefront/cache-tags";
 
 /* ============================================================
  * Internal types
@@ -323,6 +325,8 @@ export async function createCategory(
     isActive: input.isActive ?? true,
   });
 
+  revalidateTag(STOREFRONT_CATEGORIES_TAG, "max");
+
   const lookup = await loadLookup();
   return toCategoryResponse(doc.toObject() as LeanCategory, lookup);
 }
@@ -382,6 +386,8 @@ export async function updateCategory(
 
   await doc.save();
 
+  revalidateTag(STOREFRONT_CATEGORIES_TAG, "max");
+
   const [lookup, productCounts] = await Promise.all([
     loadLookup(),
     loadProductCounts(),
@@ -414,6 +420,8 @@ export async function archiveCategory(
     { $set: { deletedAt: now } },
   );
 
+  revalidateTag(STOREFRONT_CATEGORIES_TAG, "max");
+
   return { _id: id, archivedIds: allIds };
 }
 
@@ -444,6 +452,8 @@ export async function restoreCategory(id: string): Promise<CategoryResponse> {
     { _id: { $in: allIds } },
     { $set: { deletedAt: null } },
   );
+
+  revalidateTag(STOREFRONT_CATEGORIES_TAG, "max");
 
   const [lookup, productCounts] = await Promise.all([
     loadLookup(),
@@ -535,6 +545,8 @@ export async function permanentDeleteCategory(
   }
 
   await Category.deleteMany({ _id: { $in: allIds } });
+
+  revalidateTag(STOREFRONT_CATEGORIES_TAG, "max");
 
   return {
     _id: id,

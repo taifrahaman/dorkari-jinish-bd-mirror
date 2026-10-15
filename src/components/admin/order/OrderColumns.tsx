@@ -53,9 +53,12 @@ function channelLabel(channel: OrderResponse["channel"]): string {
       return "Online";
     case "phone":
       return "Phone";
+    case "facebook":
+      return "Facebook";
+    case "whatsapp":
+      return "WhatsApp";
   }
 }
-
 /* ============================================================
  * Column factory
  * ============================================================ */

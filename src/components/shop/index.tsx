@@ -8,6 +8,8 @@ import {
   applyFilters,
   getBrandFacets,
   getCategoryFacets,
+  getColorFacets,
+  getTopCategorySlugs,
   sortProducts,
 } from "@/lib/shop/filter-utils";
 import { matchesQuery } from "@/lib/shop/search";
@@ -23,10 +25,10 @@ import ProductGrid from "./ProductGrid";
 import ProductGridSkeleton from "./ProductGridSkeleton";
 import EmptyState from "./EmptyState";
 
-// imports
 import { useLoadMore } from "@/hooks/use-load-more";
 
 const PAGE_SIZE = 24;
+const TOP_CATEGORY_COUNT = 6;
 
 type ShopPageProps = {
   locale?: Locale;
@@ -50,7 +52,7 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Full catalog. Loaded once. Everything below is derived in-memory.
-  const { products, isLoading } = useShopCatalog();
+  const { products, isLoading } = useShopCatalog(locale);
 
   const priceMax = useMemo(
     () => (products.length ? Math.max(...products.map((p) => p.price)) : 0),
@@ -65,10 +67,18 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
     () => getBrandFacets(products, filters),
     [products, filters],
   );
+  const colorFacets = useMemo(
+    () => getColorFacets(products, filters),
+    [products, filters],
+  );
 
-  // Exactly what the grid should show, in order. ProductGrid diffs this
-  // list by `id` and animates the difference. (.filter() returns a fresh
-  // array, so sortProducts never touches the catalog itself.)
+  // Stable "top 6" chips — recomputed only when the catalog itself changes,
+  // not on every filter tweak, so chip order doesn't jump around.
+  const topCategorySlugs = useMemo(
+    () => getTopCategorySlugs(products, TOP_CATEGORY_COUNT),
+    [products],
+  );
+
   const results = useMemo(
     () =>
       sortProducts(
@@ -80,7 +90,6 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
     [products, filters, debouncedQuery, sort],
   );
 
-  // Chips and toolbar respond instantly; the grid re-renders at lower priority.
   const resetKey = useMemo(
     () => JSON.stringify([filters, sort, debouncedQuery]),
     [filters, sort, debouncedQuery],
@@ -92,8 +101,23 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
   );
   const gridProducts = useDeferredValue(visible);
 
-  const activeCategory =
-    filters.categories.length === 1 ? filters.categories[0] : null;
+  // A root chip lights up when every selected category belongs to it
+  // (either the root itself, or one/more of its children).
+  const activeCategory = useMemo(() => {
+    if (filters.categories.length === 0) return null;
+
+    const roots = new Set<string>();
+    for (const slug of filters.categories) {
+      const root = categoryFacets.find(
+        (r) => r.value === slug || r.children?.some((c) => c.value === slug),
+      );
+      if (!root) return null;
+      roots.add(root.value);
+    }
+
+    return roots.size === 1 ? [...roots][0] : null;
+  }, [filters.categories, categoryFacets]);
+
   const activeFilterCount = countActiveFilters(filters);
 
   const handleClear = () => {
@@ -123,6 +147,7 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
         <FilterBar
           locale={locale}
           categoryFacets={categoryFacets}
+          topCategorySlugs={topCategorySlugs}
           activeCategory={activeCategory}
           onCategoryChange={(value) =>
             setFilters((prev) => ({
@@ -145,6 +170,7 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
               onChange={setFilters}
               categoryFacets={categoryFacets}
               brandFacets={brandFacets}
+              colorFacets={colorFacets}
             />
           </div>
         )}
@@ -157,8 +183,6 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
               <ProductGrid
                 products={gridProducts}
                 locale={locale}
-                // Keyed off the urgent `results` (not the deferred list) so
-                // "no results" can't flash while the grid is catching up.
                 empty={
                   results.length === 0 ? (
                     <EmptyState locale={locale} onClear={handleClear} />
@@ -182,6 +206,7 @@ export default function ShopPage({ locale = "en" }: ShopPageProps) {
         onClear={handleClear}
         categoryFacets={categoryFacets}
         brandFacets={brandFacets}
+        colorFacets={colorFacets}
         resultCount={results.length}
         priceMax={priceMax}
       />

@@ -9,7 +9,7 @@ import { signUpload, type SignUploadResponse } from "@/lib/admin/api";
  * Types
  * ============================================================ */
 
-export type CloudinaryEntity = "products" | "categories" | "tmp";
+export type CloudinaryEntity = "products" | "categories" | "brands" | "tmp";
 
 export type UploadStatus = "pending" | "uploading" | "done" | "error";
 

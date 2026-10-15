@@ -12,12 +12,14 @@ import { FOLDER_PREFIX } from "./client";
  *   dorkari-jinish-bd/products/DJ-2026-0001/DJ-2026-0001-1
  *   dorkari-jinish-bd/products/DJ-2026-0001/DJ-2026-0001-2
  *   dorkari-jinish-bd/categories/panjabi/cover
+ *   dorkari-jinish-bd/brands/walton/logo
  *   dorkari-jinish-bd/tmp/8f3a1c9e-...           ← staging tray uploads
  * ============================================================ */
 
 export const ENTITY = {
   PRODUCTS: "products",
   CATEGORIES: "categories",
+  BRANDS: "brands",
   TMP: "tmp",
 } as const;
 
@@ -25,10 +27,6 @@ export type EntityType = (typeof ENTITY)[keyof typeof ENTITY];
 
 /* ============================================================
  * Sanitizers
- *
- * Cloudinary folder names allow most characters but it's safer
- * to normalize. We lowercase, replace anything not alphanumeric
- * or hyphen with a hyphen, and collapse repeats.
  * ============================================================ */
 
 export function sanitizeFolderSegment(input: string): string {
@@ -44,10 +42,6 @@ export function sanitizeFolderSegment(input: string): string {
  * Product paths
  * ============================================================ */
 
-/**
- * Product folder path (no leading slash).
- * e.g. "dorkari-jinish-bd/products/DJ-2026-0001"
- */
 export function productFolder(sku: string): string {
   const segment = sanitizeFolderSegment(sku);
   if (!segment) {
@@ -56,12 +50,6 @@ export function productFolder(sku: string): string {
   return `${FOLDER_PREFIX}/${ENTITY.PRODUCTS}/${segment}`;
 }
 
-/**
- * Full public_id for a product image (no file extension — Cloudinary
- * adds that based on the uploaded format).
- *
- * e.g. "dorkari-jinish-bd/products/DJ-2026-0001/DJ-2026-0001-1"
- */
 export function productImagePublicId(sku: string, index: number): string {
   if (!Number.isInteger(index) || index < 1) {
     throw new Error(
@@ -76,10 +64,6 @@ export function productImagePublicId(sku: string, index: number): string {
  * Category paths
  * ============================================================ */
 
-/**
- * Category folder path (no leading slash).
- * e.g. "dorkari-jinish-bd/categories/panjabi"
- */
 export function categoryFolder(slug: string): string {
   const segment = sanitizeFolderSegment(slug);
   if (!segment) {
@@ -88,22 +72,30 @@ export function categoryFolder(slug: string): string {
   return `${FOLDER_PREFIX}/${ENTITY.CATEGORIES}/${segment}`;
 }
 
-/**
- * Full public_id for a category image.
- * e.g. "dorkari-jinish-bd/categories/panjabi/cover"
- */
 export function categoryImagePublicId(slug: string): string {
   const segment = sanitizeFolderSegment(slug);
   return `${categoryFolder(slug)}/cover`;
 }
 
 /* ============================================================
- * Temporary staging (media tray before assignment)
- *
- * Used by the bulk-import wizard: images are uploaded to tmp/
- * first, then either renamed into products/<sku>/ on commit or
- * deleted if discarded. This keeps /products/ clean if the user
- * abandons the wizard midway.
+ * Brand paths
+ * ============================================================ */
+
+export function brandFolder(slug: string): string {
+  const segment = sanitizeFolderSegment(slug);
+  if (!segment) {
+    throw new Error(`Invalid slug for Cloudinary folder: "${slug}"`);
+  }
+  return `${FOLDER_PREFIX}/${ENTITY.BRANDS}/${segment}`;
+}
+
+export function brandLogoPublicId(slug: string): string {
+  const segment = sanitizeFolderSegment(slug);
+  return `${brandFolder(slug)}/logo`;
+}
+
+/* ============================================================
+ * Temporary staging
  * ============================================================ */
 
 export function tmpFolder(sessionId: string): string {
@@ -116,10 +108,6 @@ export function tmpFolder(sessionId: string): string {
   return `${FOLDER_PREFIX}/${ENTITY.TMP}/${segment}`;
 }
 
-/**
- * Generate a unique session ID for a media-tray session.
- * Not crypto-strong — just unique enough for folder isolation.
- */
 export function newUploadSessionId(): string {
   const rand = Math.random().toString(36).slice(2, 10);
   const time = Date.now().toString(36);
@@ -132,16 +120,13 @@ export function tmpImagePublicId(sessionId: string, filename: string): string {
 }
 
 /* ============================================================
- * Parsing — reverse of the above
+ * Parsing
  * ============================================================ */
 
-/**
- * Attempts to extract metadata from a public_id.
- * Returns null if the public_id doesn't match our conventions.
- */
 export type ParsedPublicId =
   | { kind: "product"; sku: string; index: number }
   | { kind: "category"; slug: string }
+  | { kind: "brand"; slug: string }
   | { kind: "tmp"; sessionId: string }
   | { kind: "unknown" };
 
@@ -149,7 +134,6 @@ export function parsePublicId(publicId: string): ParsedPublicId {
   const parts = publicId.split("/");
   if (parts.length < 2) return { kind: "unknown" };
 
-  // Strip the folder prefix if present
   const prefixParts = FOLDER_PREFIX.split("/");
   const prefixLen = prefixParts.length;
   const hasPrefix = prefixParts.every((p, i) => parts[i] === p);
@@ -168,6 +152,10 @@ export function parsePublicId(publicId: string): ParsedPublicId {
     return { kind: "category", slug: owner };
   }
 
+  if (entity === ENTITY.BRANDS && owner) {
+    return { kind: "brand", slug: owner };
+  }
+
   if (entity === ENTITY.TMP && owner) {
     return { kind: "tmp", sessionId: owner };
   }
@@ -176,14 +164,9 @@ export function parsePublicId(publicId: string): ParsedPublicId {
 }
 
 /* ============================================================
- * Rename between entities (used after wizard commit)
+ * Rename between entities
  * ============================================================ */
 
-/**
- * Given a tmp public_id and a target product SKU, produce the
- * final public_id. Cloudinary rename is done via the SDK in
- * manage.ts; this just computes the target.
- */
 export function tmpToProductPublicId(
   tmpPublicId: string,
   sku: string,
@@ -197,18 +180,13 @@ export function tmpToProductPublicId(
 }
 
 /* ============================================================
- * URL builder (for the client if needed)
+ * URL builder
  * ============================================================ */
 
-/**
- * Build a public delivery URL. Optional transforms:
- *   cdnUrl(publicId, "w_400,h_400,c_fill,q_auto,f_auto")
- */
 export function cdnUrl(publicId: string, transform?: string): string {
   const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   if (!cloud) {
-    // Fall back to server-only env if the public one isn't set
-    const cloudName = FOLDER_PREFIX; // prevents a crash — but should be set
+    const cloudName = FOLDER_PREFIX;
     console.warn(
       "[cloudinary] NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME not set; URL may be wrong",
     );

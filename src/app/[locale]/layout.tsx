@@ -1,7 +1,13 @@
 // src/app/[locale]/layout.tsx
+
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
-import { routing } from "@/i18n/routing";
+
+import { routing, type Locale } from "@/i18n/routing";
+import {
+  getStorefrontCategoryTree,
+  toCategoryNav,
+} from "@/lib/storefront/category-nav";
 
 import Navbar from "@/components/navigation/Navbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
@@ -21,9 +27,12 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
 
+  const tree = await getStorefrontCategoryTree();
+  const categories = toCategoryNav(tree, locale as Locale);
+
   return (
     <NextIntlClientProvider>
-      <Navbar />
+      <Navbar categories={categories} />
       {children}
       <MobileBottomNav />
       <Footer />

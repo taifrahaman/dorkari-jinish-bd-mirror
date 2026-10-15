@@ -15,11 +15,14 @@ export type ProductColor = {
 export type ShopProduct = {
   id: string;
   name: LocalizedText;
-  brand: LocalizedText;
-  brandSlug: string;
+  brand?: LocalizedText;
+  brandSlug?: string;
   category: LocalizedText;
   categorySlug: string;
-  tag?: LocalizedText;
+  /** Root ancestor of `categorySlug`. Equal to `category` when the product sits on a root. */
+  mainCategory?: LocalizedText;
+  mainCategorySlug?: string;
+
   price: number;
   originalPrice?: number;
   rating: number;
@@ -27,6 +30,7 @@ export type ShopProduct = {
   image: string;
   href: string;
   inStock: boolean;
+  badges: [];
   /** ISO date string — used for the "Newest" sort. */
   createdAt: string;
 };
@@ -37,7 +41,7 @@ export type SortOption =
 export type PriceRange = [number, number];
 
 export type FilterState = {
-  categories: string[]; // categorySlug values
+  categories: string[]; // categorySlug OR mainCategorySlug values
   brands: string[]; // brandSlug values
   priceRange: PriceRange | null;
   minRating: number | null;
@@ -60,6 +64,18 @@ export const DEFAULT_FILTERS: FilterState = {
 export type Facet = {
   value: string;
   label: LocalizedText;
+  count: number;
+};
+
+/** A category facet that may carry one level of children (parent → leaf). */
+export type CategoryFacetNode = Facet & {
+  children?: Facet[];
+};
+
+/** One selectable colour swatch, with a live result count. */
+export type ColorFacet = {
+  hex: string;
+  name?: LocalizedText;
   count: number;
 };
 

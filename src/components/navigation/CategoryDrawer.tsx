@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, X } from "lucide-react";
 import type { CategoryNode, NavLink } from "./navItems";
@@ -20,7 +20,9 @@ export default function CategoryDrawer({ open, onClose, categories }: Props) {
   const [mounted, setMounted] = useState(false);
 
   // Portal target only exists client-side
-  useEffectEvent(() => setMounted(true));
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Escape closes
   useEffect(() => {

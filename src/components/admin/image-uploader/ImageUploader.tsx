@@ -3,11 +3,30 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Loader2, Plus } from "lucide-react";
+import { GripVertical, ImagePlus, Images, Loader2, Plus } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ImageRef } from "@/services/cloudinary.service";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import type { MediaAsset } from "@/services/media.service";
 import {
   useCloudinaryUpload,
   type CloudinaryEntity,
@@ -30,11 +49,17 @@ export type ImageUploaderProps = {
 
   getPublicId?: (file: File, index: number) => string;
 
-  /**
-   * Show an alt-text input under each saved image.
-   * Default: true. Alt is optional — the input is a convenience.
-   */
+  /** Show an alt-text input under each saved image. Default: true. */
   showAltInput?: boolean;
+
+  /** Enable drag-to-reorder for saved images. Default: true. */
+  sortable?: boolean;
+
+  /** Show the "Choose from library" button. Default: true. */
+  showLibraryPicker?: boolean;
+
+  /** Folder filter for the library picker. Defaults to `entity`. */
+  pickerEntity?: "all" | "products" | "categories" | "brands";
 
   disabled?: boolean;
 
@@ -53,11 +78,15 @@ export function ImageUploader({
   maxImages = 10,
   getPublicId,
   showAltInput = true,
+  sortable = true,
+  showLibraryPicker = true,
+  pickerEntity,
   disabled = false,
   className,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const mergedIdsRef = useRef<Set<string>>(new Set());
 
   const upload = useCloudinaryUpload({
@@ -122,7 +151,7 @@ export function ImageUploader({
   };
 
   /* ----------------------------------------------------------
-   * Drag & drop
+   * Drag & drop (file drop)
    * ---------------------------------------------------------- */
 
   const onDragEnter = (e: React.DragEvent) => {
@@ -182,6 +211,68 @@ export function ImageUploader({
   );
 
   /* ----------------------------------------------------------
+   * Library picker → append selected assets
+   * ---------------------------------------------------------- */
+
+  const handlePickerConfirm = useCallback(
+    (picked: MediaAsset[]) => {
+      const existing = new Set(value.map((v) => v.publicId));
+      const room = Math.max(0, maxImages - value.length);
+
+      const additions: ImageRef[] = [];
+      for (const asset of picked) {
+        if (existing.has(asset.publicId)) continue;
+        if (additions.length >= room) break;
+        additions.push({
+          url: asset.url,
+          publicId: asset.publicId,
+          alt: "",
+        });
+      }
+
+      if (additions.length === 0) return;
+      onChange([...value, ...additions]);
+    },
+    [onChange, value, maxImages],
+  );
+
+  const existingPublicIds = useMemo(
+    () => new Set(value.map((v) => v.publicId)),
+    [value],
+  );
+
+  /* ----------------------------------------------------------
+   * Sortable (drag-to-reorder) for saved images
+   * ---------------------------------------------------------- */
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = value.findIndex(
+        (img) => `saved-${img.publicId}` === active.id,
+      );
+      const newIndex = value.findIndex(
+        (img) => `saved-${img.publicId}` === over.id,
+      );
+
+      if (oldIndex === -1 || newIndex === -1) return;
+      onChange(arrayMove(value, oldIndex, newIndex));
+    },
+    [onChange, value],
+  );
+
+  /* ----------------------------------------------------------
    * Synthetic items for saved refs
    * ---------------------------------------------------------- */
 
@@ -198,11 +289,18 @@ export function ImageUploader({
     [value],
   );
 
+  const sortableIds = useMemo(
+    () => savedItems.map((it) => it.id),
+    [savedItems],
+  );
+
   /* ----------------------------------------------------------
    * Render
    * ---------------------------------------------------------- */
 
   const hasAny = savedItems.length > 0 || uploadItems.length > 0;
+  const resolvedPickerEntity =
+    pickerEntity ?? (entity === "tmp" ? "all" : entity);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -251,6 +349,25 @@ export function ImageUploader({
         </div>
       )}
 
+      {/* Library picker trigger */}
+      {showLibraryPicker && !atMax && (
+        <div className="flex items-center justify-center gap-2">
+          <span className="h-px flex-1 bg-brand-border" aria-hidden />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => !disabled && setPickerOpen(true)}
+            disabled={disabled}
+            className="gap-1.5 text-xs"
+          >
+            <Images className="h-3.5 w-3.5" />
+            Choose from library
+          </Button>
+          <span className="h-px flex-1 bg-brand-border" aria-hidden />
+        </div>
+      )}
+
       <input
         ref={inputRef}
         type="file"
@@ -264,33 +381,73 @@ export function ImageUploader({
       {/* Grid */}
       {hasAny && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {/* Persisted images — optional alt input below */}
-          {savedItems.map((item, idx) => {
-            const ref = value[idx];
+          {sortable ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortableIds}
+                strategy={rectSortingStrategy}
+              >
+                {savedItems.map((item, idx) => {
+                  const ref = value[idx];
+                  return (
+                    <SortableImageTile key={item.id} id={item.id}>
+                      <ImageItem
+                        item={item}
+                        isPrimary={idx === 0}
+                        onSetPrimary={() =>
+                          handleSetPrimary(item.result!.publicId)
+                        }
+                        onRemove={() =>
+                          handleRemoveSaved(item.result!.publicId)
+                        }
+                      />
 
-            return (
-              <div key={item.id} className="space-y-1.5">
-                <ImageItem
-                  item={item}
-                  isPrimary={idx === 0}
-                  onSetPrimary={() => handleSetPrimary(item.result!.publicId)}
-                  onRemove={() => handleRemoveSaved(item.result!.publicId)}
-                />
-
-                {showAltInput && (
-                  <Input
-                    value={ref?.alt ?? ""}
-                    onChange={(e) => handleAltChange(idx, e.target.value)}
-                    placeholder="Alt text (optional)"
-                    maxLength={200}
-                    disabled={disabled}
-                    className="h-8 text-xs"
-                    aria-label={`Alt text for image ${idx + 1}`}
+                      {showAltInput && (
+                        <Input
+                          value={ref?.alt ?? ""}
+                          onChange={(e) => handleAltChange(idx, e.target.value)}
+                          placeholder="Alt text (optional)"
+                          maxLength={200}
+                          disabled={disabled}
+                          className="h-8 text-xs"
+                          aria-label={`Alt text for image ${idx + 1}`}
+                        />
+                      )}
+                    </SortableImageTile>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            savedItems.map((item, idx) => {
+              const ref = value[idx];
+              return (
+                <div key={item.id} className="space-y-1.5">
+                  <ImageItem
+                    item={item}
+                    isPrimary={idx === 0}
+                    onSetPrimary={() => handleSetPrimary(item.result!.publicId)}
+                    onRemove={() => handleRemoveSaved(item.result!.publicId)}
                   />
-                )}
-              </div>
-            );
-          })}
+                  {showAltInput && (
+                    <Input
+                      value={ref?.alt ?? ""}
+                      onChange={(e) => handleAltChange(idx, e.target.value)}
+                      placeholder="Alt text (optional)"
+                      maxLength={200}
+                      disabled={disabled}
+                      className="h-8 text-xs"
+                      aria-label={`Alt text for image ${idx + 1}`}
+                    />
+                  )}
+                </div>
+              );
+            })
+          )}
 
           {/* Transient uploads */}
           {uploadItems.map((item) => (
@@ -351,8 +508,69 @@ export function ImageUploader({
           )}
         </div>
       )}
+
+      {/* Library picker modal */}
+      {showLibraryPicker && (
+        <MediaPickerModal
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          maxSelectable={remainingSlots}
+          disabledIds={existingPublicIds}
+          onConfirm={handlePickerConfirm}
+          defaultEntity={resolvedPickerEntity}
+        />
+      )}
     </div>
   );
 }
 
 export default ImageUploader;
+
+/* ============================================================
+ * Sortable tile wrapper
+ * ============================================================ */
+
+function SortableImageTile({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 20 : undefined,
+      }}
+      className="relative space-y-1.5"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className={cn(
+          "absolute -left-1.5 -top-1.5 z-10 grid h-6 w-6 cursor-grab touch-none place-items-center rounded-full border border-brand-border bg-brand-surface text-brand-text-secondary shadow-sm transition-colors",
+          "hover:bg-muted active:cursor-grabbing",
+        )}
+      >
+        <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+
+      {children}
+    </div>
+  );
+}

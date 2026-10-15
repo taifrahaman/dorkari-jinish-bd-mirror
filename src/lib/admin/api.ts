@@ -25,6 +25,12 @@ import type {
   UpdateColorInput,
 } from "@/lib/validations/color.schema";
 import type {
+  CreateBrandInput,
+  BrandResponse,
+  BrandListQuery,
+  UpdateBrandInput,
+} from "@/lib/validations/brand.schema";
+import type {
   BulkCreateProductInput,
   ImportPayload,
   ImportResult,
@@ -47,11 +53,27 @@ import type {
 
 import type {
   InventoryReport,
+  InventorySort,
   InventoryStatus,
   ProfitReport,
   ReportRange,
   VatReport,
 } from "@/lib/admin/reports";
+
+import type {
+  CreateCustomerInput,
+  UpdateCustomerInput,
+  CustomerListQuery,
+  CustomerResponse,
+  CustomerStats,
+} from "@/lib/validations/customer.schema";
+
+import type {
+  MediaAsset,
+  ListMediaResult,
+  UsageEntry,
+  DeleteMediaResult,
+} from "@/services/media.service";
 
 /* ============================================================
  * Spec suggestion type
@@ -125,7 +147,9 @@ export type ProductStats = {
 
 export type OrderStatsRange = "today" | "7d" | "30d" | "all";
 
-export type OrderChannel = "online" | "pos" | "phone" | "walk-in";
+export type OrderChannel =
+  "online" | "pos" | "phone" | "walk-in" | "facebook" | "whatsapp";
+
 export type OrderStatus =
   | "pending"
   | "confirmed"
@@ -151,6 +175,20 @@ export type OrderStats = {
   byChannel: Record<OrderChannel, number>;
   byStatus: Record<OrderStatus, number>;
   byPaymentStatus: Record<PaymentStatus, number>;
+};
+
+/* ============================================================
+ * Media list params
+ * ============================================================ */
+
+export type MediaListParams = {
+  entity?: "all" | "products" | "categories" | "brands" | "tmp";
+  used?: "all" | "true" | "false";
+  category?: string;
+  q?: string;
+  sort?: "newest" | "oldest" | "name" | "size";
+  cursor?: string;
+  limit?: number;
 };
 
 /* ============================================================
@@ -410,7 +448,7 @@ function extractFilename(res: Response, fallbackPath: string): string {
  * ============================================================ */
 
 export type SignUploadRequest = {
-  entity: "products" | "categories" | "tmp";
+  entity: "products" | "categories" | "brands" | "tmp";
   owner: string;
   publicId?: string;
 };
@@ -744,10 +782,11 @@ export const reportsApi = {
 
   inventory(
     status: InventoryStatus = "all",
+    sort: InventorySort = "stock-asc",
     signal?: AbortSignal,
   ): Promise<InventoryReport> {
     return adminRequest<InventoryReport>("/reports/inventory", {
-      query: { status },
+      query: { status, sort },
       signal,
     });
   },
@@ -808,6 +847,182 @@ export const colorsApi = {
     return adminRequest<{ _id: string }>(`/colors/${id}`, {
       method: "DELETE",
     });
+  },
+};
+
+/* ============================================================
+ * Brands API
+ * ============================================================ */
+
+export const brandsApi = {
+  list(
+    params: Partial<BrandListQuery> = {},
+    signal?: AbortSignal,
+  ): Promise<Paginated<BrandResponse>> {
+    return adminRequest<Paginated<BrandResponse>>("/brands", {
+      query: params,
+      signal,
+    });
+  },
+
+  suggest(
+    q: string,
+    limit = 10,
+    signal?: AbortSignal,
+  ): Promise<BrandResponse[]> {
+    return adminRequest<BrandResponse[]>("/brands/suggest", {
+      query: { q, limit },
+      signal,
+    });
+  },
+
+  get(id: string, signal?: AbortSignal): Promise<BrandResponse> {
+    return adminRequest<BrandResponse>(`/brands/${id}`, { signal });
+  },
+
+  create(input: CreateBrandInput): Promise<BrandResponse> {
+    return adminRequest<BrandResponse>("/brands", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  update(id: string, input: UpdateBrandInput): Promise<BrandResponse> {
+    return adminRequest<BrandResponse>(`/brands/${id}`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+
+  archive(id: string): Promise<{ _id: string }> {
+    return adminRequest<{ _id: string }>(`/brands/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  restore(id: string): Promise<BrandResponse> {
+    return adminRequest<BrandResponse>(`/brands/${id}/restore`, {
+      method: "POST",
+    });
+  },
+};
+
+/* ============================================================
+ * Customers API
+ * ============================================================ */
+
+export const customersApi = {
+  list(
+    params: Partial<CustomerListQuery> = {},
+    signal?: AbortSignal,
+  ): Promise<Paginated<CustomerResponse>> {
+    return adminRequest<Paginated<CustomerResponse>>("/customers", {
+      query: params,
+      signal,
+    });
+  },
+
+  get(id: string, signal?: AbortSignal): Promise<CustomerResponse> {
+    return adminRequest<CustomerResponse>(`/customers/${id}`, { signal });
+  },
+
+  stats(id: string, signal?: AbortSignal): Promise<CustomerStats> {
+    return adminRequest<CustomerStats>(`/customers/${id}/stats`, { signal });
+  },
+
+  suggest(
+    q: string,
+    limit = 10,
+    signal?: AbortSignal,
+  ): Promise<CustomerResponse[]> {
+    return adminRequest<CustomerResponse[]>("/customers/suggest", {
+      query: { q, limit },
+      signal,
+    });
+  },
+
+  create(input: CreateCustomerInput): Promise<CustomerResponse> {
+    return adminRequest<CustomerResponse>("/customers", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  update(id: string, input: UpdateCustomerInput): Promise<CustomerResponse> {
+    return adminRequest<CustomerResponse>(`/customers/${id}`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+
+  archive(id: string): Promise<{ _id: string }> {
+    return adminRequest<{ _id: string }>(`/customers/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  restore(id: string): Promise<CustomerResponse> {
+    return adminRequest<CustomerResponse>(`/customers/${id}/restore`, {
+      method: "POST",
+    });
+  },
+
+  permanentDelete(id: string): Promise<{ _id: string }> {
+    return adminRequest<{ _id: string }>(`/customers/${id}/permanent`, {
+      method: "DELETE",
+    });
+  },
+};
+
+/* ============================================================
+ * Media API
+ * ============================================================
+ * Public IDs contain slashes (e.g. `prefix/products/SKU/SKU-1`),
+ * so we URL-encode each segment individually and join with `/`.
+ * The Next.js catch-all route `[...publicId]` reassembles them.
+ * ============================================================ */
+
+function encodePublicId(publicId: string): string {
+  return publicId
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+export const mediaApi = {
+  list(
+    params: MediaListParams = {},
+    signal?: AbortSignal,
+  ): Promise<ListMediaResult> {
+    return adminRequest<ListMediaResult>("/media", {
+      query: params,
+      signal,
+    });
+  },
+
+  getUsage(
+    publicIds: string[],
+    signal?: AbortSignal,
+  ): Promise<Record<string, UsageEntry>> {
+    return adminRequest<Record<string, UsageEntry>>("/media/usage", {
+      query: { publicIds: publicIds.join(",") },
+      signal,
+    });
+  },
+
+  remove(
+    publicId: string,
+    force = false,
+    signal?: AbortSignal,
+  ): Promise<DeleteMediaResult> {
+    return adminRequest<DeleteMediaResult>(
+      `/media/${encodePublicId(publicId)}`,
+      {
+        method: "DELETE",
+        query: force ? { force: "true" } : undefined,
+        signal,
+      },
+    );
   },
 };
 

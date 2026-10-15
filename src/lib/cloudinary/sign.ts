@@ -225,6 +225,13 @@ export const signCategoryImage = (slug: string) =>
     publicId: "cover",
   });
 
+export const signBrandLogo = (slug: string) =>
+  createSignedUploadParams({
+    entity: ENTITY.BRANDS,
+    owner: slug,
+    publicId: "logo",
+  });
+
 export const signTmpImage = (sessionId: string, filename: string) => {
   const base = filename.replace(/\.[^.]+$/, "");
   return createSignedUploadParams({

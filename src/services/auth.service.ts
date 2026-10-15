@@ -66,7 +66,7 @@ export async function loginUser(email: string, password: string) {
 
   const token = await signJwt({
     userId: user._id.toString(),
-    email: user.email,
+    email: email,
     role: user.role,
   });
 
@@ -126,7 +126,7 @@ export async function loginAdmin(email: string, password: string) {
 
   const token = await signJwt({
     userId: user._id.toString(),
-    email: user.email,
+    email: email,
     role: user.role,
   });
 

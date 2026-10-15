@@ -4,10 +4,17 @@ import { z } from "zod";
 import { objectIdSchema } from "./common.schema";
 
 /* ============================================================
- * Enums — must match the model
+ * Enums
  * ============================================================ */
 
-export const orderChannelSchema = z.enum(["online", "pos", "phone", "walk-in"]);
+export const orderChannelSchema = z.enum([
+  "online",
+  "pos",
+  "walk-in",
+  "phone",
+  "facebook",
+  "whatsapp",
+]);
 
 export const orderStatusSchema = z.enum([
   "pending",
@@ -35,6 +42,11 @@ export const paymentMethodSchema = z.enum([
   "bank_transfer",
 ]);
 
+export type OrderChannel = z.infer<typeof orderChannelSchema>;
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
+export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+
 /* ============================================================
  * Order item
  * ============================================================ */
@@ -50,29 +62,30 @@ export const orderItemInputSchema = z.object({
 export type OrderItemInput = z.infer<typeof orderItemInputSchema>;
 
 /* ============================================================
- * Customer snapshot
+ * Customer input
+ *
+ * Unified shape: either an existing customer id, or enough
+ * info to find-or-create one, or nothing (walk-in).
  * ============================================================ */
 
-export const customerSnapshotSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  phone: z.string().trim().max(40).optional(),
-  email: z.string().trim().email().optional().or(z.literal("")),
-});
+export const customerInputSchema = z
+  .object({
+    id: objectIdSchema.optional(),
+    name: z.string().trim().max(120).optional(),
+    phone: z.string().trim().max(40).optional(),
+    email: z.string().trim().email().optional().or(z.literal("")),
+  })
+  .optional();
 
-export type CustomerSnapshotInput = z.infer<typeof customerSnapshotSchema>;
+export type CustomerInput = z.infer<typeof customerInputSchema>;
 
 /* ============================================================
- * Create order
+ * Create
  * ============================================================ */
 
 export const createOrderSchema = z.object({
   channel: orderChannelSchema.default("online"),
-
-  user: objectIdSchema.optional(),
-  guestEmail: z.string().trim().email().optional().or(z.literal("")),
-  guestName: z.string().trim().max(120).optional(),
-  guestPhone: z.string().trim().max(40).optional(),
-  customerSnapshot: customerSnapshotSchema.optional(),
+  customer: customerInputSchema,
 
   items: z
     .array(orderItemInputSchema)
@@ -93,7 +106,7 @@ export const createOrderSchema = z.object({
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
 /* ============================================================
- * Update order — statuses + notes + tracking only
+ * Update
  * ============================================================ */
 
 export const updateOrderSchema = z.object({
@@ -175,6 +188,12 @@ export const orderItemResponseSchema = z.object({
   lineTotal: z.number(),
 });
 
+export const customerSnapshotResponseSchema = z.object({
+  name: z.string(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+});
+
 export const orderResponseSchema = z.object({
   _id: z.string(),
   orderNumber: z.string(),
@@ -184,7 +203,7 @@ export const orderResponseSchema = z.object({
   guestEmail: z.string().optional(),
   guestName: z.string().optional(),
   guestPhone: z.string().optional(),
-  customerSnapshot: customerSnapshotSchema.optional(),
+  customerSnapshot: customerSnapshotResponseSchema.optional(),
 
   items: z.array(orderItemResponseSchema),
 

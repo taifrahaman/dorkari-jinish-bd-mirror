@@ -1,13 +1,16 @@
 // src/lib/shop/filter-utils.ts
 
 import type {
+  CategoryFacetNode,
+  ColorFacet,
   Facet,
   FilterState,
   Locale,
+  LocalizedText,
+  ProductColor,
   ShopProduct,
   SortOption,
 } from "./types";
-import { BRAND_LIST, CATEGORY_LIST } from "./dummy-products";
 
 /* ------------------------------------------------------------------ */
 /* Formatting                                                           */
@@ -21,14 +24,26 @@ export function formatPrice(price: number, locale: Locale): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* Filtering                                                            */
+/* Category matching                                                    */
 /* ------------------------------------------------------------------ */
 
 /**
- * Applies every filter dimension except `except`. Used to compute facet
- * counts that reflect all *other* active filters without a facet
- * shrinking its own option list to just the selected values.
+ * A product matches a category filter value if:
+ *   - its leaf slug equals the value, OR
+ *   - its root slug equals the value.
+ *
+ * This makes a root chip select the whole subtree.
  */
+function categoryMatches(product: ShopProduct, slug: string): boolean {
+  if (product.categorySlug === slug) return true;
+  if (product.mainCategorySlug === slug) return true;
+  return false;
+}
+
+/* ------------------------------------------------------------------ */
+/* Filtering                                                            */
+/* ------------------------------------------------------------------ */
+
 function applyFiltersExcept(
   products: ShopProduct[],
   filters: FilterState,
@@ -36,10 +51,12 @@ function applyFiltersExcept(
 ): ShopProduct[] {
   return products.filter((p) => {
     if (except !== "categories" && filters.categories.length > 0) {
-      if (!filters.categories.includes(p.categorySlug)) return false;
+      if (!filters.categories.some((slug) => categoryMatches(p, slug))) {
+        return false;
+      }
     }
     if (except !== "brands" && filters.brands.length > 0) {
-      if (!filters.brands.includes(p.brandSlug)) return false;
+      if (!p.brandSlug || !filters.brands.includes(p.brandSlug)) return false;
     }
     if (except !== "priceRange" && filters.priceRange) {
       const [min, max] = filters.priceRange;
@@ -95,18 +112,89 @@ export function sortProducts(
 }
 
 /* ------------------------------------------------------------------ */
+/* Facet source lists — derived from the catalog                      */
+/* ------------------------------------------------------------------ */
+
+function deriveCategoryTree(products: ShopProduct[]): CategoryFacetNode[] {
+  const roots = new Map<
+    string,
+    {
+      label: LocalizedText;
+      children: Map<string, LocalizedText>;
+    }
+  >();
+
+  for (const p of products) {
+    const rootSlug = p.mainCategorySlug ?? p.categorySlug;
+    const rootLabel = p.mainCategory ?? p.category;
+    if (!rootSlug) continue;
+
+    let node = roots.get(rootSlug);
+    if (!node) {
+      node = { label: rootLabel, children: new Map() };
+      roots.set(rootSlug, node);
+    }
+
+    if (p.categorySlug && p.categorySlug !== rootSlug) {
+      if (!node.children.has(p.categorySlug)) {
+        node.children.set(p.categorySlug, p.category);
+      }
+    }
+  }
+
+  return Array.from(roots, ([value, { label, children }]) => ({
+    value,
+    label,
+    count: 0,
+    children: children.size
+      ? Array.from(children, ([cValue, cLabel]) => ({
+          value: cValue,
+          label: cLabel,
+          count: 0,
+        }))
+      : undefined,
+  }));
+}
+
+function deriveBrandList(
+  products: ShopProduct[],
+): { value: string; label: LocalizedText }[] {
+  const seen = new Map<string, LocalizedText>();
+  for (const p of products) {
+    if (p.brandSlug && p.brand && !seen.has(p.brandSlug)) {
+      seen.set(p.brandSlug, p.brand);
+    }
+  }
+  return Array.from(seen, ([value, label]) => ({ value, label }));
+}
+
+function deriveColorList(products: ShopProduct[]): ProductColor[] {
+  const seen = new Map<string, ProductColor>();
+  for (const p of products) {
+    for (const c of p.colors) {
+      if (!seen.has(c.hex)) seen.set(c.hex, c);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+/* ------------------------------------------------------------------ */
 /* Facet counts                                                         */
 /* ------------------------------------------------------------------ */
 
 export function getCategoryFacets(
   products: ShopProduct[],
   filters: FilterState,
-): Facet[] {
+): CategoryFacetNode[] {
   const pool = applyFiltersExcept(products, filters, "categories");
-  return CATEGORY_LIST.map(({ value, label }) => ({
-    value,
-    label,
-    count: pool.filter((p) => p.categorySlug === value).length,
+
+  return deriveCategoryTree(products).map((root) => ({
+    ...root,
+    count: pool.filter((p) => categoryMatches(p, root.value)).length,
+    children: root.children?.map((child) => ({
+      ...child,
+      count: pool.filter((p) => p.categorySlug === child.value).length,
+    })),
   }));
 }
 
@@ -115,13 +203,25 @@ export function getBrandFacets(
   filters: FilterState,
 ): Facet[] {
   const pool = applyFiltersExcept(products, filters, "brands");
-  return BRAND_LIST.map(({ value, label }) => ({
-    value,
-    label,
-    count: pool.filter((p) => p.brandSlug === value).length,
-  })).filter(
-    (facet) => facet.count > 0 || filters.brands.includes(facet.value),
-  );
+  return deriveBrandList(products)
+    .map(({ value, label }) => ({
+      value,
+      label,
+      count: pool.filter((p) => p.brandSlug === value).length,
+    }))
+    .filter((facet) => facet.count > 0 || filters.brands.includes(facet.value));
+}
+
+export function getColorFacets(
+  products: ShopProduct[],
+  filters: FilterState,
+): ColorFacet[] {
+  const pool = applyFiltersExcept(products, filters, "colors");
+  return deriveColorList(products).map((color) => ({
+    hex: color.hex,
+    name: color.name,
+    count: pool.filter((p) => p.colors.some((c) => c.hex === color.hex)).length,
+  }));
 }
 
 export function getResultCount(
@@ -129,4 +229,40 @@ export function getResultCount(
   filters: FilterState,
 ): number {
   return applyFilters(products, filters).length;
+}
+
+/**
+ * Top N root-category slugs by product count, computed from the raw
+ * catalog. Stable across filter changes — used by FilterBar for the
+ * horizontal chip strip.
+ */
+export function getTopCategorySlugs(
+  products: ShopProduct[],
+  limit = 6,
+): string[] {
+  const counts = new Map<string, number>();
+  for (const p of products) {
+    const slug = p.mainCategorySlug ?? p.categorySlug;
+    if (!slug) continue;
+    counts.set(slug, (counts.get(slug) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([slug]) => slug);
+}
+
+/**
+ * Locate a category facet (root or child) by value.
+ */
+export function findCategoryFacet(
+  nodes: CategoryFacetNode[],
+  value: string,
+): Facet | undefined {
+  for (const node of nodes) {
+    if (node.value === value) return node;
+    const child = node.children?.find((c) => c.value === value);
+    if (child) return child;
+  }
+  return undefined;
 }

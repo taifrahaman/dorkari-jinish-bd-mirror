@@ -9,10 +9,14 @@ import { Menu } from "lucide-react";
 import NotificationBell from "@/components/shared/NotificationBell";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 import CategoryDrawer from "./CategoryDrawer";
-import { categoryTree, primaryNavLinks } from "./navItems";
+import { primaryNavLinks, type CategoryNode } from "./navItems";
 import styles from "./MobileNav.module.css";
 
-export default function MobileNav() {
+type Props = {
+  categories: CategoryNode[];
+};
+
+export default function MobileNav({ categories }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
@@ -47,7 +51,7 @@ export default function MobileNav() {
       <CategoryDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        categories={categoryTree}
+        categories={categories}
         links={primaryNavLinks}
       />
     </div>

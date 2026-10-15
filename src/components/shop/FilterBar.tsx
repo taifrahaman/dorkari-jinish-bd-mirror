@@ -2,16 +2,18 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { ChevronRight, SlidersHorizontal } from "lucide-react";
 import gsap from "gsap";
 
-import type { Facet, Locale, SortOption } from "@/lib/shop/types";
+import type { CategoryFacetNode, Locale, SortOption } from "@/lib/shop/types";
 import SortMenu from "./SortMenu";
 
 type FilterBarProps = {
   locale?: Locale;
-  categoryFacets: Facet[];
+  categoryFacets: CategoryFacetNode[];
+  /** Stable root slugs to render as chips. Order is preserved. */
+  topCategorySlugs: string[];
   activeCategory: string | null;
   onCategoryChange: (value: string | null) => void;
   onOpenFilters: () => void;
@@ -93,6 +95,7 @@ function ResultCount({ value, locale }: { value: number; locale: Locale }) {
 export default function FilterBar({
   locale = "en",
   categoryFacets,
+  topCategorySlugs,
   activeCategory,
   onCategoryChange,
   onOpenFilters,
@@ -102,6 +105,15 @@ export default function FilterBar({
   resultCount,
 }: FilterBarProps) {
   const hasFilters = activeFilterCount > 0;
+
+  // Resolve the top slugs against the tree. Missing slugs are skipped.
+  const chips = useMemo(() => {
+    return topCategorySlugs
+      .map((slug) => categoryFacets.find((f) => f.value === slug))
+      .filter((f): f is CategoryFacetNode => Boolean(f));
+  }, [topCategorySlugs, categoryFacets]);
+
+  const hasMoreCategories = categoryFacets.length > chips.length;
 
   return (
     <>
@@ -117,7 +129,8 @@ export default function FilterBar({
         >
           {locale === "bn" ? "সব" : "All"}
         </Chip>
-        {categoryFacets.map((facet) => (
+
+        {chips.map((facet) => (
           <Chip
             key={facet.value}
             active={activeCategory === facet.value}
@@ -131,6 +144,17 @@ export default function FilterBar({
             {facet.label[locale]}
           </Chip>
         ))}
+
+        {hasMoreCategories && (
+          <button
+            type="button"
+            onClick={onOpenFilters}
+            className="inline-flex min-h-11 items-center gap-1 rounded-full bg-brand-surface px-4 text-sm font-medium text-brand-text ring-1 ring-brand-border transition-all duration-300 hover:-translate-y-0.5 hover:ring-brand-accent active:scale-95"
+          >
+            {locale === "bn" ? "আরও" : "See more"}
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Toolbar: the only sticky part, parked just under the floating navbar */}

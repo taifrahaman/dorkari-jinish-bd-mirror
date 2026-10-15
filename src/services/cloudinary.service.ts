@@ -79,7 +79,7 @@ export async function syncProductImages(
   const prevIds = new Set(previous.map((i) => i.publicId));
 
   const toRemove = previous.filter((i) => !nextIds.has(i.publicId));
-  const kept = next.filter((i) => prevIds.has(i.publicId) || !i.publicId);
+  const kept = next.filter((i) => Boolean(i.publicId));
 
   const removed: string[] = [];
   const errors: SyncImagesResult["errors"] = [];

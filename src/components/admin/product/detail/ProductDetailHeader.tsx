@@ -3,13 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Archive,
-  ArchiveRestore,
-  Copy,
-  ExternalLink,
-  Pencil,
-} from "lucide-react";
+import { Archive, ArchiveRestore, Copy, Pencil, Tag } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/admin/page-header";
@@ -36,6 +30,15 @@ function getCategoryLabel(product: ProductResponse): string | null {
   return cat.name;
 }
 
+type BrandRef = { _id: string; name: string; slug: string } | null;
+
+function getBrandRef(product: ProductResponse): BrandRef {
+  const b = product.brand;
+  if (!b) return null;
+  if (typeof b === "string") return null;
+  return { _id: b._id, name: b.name, slug: b.slug };
+}
+
 /* ============================================================
  * Component
  * ============================================================ */
@@ -47,6 +50,7 @@ export function ProductDetailHeader({
 }: ProductDetailHeaderProps) {
   const archived = Boolean(product.deletedAt);
   const category = getCategoryLabel(product);
+  const brand = getBrandRef(product);
 
   const copySku = async () => {
     if (!product.sku) return;
@@ -151,6 +155,17 @@ export function ProductDetailHeader({
           <span className="inline-flex items-center rounded-md border border-brand-border bg-muted/40 px-2 py-0.5 text-xs text-brand-text-secondary">
             {category}
           </span>
+        )}
+
+        {brand && (
+          <Link
+            href={`/admin/brands/${brand._id}/edit`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-brand-border bg-muted/40 px-2 py-0.5 text-xs text-brand-text-secondary transition-colors hover:bg-muted hover:text-brand-primary"
+            title="View brand"
+          >
+            <Tag className="h-3 w-3 opacity-70" aria-hidden="true" />
+            {brand.name}
+          </Link>
         )}
       </div>
     </PageHeader>

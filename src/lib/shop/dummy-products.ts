@@ -199,11 +199,11 @@ function generateProducts(): ShopProduct[] {
       brandSlug: brand.slug,
       category: { en: category.en, bn: category.bn },
       categorySlug: category.slug,
-      tag: isOnSale ? { en: "Best Deal", bn: "সেরা অফার" } : undefined,
       price,
       originalPrice,
       rating,
       colors,
+      badges: [],
       // NOTE: swap for real product photography once the backend lands.
       // Add "picsum.photos" to next.config's images.remotePatterns to use
       // this placeholder source, or point it at local files in /public.

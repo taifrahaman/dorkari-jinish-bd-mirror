@@ -9,6 +9,7 @@ import { LOW_STOCK_THRESHOLD } from "@/lib/validations/product.schema";
 import type {
   InventoryReport,
   InventoryRow,
+  InventorySort,
   InventoryStatus,
   ProfitReport,
   ProfitReportBucket,
@@ -335,11 +336,38 @@ export async function getProfitReport(
 }
 
 /* ============================================================
+ * Inventory row sort helper
+ * ============================================================ */
+
+function sortInventoryRows(rows: InventoryRow[], sort: InventorySort): void {
+  rows.sort((a, b) => {
+    switch (sort) {
+      case "stock-asc":
+        return a.stock - b.stock || a.name.localeCompare(b.name);
+      case "stock-desc":
+        return b.stock - a.stock || a.name.localeCompare(b.name);
+      case "retail-desc":
+        return b.retailValue - a.retailValue || a.name.localeCompare(b.name);
+      case "retail-asc":
+        return a.retailValue - b.retailValue || a.name.localeCompare(b.name);
+      case "profit-desc": {
+        const av = a.potentialProfit ?? -Number.MAX_SAFE_INTEGER;
+        const bv = b.potentialProfit ?? -Number.MAX_SAFE_INTEGER;
+        return bv - av || a.name.localeCompare(b.name);
+      }
+      case "name-asc":
+        return a.name.localeCompare(b.name);
+    }
+  });
+}
+
+/* ============================================================
  * Inventory report
  * ============================================================ */
 
 export async function getInventoryReport(
   status: InventoryStatus = "all",
+  sort: InventorySort = "stock-asc",
 ): Promise<InventoryReport> {
   /* Global low-stock threshold from settings */
   const settings = await getSettings();
@@ -426,6 +454,8 @@ export async function getInventoryReport(
       potentialProfit,
     });
   }
+
+  sortInventoryRows(rows, sort);
 
   return {
     status,

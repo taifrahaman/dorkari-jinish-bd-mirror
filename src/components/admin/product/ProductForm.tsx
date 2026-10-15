@@ -17,6 +17,7 @@ import {
   CategoryCombobox,
   type CategoryOption,
 } from "@/components/admin/category-combobox/CategoryCombobox";
+import { BrandCombobox } from "@/components/admin/brand-combobox/BrandCombobox";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { ColorMultiSelect } from "@/components/admin/color";
 import { SpecificationEditor } from "./SpecificationEditor";
@@ -113,10 +114,6 @@ function buildDefaults(product?: ProductResponse): FormInput {
 
 /* ============================================================
  * Numeric coercion for optional number inputs
- *
- * An empty <input type="number"> yields "" from the DOM. With
- * `valueAsNumber: true` that becomes NaN, which Zod rejects.
- * `setValueAs` lets us turn empty into undefined cleanly.
  * ============================================================ */
 
 const optionalNumber = {
@@ -198,12 +195,16 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const onSubmit = handleSubmit(async (values) => {
     try {
       if (isEdit && product) {
+        // Edit: stay on this page. The mutation invalidates the query
+        // cache and useProduct re-fetches — form re-hydrates with
+        // fresh data. No redirect, no refresh.
         await updateMutation.mutateAsync(values);
       } else {
+        // Create: navigate back to the products list.
         await createMutation.mutateAsync(values);
+        router.push("/admin/products");
+        router.refresh();
       }
-      router.push("/admin/products");
-      router.refresh();
     } catch (err) {
       if (err instanceof AdminApiError) {
         const fieldErrors = err.getFieldErrors();
@@ -341,7 +342,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           </Field>
         </div>
 
-        {/* Live margin preview */}
         {marginLine && (
           <div
             className={cn(
@@ -389,7 +389,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
        * ------------------------------------------------------ */}
       <Section
         title="Organization"
-        description="Category and visibility settings."
+        description="Category, brand, and visibility settings."
       >
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Category" required error={errors.category?.message}>
@@ -408,33 +408,52 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             />
           </Field>
 
-          <div className="space-y-3">
+          <Field
+            label="Brand"
+            hint="Optional. Leave blank for unbranded products."
+            error={errors.brand?.message}
+          >
             <Controller
               control={control}
-              name="isActive"
+              name="brand"
               render={({ field }) => (
-                <ToggleRow
-                  label="Active"
-                  description="Visible on the storefront."
-                  checked={field.value ?? true}
-                  onCheckedChange={field.onChange}
+                <BrandCombobox
+                  value={field.value || undefined}
+                  onChange={(id) => field.onChange(id ?? undefined)}
+                  allowCreate
+                  placeholder="Select brand…"
                 />
               )}
             />
+          </Field>
+        </div>
 
-            <Controller
-              control={control}
-              name="isFeatured"
-              render={({ field }) => (
-                <ToggleRow
-                  label="Featured"
-                  description="Highlight on the homepage."
-                  checked={field.value ?? false}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-          </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <ToggleRow
+                label="Active"
+                description="Visible on the storefront."
+                checked={field.value ?? true}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="isFeatured"
+            render={({ field }) => (
+              <ToggleRow
+                label="Featured"
+                description="Highlight on the homepage."
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
         </div>
       </Section>
 
@@ -489,7 +508,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
        * ------------------------------------------------------ */}
       <Section
         title="Images"
-        description="First image is the primary. Drag to reorder is coming soon."
+        description="First image is the main image. Drag the handle to reorder."
       >
         <Controller
           control={control}

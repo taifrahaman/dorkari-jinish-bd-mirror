@@ -6,7 +6,14 @@ import mongoose, { Schema, Document, Model } from "mongoose";
  * Constants
  * ============================================================ */
 
-export const ORDER_CHANNELS = ["online", "pos", "phone", "walk-in"] as const;
+export const ORDER_CHANNELS = [
+  "online",
+  "pos",
+  "walk-in",
+  "phone",
+  "facebook",
+  "whatsapp",
+] as const;
 
 export type OrderChannel = (typeof ORDER_CHANNELS)[number];
 
@@ -152,7 +159,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     channel: {
       type: String,
-      enum: ORDER_CHANNELS,
+      enum: [...ORDER_CHANNELS],
       default: "online",
     },
 
@@ -186,17 +193,17 @@ const OrderSchema = new Schema<IOrder>(
 
     status: {
       type: String,
-      enum: ORDER_STATUSES,
+      enum: [...ORDER_STATUSES],
       default: "pending",
     },
     paymentStatus: {
       type: String,
-      enum: PAYMENT_STATUSES,
+      enum: [...PAYMENT_STATUSES],
       default: "pending",
     },
     paymentMethod: {
       type: String,
-      enum: PAYMENT_METHODS,
+      enum: [...PAYMENT_METHODS],
     },
 
     shippingAddress: { type: String, trim: true },
@@ -219,10 +226,6 @@ const OrderSchema = new Schema<IOrder>(
  * Middleware
  * ============================================================ */
 
-/**
- * Validate: either user OR guest details must be present, EXCEPT
- * for POS / walk-in channels where the customer may be anonymous.
- */
 OrderSchema.pre("validate", function () {
   const walkInChannels: OrderChannel[] = ["pos", "walk-in"];
   const isWalkIn = walkInChannels.includes(this.channel);
@@ -240,10 +243,6 @@ OrderSchema.pre("validate", function () {
   }
 });
 
-/**
- * Compute line totals, subtotal, tax, cost, profit, grand total.
- * Authoritative — overwrites any incoming values.
- */
 OrderSchema.pre("validate", function () {
   let subtotal = 0;
   let costTotal = 0;
@@ -261,19 +260,10 @@ OrderSchema.pre("validate", function () {
 
   this.subtotal = subtotal;
   this.costTotal = costTotal;
-
-  // Order-level discount is applied on top of line discounts.
-  // Currently there is no separate order-level discount field —
-  // discountTotal is the sum of line-level discounts.
   this.discountTotal = lineDiscounts;
-
-  // Tax is currently 0 — VAT disabled. When enabled, taxTotal
-  // will be computed from item.taxRate × lineTotal.
   this.taxTotal = 0;
-
   this.totalAmount =
     subtotal - this.discountTotal + this.taxTotal + (this.shippingFee ?? 0);
-
   this.profitTotal = subtotal - this.discountTotal - costTotal;
 });
 

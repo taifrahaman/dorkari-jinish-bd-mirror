@@ -36,13 +36,17 @@ export type CategoryOption = {
   name: string;
   path?: string;
   specTemplate?: string[];
+  /** 0 = root, 1 = child, … Used for indentation + font weight. */
+  depth?: number;
+  /** Cumulative product count (own + all descendants). */
+  productCount?: number;
 };
 
 export type CategoryComboboxProps = {
   value: string | undefined;
   onChange: (value: string | undefined) => void;
-  /** Optional pre-flattened list. If omitted or empty, the
-   *  combobox fetches the tree itself. */
+  /** Optional pre-flattened list — used as a fast-path until the
+   *  tree query finishes loading. Enriched with depth + counts. */
   initialCategories?: CategoryOption[];
   allowCreate?: boolean;
   disabled?: boolean;
@@ -52,26 +56,44 @@ export type CategoryComboboxProps = {
 };
 
 /* ============================================================
- * Flatten helper
+ * Tree helpers
  * ============================================================ */
+
+function cumulativeProductCount(node: CategoryTreeNode): number {
+  const own = node.productCount ?? 0;
+  let sum = own;
+  for (const child of node.children ?? []) {
+    sum += cumulativeProductCount(child);
+  }
+  return sum;
+}
 
 function flattenTree(nodes: CategoryTreeNode[]): CategoryOption[] {
   const out: CategoryOption[] = [];
 
-  function walk(list: CategoryTreeNode[]) {
+  function walk(list: CategoryTreeNode[], depth: number) {
     for (const node of list) {
       out.push({
         _id: node._id,
         name: node.name.en,
         path: node.path,
         specTemplate: node.specTemplate,
+        depth,
+        productCount: cumulativeProductCount(node),
       });
-      if (node.children && node.children.length > 0) walk(node.children);
+      if (node.children && node.children.length > 0) {
+        walk(node.children, depth + 1);
+      }
     }
   }
 
-  walk(nodes);
+  walk(nodes, 0);
   return out;
+}
+
+function depthFromPath(path: string | undefined): number {
+  if (!path) return 0;
+  return Math.max(0, path.split(" > ").length - 1);
 }
 
 /* ============================================================
@@ -102,23 +124,29 @@ export function CategoryCombobox({
     };
   }, [query]);
 
-  /* Suggestions — only fires when the query has content */
   const suggest = useCategorySuggest(debouncedQuery, 10);
   const createCategory = useCreateCategory();
 
-  /* Fallback tree — shares the React Query cache with any parent
-       that also calls `useCategoryTree()`, so no duplicate fetch. */
+  /* Tree — always called, shares React Query cache with parent */
   const treeQuery = useCategoryTree();
 
   /* ----------------------------------------------------------
-   * Base list — shown when the query is empty
+   * Base list — full tree when available, else fall back
    * ---------------------------------------------------------- */
 
   const baseList = useMemo<CategoryOption[]>(() => {
-    if (initialCategories && initialCategories.length > 0) {
-      return initialCategories;
+    // Prefer the tree — has depth + productCount
+    if (treeQuery.data && treeQuery.data.length > 0) {
+      return flattenTree(treeQuery.data);
     }
-    return flattenTree(treeQuery.data ?? []);
+    // Fallback: enrich initialCategories with derived depth
+    if (initialCategories && initialCategories.length > 0) {
+      return initialCategories.map((c) => ({
+        ...c,
+        depth: c.depth ?? depthFromPath(c.path),
+      }));
+    }
+    return [];
   }, [initialCategories, treeQuery.data]);
 
   const isBaseLoading =
@@ -141,6 +169,7 @@ export function CategoryCombobox({
         name: fromSuggest.name.en,
         path: fromSuggest.path,
         specTemplate: fromSuggest.specTemplate,
+        depth: depthFromPath(fromSuggest.path),
       };
     }
     return null;
@@ -148,13 +177,6 @@ export function CategoryCombobox({
 
   /* ----------------------------------------------------------
    * Display options
-   *
-   * - Query empty     → full base list
-   * - Query has text  → API results merged with any base-list
-   *                     matches the API hasn't returned yet
-   *
-   * Merging avoids the "list flashes empty" feel while the API
-   * round-trip is in flight.
    * ---------------------------------------------------------- */
 
   type DisplayOption = {
@@ -163,6 +185,8 @@ export function CategoryCombobox({
     nameBn?: string;
     path?: string;
     slug?: string;
+    depth?: number;
+    productCount?: number;
   };
 
   const options = useMemo<DisplayOption[]>(() => {
@@ -175,6 +199,8 @@ export function CategoryCombobox({
         nameBn: c.name.bn,
         path: c.path,
         slug: c.slug,
+        depth: depthFromPath(c.path),
+        // No productCount from the suggest endpoint
       }));
 
       const apiIds = new Set(fromApi.map((o) => o._id));
@@ -190,12 +216,14 @@ export function CategoryCombobox({
           _id: c._id,
           name: c.name,
           path: c.path,
+          depth: c.depth,
+          productCount: c.productCount,
         }));
 
       return [...fromApi, ...fromBase];
     }
 
-    /* No API query — filter base list locally for instant feedback */
+    /* No query — filter base list locally for instant feedback */
     const q = query.trim().toLowerCase();
     const filtered = q
       ? baseList.filter(
@@ -209,6 +237,8 @@ export function CategoryCombobox({
       _id: c._id,
       name: c.name,
       path: c.path,
+      depth: c.depth,
+      productCount: c.productCount,
     }));
   }, [baseList, query, debouncedQuery, suggest.data]);
 
@@ -363,30 +393,53 @@ export function CategoryCombobox({
 
             {options.length > 0 && (
               <CommandGroup heading="Categories">
-                {options.map((cat) => (
-                  <CommandItem
-                    key={cat._id}
-                    value={cat._id}
-                    onSelect={() => handleSelect(cat._id)}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate">{cat.name}</span>
-                      {cat.nameBn && cat.nameBn !== cat.name && (
-                        <span className="truncate text-[11px] text-brand-text-secondary">
-                          {cat.nameBn}
+                {options.map((cat) => {
+                  const depth = cat.depth ?? 0;
+                  const isParent = depth === 0;
+                  const showCount =
+                    typeof cat.productCount === "number" &&
+                    cat.productCount > 0;
+
+                  return (
+                    <CommandItem
+                      key={cat._id}
+                      value={cat._id}
+                      onSelect={() => handleSelect(cat._id)}
+                      className="flex items-center justify-between"
+                    >
+                      <div
+                        className="flex min-w-0 flex-col"
+                        style={{ paddingLeft: depth * 14 }}
+                      >
+                        <span
+                          className={cn(
+                            "truncate",
+                            isParent ? "font-semibold" : "font-normal",
+                          )}
+                        >
+                          {cat.name}
+                          {showCount && (
+                            <span className="ml-1.5 text-[11px] font-normal text-brand-text-secondary">
+                              ({cat.productCount})
+                            </span>
+                          )}
                         </span>
-                      )}
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-2 h-4 w-4 shrink-0",
-                        value === cat._id ? "opacity-100" : "opacity-0",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </CommandItem>
-                ))}
+                        {cat.nameBn && cat.nameBn !== cat.name && (
+                          <span className="truncate text-[11px] text-brand-text-secondary">
+                            {cat.nameBn}
+                          </span>
+                        )}
+                      </div>
+                      <Check
+                        className={cn(
+                          "ml-2 h-4 w-4 shrink-0",
+                          value === cat._id ? "opacity-100" : "opacity-0",
+                        )}
+                        aria-hidden="true"
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             )}
 

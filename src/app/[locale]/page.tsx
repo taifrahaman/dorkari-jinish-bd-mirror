@@ -1,5 +1,11 @@
 // src/app/[locale]/page.tsx
 
+import type { Locale } from "@/i18n/routing";
+import {
+  getStorefrontCategoryTree,
+  toCategoryNav,
+} from "@/lib/storefront/category-nav";
+
 import Hero from "@/components/hero/Hero";
 import { ProductHero } from "@/components/home/product-hero";
 import { DealsOfTheWeek } from "@/components/home/deals-of-the-week";
@@ -12,8 +18,6 @@ import {
 import CountdownBanner from "@/components/home/countdown/Countdownbanner";
 import Testimonials from "@/components/home/testimonials/Testimonials";
 
-type Locale = "en" | "bn";
-
 export default async function HomePage({
   params,
 }: {
@@ -22,9 +26,12 @@ export default async function HomePage({
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
+  const tree = await getStorefrontCategoryTree();
+  const categories = toCategoryNav(tree, locale);
+
   return (
     <main>
-      <Hero />
+      <Hero categories={categories} />
       <ProductHero />
       <DealsOfTheWeek />
 

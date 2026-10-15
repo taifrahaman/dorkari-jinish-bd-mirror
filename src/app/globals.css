@@ -284,3 +284,29 @@
 .font-body {
   font-family: var(--font-body);
 }
+
+/* ============================================================
+ * POS receipt — print styles
+ *
+ * When printing, hide everything except #pos-receipt.
+ * ============================================================ */
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #pos-receipt,
+  #pos-receipt * {
+    visibility: visible;
+  }
+
+  #pos-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 16px;
+    font-size: 12px;
+  }
+}

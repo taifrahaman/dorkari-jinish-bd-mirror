@@ -3,11 +3,14 @@
 import {
   BarChart3,
   FolderTree,
+  Image as ImageIcon,
   LayoutDashboard,
   Package,
   Palette,
   Receipt,
   Settings,
+  Tag,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +52,15 @@ export const NAV: NavItem[] = [
     ],
   },
   {
+    id: "customers",
+    label: "Customers",
+    icon: Users,
+    children: [
+      { href: "/admin/customers", label: "All customers" },
+      { href: "/admin/customers/new", label: "New customer" },
+    ],
+  },
+  {
     id: "products",
     label: "Products",
     icon: Package,
@@ -59,12 +71,27 @@ export const NAV: NavItem[] = [
     ],
   },
   {
+    id: "media",
+    label: "Media Library",
+    icon: ImageIcon,
+    href: "/admin/media",
+  },
+  {
     id: "categories",
     label: "Categories",
     icon: FolderTree,
     children: [
       { href: "/admin/categories", label: "All categories" },
       { href: "/admin/categories/new", label: "New category" },
+    ],
+  },
+  {
+    id: "brands",
+    label: "Brands",
+    icon: Tag,
+    children: [
+      { href: "/admin/brands", label: "All brands" },
+      { href: "/admin/brands/new", label: "New brand" },
     ],
   },
   {

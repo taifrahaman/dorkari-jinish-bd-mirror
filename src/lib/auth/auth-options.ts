@@ -38,7 +38,7 @@ export const authOptions: NextAuthOptions = {
 
         const token = await signJwt({
           userId: existingUser._id.toString(),
-          email: existingUser.email,
+          email: user.email,
           role: existingUser.role,
         });
 

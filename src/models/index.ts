@@ -10,3 +10,4 @@ export { default as ProductSubscription } from "./ProductSubscription.model";
 export { default as Coupon } from "./Coupon.model";
 export { default as AnalyticsCache } from "./AnalyticsCache.model";
 export { default as FAQ } from "./FAQ.model";
+export { default as Brand } from "./Brand.model";

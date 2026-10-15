@@ -8,6 +8,8 @@ import type { ProductListQuery } from "@/lib/validations/product.schema";
 import type { ColorListQuery } from "@/lib/validations/color.schema";
 import type { OrderListQuery } from "@/lib/validations/order.schema";
 import type { AnalyticsRange } from "@/lib/admin/analytics";
+import type { CustomerListQuery } from "@/lib/validations/customer.schema";
+import type { BrandListQuery } from "@/lib/validations/brand.schema";
 
 export const adminKeys = {
   all: ["admin"] as const,
@@ -59,6 +61,24 @@ export const adminKeys = {
     suggest: (q: string, limit: number) =>
       [...adminKeys.colors.all(), "suggest", { q, limit }] as const,
   },
+  media: {
+    all: () => [...adminKeys.all, "media"] as const,
+    list: (params: unknown) =>
+      [...adminKeys.all, "media", "list", params] as const,
+    usage: (ids: string[]) =>
+      [...adminKeys.all, "media", "usage", ids] as const,
+  },
+
+  brands: {
+    all: () => [...adminKeys.all, "brands"] as const,
+    lists: () => [...adminKeys.brands.all(), "list"] as const,
+    list: (params: Partial<BrandListQuery> = {}) =>
+      [...adminKeys.brands.lists(), normalizeParams(params)] as const,
+    details: () => [...adminKeys.brands.all(), "detail"] as const,
+    detail: (id: string) => [...adminKeys.brands.details(), id] as const,
+    suggest: (q: string, limit: number) =>
+      [...adminKeys.brands.all(), "suggest", { q, limit }] as const,
+  },
 
   orders: {
     all: () => [...adminKeys.all, "orders"] as const,
@@ -100,9 +120,28 @@ export const adminKeys = {
     all: () => [...adminKeys.all, "reports"] as const,
     profit: (range: string) =>
       [...adminKeys.reports.all(), "profit", range] as const,
-    inventory: (status: string) =>
-      [...adminKeys.reports.all(), "inventory", status] as const,
+    inventory: (status: string, sort: string) =>
+      [...adminKeys.reports.all(), "inventory", status, sort] as const,
     vat: (range: string) => [...adminKeys.reports.all(), "vat", range] as const,
+  },
+
+  customers: {
+    all: () => [...adminKeys.all, "customers"] as const,
+
+    lists: () => [...adminKeys.customers.all(), "list"] as const,
+
+    list: (params: Partial<CustomerListQuery> = {}) =>
+      [...adminKeys.customers.lists(), normalizeParams(params)] as const,
+
+    details: () => [...adminKeys.customers.all(), "detail"] as const,
+
+    detail: (id: string) => [...adminKeys.customers.details(), id] as const,
+
+    stats: (id: string) =>
+      [...adminKeys.customers.detail(id), "stats"] as const,
+
+    suggest: (q: string, limit: number) =>
+      [...adminKeys.customers.all(), "suggest", { q, limit }] as const,
   },
 } as const;
 

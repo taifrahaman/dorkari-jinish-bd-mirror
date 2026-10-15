@@ -6,9 +6,14 @@ import { useRef } from "react";
 import { X } from "lucide-react";
 import gsap from "gsap";
 
-import type { Facet, FilterState, Locale } from "@/lib/shop/types";
-import { COLOR_LIST } from "@/lib/shop/dummy-products";
-import { formatPrice } from "@/lib/shop/filter-utils";
+import type {
+  CategoryFacetNode,
+  ColorFacet,
+  Facet,
+  FilterState,
+  Locale,
+} from "@/lib/shop/types";
+import { findCategoryFacet, formatPrice } from "@/lib/shop/filter-utils";
 
 type Pill = {
   key: string;
@@ -20,8 +25,9 @@ type ActiveFilterPillsProps = {
   locale?: Locale;
   filters: FilterState;
   onChange: (next: FilterState) => void;
-  categoryFacets: Facet[];
+  categoryFacets: CategoryFacetNode[];
   brandFacets: Facet[];
+  colorFacets: ColorFacet[];
 };
 
 export default function ActiveFilterPills({
@@ -30,13 +36,14 @@ export default function ActiveFilterPills({
   onChange,
   categoryFacets,
   brandFacets,
+  colorFacets,
 }: ActiveFilterPillsProps) {
   const nodeRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
 
   const pills: Pill[] = [];
 
   for (const value of filters.categories) {
-    const facet = categoryFacets.find((f) => f.value === value);
+    const facet = findCategoryFacet(categoryFacets, value);
     pills.push({
       key: `category-${value}`,
       label: facet?.label[locale] ?? value,
@@ -79,7 +86,7 @@ export default function ActiveFilterPills({
   }
 
   for (const hex of filters.colors) {
-    const color = COLOR_LIST.find((c) => c.hex === hex);
+    const color = colorFacets.find((c) => c.hex === hex);
     pills.push({
       key: `color-${hex}`,
       label: color?.name?.[locale] ?? hex,
@@ -115,8 +122,6 @@ export default function ActiveFilterPills({
       onRemove();
       return;
     }
-    // Collapse the pill's width to 0 as it fades, so its neighbors slide
-    // over into the freed space instead of the row just losing an item.
     gsap.to(el, {
       opacity: 0,
       scale: 0.85,

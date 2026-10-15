@@ -120,6 +120,30 @@ export const INVENTORY_STATUS_OPTIONS: Array<{
 ];
 
 /* ============================================================
+ * Inventory sort
+ * ============================================================ */
+
+export type InventorySort =
+  | "stock-asc"
+  | "stock-desc"
+  | "retail-desc"
+  | "retail-asc"
+  | "profit-desc"
+  | "name-asc";
+
+export const INVENTORY_SORT_OPTIONS: Array<{
+  value: InventorySort;
+  label: string;
+}> = [
+  { value: "stock-asc", label: "Stock: low → high" },
+  { value: "stock-desc", label: "Stock: high → low" },
+  { value: "retail-desc", label: "Retail value: high → low" },
+  { value: "retail-asc", label: "Retail value: low → high" },
+  { value: "profit-desc", label: "Potential profit: high → low" },
+  { value: "name-asc", label: "Name: A → Z" },
+];
+
+/* ============================================================
  * VAT report
  * ============================================================ */
 

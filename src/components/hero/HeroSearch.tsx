@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { ChevronDown, Check, Search } from "lucide-react";
 
-import { categoryTree } from "@/components/navigation/navItems";
+import type { CategoryNode } from "@/components/navigation/navItems";
 import {
   heroSearchPlaceholder,
   heroFilterAllLabel,
@@ -16,7 +16,11 @@ import styles from "./HeroSearch.module.css";
 
 type FilterOption = { id: string; label: string };
 
-export default function HeroSearch() {
+type Props = {
+  categories: CategoryNode[];
+};
+
+export default function HeroSearch({ categories }: Props) {
   const router = useRouter();
   const locale = useLocale() as SupportedLocale;
 
@@ -26,7 +30,7 @@ export default function HeroSearch() {
   /** Filter list — All + top-level categories */
   const filterOptions: FilterOption[] = [
     { id: "all", label: allLabel },
-    ...categoryTree.map((c) => ({ id: c.id, label: c.label })),
+    ...categories.map((c) => ({ id: c.slug, label: c.label })),
   ];
 
   const [query, setQuery] = useState("");

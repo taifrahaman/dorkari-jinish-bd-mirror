@@ -7,8 +7,14 @@ import { ChevronDown, X } from "lucide-react";
 import gsap from "gsap";
 
 import styles from "./FilterPanel.module.css";
-import type { Facet, FilterState, Locale, PriceRange } from "@/lib/shop/types";
-import { COLOR_LIST } from "@/lib/shop/dummy-products";
+import type {
+  CategoryFacetNode,
+  ColorFacet,
+  Facet,
+  FilterState,
+  Locale,
+  PriceRange,
+} from "@/lib/shop/types";
 
 type FilterPanelProps = {
   open: boolean;
@@ -17,8 +23,9 @@ type FilterPanelProps = {
   filters: FilterState;
   onChange: (next: FilterState) => void;
   onClear: () => void;
-  categoryFacets: Facet[];
+  categoryFacets: CategoryFacetNode[];
   brandFacets: Facet[];
+  colorFacets: ColorFacet[];
   resultCount: number;
   priceMax: number;
 };
@@ -46,7 +53,7 @@ function toggleValue(list: string[], value: string): string[] {
 }
 
 /* ------------------------------------------------------------------ */
-/* Accordion section — GSAP-animated height, not a CSS transition      */
+/* Accordion section                                                    */
 /* ------------------------------------------------------------------ */
 
 function FilterSection({
@@ -104,6 +111,178 @@ function FilterSection({
 }
 
 /* ------------------------------------------------------------------ */
+/* Category tree node — parent / child linked checkboxes               */
+/*                                                                     */
+/* Semantics:                                                          */
+/*   - Clicking a parent selects / deselects the whole subtree by      */
+/*     storing the parent slug in filters.categories.                  */
+/*   - Children render as checked while the parent is selected.        */
+/*   - Clicking a child while the parent is selected "materializes":   */
+/*     the parent slug is removed and every other child is added       */
+/*     explicitly, so only the clicked child ends up unchecked.        */
+/*   - Selecting every child individually shows the parent as checked. */
+/*   - Selecting some children shows the parent as indeterminate.      */
+/* ------------------------------------------------------------------ */
+
+function CategoryTreeNode({
+  node,
+  filters,
+  locale,
+  onChange,
+}: {
+  node: CategoryFacetNode;
+  filters: FilterState;
+  locale: Locale;
+  onChange: (next: FilterState) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const parentRef = useRef<HTMLInputElement>(null);
+
+  const childSlugs = node.children?.map((c) => c.value) ?? [];
+  const hasChildren = childSlugs.length > 0;
+
+  const parentSelected = filters.categories.includes(node.value);
+  const selectedChildCount = childSlugs.filter((s) =>
+    filters.categories.includes(s),
+  ).length;
+  const allChildrenSelected =
+    hasChildren && selectedChildCount === childSlugs.length;
+  const someChildrenSelected = selectedChildCount > 0 && !allChildrenSelected;
+
+  const parentChecked = parentSelected || allChildrenSelected;
+  const parentIndeterminate = !parentSelected && someChildrenSelected;
+
+  // `indeterminate` is a DOM-only property — must be set via ref.
+  useEffect(() => {
+    if (parentRef.current) {
+      parentRef.current.indeterminate = parentIndeterminate;
+    }
+  }, [parentIndeterminate]);
+
+  const handleParentToggle = () => {
+    // Unchecking (or was-checked-via-children): clear parent and every child.
+    if (parentSelected || allChildrenSelected) {
+      return onChange({
+        ...filters,
+        categories: filters.categories.filter(
+          (v) => v !== node.value && !childSlugs.includes(v),
+        ),
+      });
+    }
+
+    // Checking: store parent slug, drop any explicit child slugs so the
+    // two representations can't coexist.
+    return onChange({
+      ...filters,
+      categories: [
+        ...filters.categories.filter((v) => !childSlugs.includes(v)),
+        node.value,
+      ],
+    });
+  };
+
+  const handleChildToggle = (childValue: string) => {
+    // Parent is selected → user is trying to uncheck a child that was
+    // only "checked" because of the parent. Materialize the parent into
+    // explicit children, minus the one just clicked.
+    if (parentSelected) {
+      const otherChildren = childSlugs.filter((v) => v !== childValue);
+      return onChange({
+        ...filters,
+        categories: [
+          ...filters.categories.filter((v) => v !== node.value),
+          ...otherChildren,
+        ],
+      });
+    }
+
+    // Normal child toggle.
+    return onChange({
+      ...filters,
+      categories: toggleValue(filters.categories, childValue),
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <label className="flex flex-1 cursor-pointer items-center gap-2.5 text-sm text-brand-text">
+          <input
+            ref={parentRef}
+            type="checkbox"
+            checked={parentChecked}
+            onChange={handleParentToggle}
+            className="h-4 w-4 rounded border-brand-border accent-brand-primary"
+          />
+          <span className="font-medium">{node.label[locale]}</span>
+        </label>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-brand-text-secondary">
+            {node.count}
+          </span>
+
+          {hasChildren && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              aria-label={
+                expanded
+                  ? locale === "bn"
+                    ? "সংকুচিত করুন"
+                    : "Collapse"
+                  : locale === "bn"
+                    ? "প্রসারিত করুন"
+                    : "Expand"
+              }
+              aria-expanded={expanded}
+              className="grid h-6 w-6 place-items-center rounded-full text-brand-text-secondary hover:bg-brand-navbar"
+            >
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                  expanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {hasChildren && expanded && (
+        <div className="ml-6 flex flex-col gap-2 border-l border-brand-border pl-3">
+          {node.children!.map((child) => {
+            // While the parent is selected, every child displays as
+            // checked even though only the parent slug is stored.
+            const isChecked =
+              parentSelected || filters.categories.includes(child.value);
+
+            return (
+              <label
+                key={child.value}
+                className="flex cursor-pointer items-center justify-between gap-3 text-sm text-brand-text"
+              >
+                <span className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleChildToggle(child.value)}
+                    className="h-4 w-4 rounded border-brand-border accent-brand-primary"
+                  />
+                  {child.label[locale]}
+                </span>
+                <span className="text-xs text-brand-text-secondary">
+                  {child.count}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Panel                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -116,6 +295,7 @@ export default function FilterPanel({
   onClear,
   categoryFacets,
   brandFacets,
+  colorFacets,
   resultCount,
   priceMax,
 }: FilterPanelProps) {
@@ -143,8 +323,6 @@ export default function FilterPanel({
     },
   ];
 
-  // Mount on open without synchronously updating state inside the effect.
-  // The next effect run starts the existing GSAP entrance animation.
   useEffect(() => {
     if (!open) return;
 
@@ -155,7 +333,6 @@ export default function FilterPanel({
     return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
-  // Mount → slide/fade in. Unmount is deferred until the exit animation ends.
   useEffect(() => {
     if (!mountedInDom) return;
 
@@ -236,35 +413,15 @@ export default function FilterPanel({
 
         <div className={styles.body}>
           <FilterSection title={COPY.category[locale]} defaultOpen>
-            <div className="flex flex-col gap-2.5">
-              {categoryFacets.map((facet) => (
-                <label
-                  key={facet.value}
-                  className="flex cursor-pointer items-center justify-between gap-3 text-sm text-brand-text"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={filters.categories.includes(facet.value)}
-                      onChange={() =>
-                        onChange({
-                          ...filters,
-                          categories: toggleValue(
-                            filters.categories,
-                            facet.value,
-                          ),
-                        })
-                      }
-                      className="h-4 w-4 rounded border-brand-border accent-brand-primary"
-                    />
-
-                    {facet.label[locale]}
-                  </span>
-
-                  <span className="text-xs text-brand-text-secondary">
-                    {facet.count}
-                  </span>
-                </label>
+            <div className="flex flex-col gap-3">
+              {categoryFacets.map((node) => (
+                <CategoryTreeNode
+                  key={node.value}
+                  node={node}
+                  filters={filters}
+                  locale={locale}
+                  onChange={onChange}
+                />
               ))}
             </div>
           </FilterSection>
@@ -358,7 +515,7 @@ export default function FilterPanel({
 
           <FilterSection title={COPY.color[locale]}>
             <div className="flex flex-wrap gap-3">
-              {COLOR_LIST.map((color) => {
+              {colorFacets.map((color) => {
                 const active = filters.colors.includes(color.hex);
 
                 return (

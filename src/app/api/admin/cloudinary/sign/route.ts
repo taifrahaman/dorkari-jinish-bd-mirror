@@ -11,7 +11,7 @@ import { createSignedUploadParams } from "@/lib/cloudinary/sign";
  * ============================================================ */
 
 const signRequestSchema = z.object({
-  entity: z.enum(["products", "categories", "tmp"]),
+  entity: z.enum(["products", "categories", "brands", "tmp"]),
   owner: z.string().trim().min(1).max(200),
   publicId: z.string().trim().min(1).max(200).optional(),
 });

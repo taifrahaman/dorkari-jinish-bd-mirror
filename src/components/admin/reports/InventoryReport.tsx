@@ -24,6 +24,8 @@ import { formatNumber, formatPrice } from "@/lib/admin/format";
 import { useInventoryReport } from "@/hooks/admin";
 import {
   INVENTORY_STATUS_OPTIONS,
+  INVENTORY_SORT_OPTIONS,
+  type InventorySort,
   type InventoryStatus,
 } from "@/lib/admin/reports";
 
@@ -33,7 +35,8 @@ import {
 
 export function InventoryReport() {
   const [status, setStatus] = useState<InventoryStatus>("all");
-  const query = useInventoryReport(status);
+  const [sort, setSort] = useState<InventorySort>("stock-asc");
+  const query = useInventoryReport(status, sort);
 
   const summary = query.data?.summary;
   const rows = query.data?.rows ?? [];
@@ -50,21 +53,42 @@ export function InventoryReport() {
           { label: "Inventory" },
         ]}
         actions={
-          <Select
-            value={status}
-            onValueChange={(v) => setStatus(v as InventoryStatus)}
-          >
-            <SelectTrigger className="h-9 w-[170px]" aria-label="Stock filter">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {INVENTORY_STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={sort}
+              onValueChange={(v) => setSort(v as InventorySort)}
+            >
+              <SelectTrigger className="h-9 w-[210px]" aria-label="Sort order">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INVENTORY_SORT_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as InventoryStatus)}
+            >
+              <SelectTrigger
+                className="h-9 w-[170px]"
+                aria-label="Stock filter"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INVENTORY_STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         }
       />
 

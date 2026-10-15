@@ -40,6 +40,10 @@ import type {
   BulkRowResult,
 } from "@/lib/validations/common.schema";
 import { LOW_STOCK_THRESHOLD } from "@/lib/validations/product.schema";
+import {
+  toStorefrontProduct,
+  type StorefrontProduct,
+} from "@/lib/storefront/product-mapper";
 
 /* ============================================================
  * Internal types
@@ -390,6 +394,28 @@ export async function listProducts(
     limit: query.limit,
     totalPages: Math.max(1, Math.ceil(total / query.limit)),
   };
+}
+
+/* ============================================================
+ * Storefront list — public, slim, no auth
+ *
+ * Same query pattern as listProducts but:
+ *   - hard-filters to isActive:true and deletedAt:null
+ *   - returns the public StorefrontProduct shape via a
+ *     separate mapper (keeps admin output untouched)
+ *   - sorts by createdAt desc so newest appears first
+ * ============================================================ */
+
+export async function listStorefrontProducts(): Promise<StorefrontProduct[]> {
+  const docs = await Product.find({
+    isActive: true,
+    deletedAt: null,
+  })
+    .sort({ createdAt: -1 })
+    .populate(POPULATE)
+    .lean<Parameters<typeof toStorefrontProduct>[0][]>();
+
+  return docs.map(toStorefrontProduct);
 }
 
 /* ============================================================
