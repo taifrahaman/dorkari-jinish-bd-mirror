@@ -21,6 +21,7 @@ import { BrandCombobox } from "@/components/admin/brand-combobox/BrandCombobox";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { ColorMultiSelect } from "@/components/admin/color";
 import { SpecificationEditor } from "./SpecificationEditor";
+import { BoxContentsEditor } from "./BoxContentsEditor";
 import { AdminApiError } from "@/lib/admin/api";
 import { createProductSchema } from "@/lib/validations/product.schema";
 import type { ProductResponse } from "@/lib/validations/product.schema";
@@ -64,6 +65,7 @@ const CREATE_DEFAULTS: FormInput = {
   weight: undefined,
   dimensions: undefined,
   specifications: {},
+  boxContents: [],
   supplier: undefined,
   isActive: true,
   isFeatured: false,
@@ -106,6 +108,7 @@ function buildDefaults(product?: ProductResponse): FormInput {
     weight: product.weight,
     dimensions: product.dimensions,
     specifications: (product.specifications as Record<string, string>) ?? {},
+    boxContents: product.boxContents ?? [],
     supplier: product.supplier,
     isActive: product.isActive,
     isFeatured: product.isFeatured,
@@ -192,7 +195,20 @@ export function ProductForm({ product, categories }: ProductFormProps) {
    * Submit
    * ---------------------------------------------------------- */
 
-  const onSubmit = handleSubmit(async (values) => {
+  /* ----------------------------------------------------------
+   * Submit
+   * ---------------------------------------------------------- */
+
+  const onSubmit = handleSubmit(async (rawValues) => {
+    // Drop box-content rows where both fields are empty. The user may have
+    // clicked "Add item" and left the row blank; no reason to persist it.
+    const values = {
+      ...rawValues,
+      boxContents: (rawValues.boxContents ?? []).filter(
+        (row) => row.en.trim() !== "" || row.bn.trim() !== "",
+      ),
+    };
+
     try {
       if (isEdit && product) {
         // Edit: stay on this page. The mutation invalidates the query
@@ -561,6 +577,21 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             setValue("specifications", next, { shouldDirty: true })
           }
           categoryId={currentCategoryId || undefined}
+        />
+      </Section>
+
+      {/* ------------------------------------------------------
+       * Box contents
+       * ------------------------------------------------------ */}
+      <Section
+        title="In the box"
+        description="What ships with this product. Shown on the product detail page. Optional — leave empty for products with nothing notable in the box."
+      >
+        <BoxContentsEditor
+          value={watch("boxContents") ?? []}
+          onChange={(next) =>
+            setValue("boxContents", next, { shouldDirty: true })
+          }
         />
       </Section>
 
