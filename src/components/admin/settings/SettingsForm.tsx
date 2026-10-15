@@ -42,6 +42,14 @@ const DEFAULTS: FormInput = {
     defaultRate: 15,
     inclusive: true,
   },
+  deliveryEstimate: {
+    en: "",
+    bn: "",
+  },
+  returnPolicy: {
+    en: "",
+    bn: "",
+  },
   lowStockThreshold: 5,
 };
 
@@ -84,6 +92,14 @@ export function SettingsForm() {
         enabled: query.data.vat.enabled,
         defaultRate: query.data.vat.defaultRate,
         inclusive: query.data.vat.inclusive,
+      },
+      deliveryEstimate: {
+        en: query.data.deliveryEstimate.en,
+        bn: query.data.deliveryEstimate.bn,
+      },
+      returnPolicy: {
+        en: query.data.returnPolicy.en,
+        bn: query.data.returnPolicy.bn,
       },
       lowStockThreshold: query.data.lowStockThreshold,
     });
@@ -255,6 +271,60 @@ export function SettingsForm() {
             />
           </div>
         )}
+      </Section>
+
+      {/* Storefront messaging */}
+      <Section
+        title="Storefront messaging"
+        description="Shown on every product detail page. Shoppers see the version matching their language."
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field
+            label="Delivery estimate (English)"
+            hint='e.g. "Delivery in 2–4 days across Dhaka"'
+            error={errors.deliveryEstimate?.en?.message}
+          >
+            <Textarea
+              {...register("deliveryEstimate.en")}
+              rows={2}
+              placeholder="Delivery in 2–4 days across Dhaka"
+            />
+          </Field>
+
+          <Field
+            label="Delivery estimate (বাংলা)"
+            error={errors.deliveryEstimate?.bn?.message}
+          >
+            <Textarea
+              {...register("deliveryEstimate.bn")}
+              rows={2}
+              placeholder="ঢাকার মধ্যে ২-৪ দিনে ডেলিভারি"
+            />
+          </Field>
+
+          <Field
+            label="Return policy (English)"
+            hint='e.g. "7-day easy return if unused and in original packaging"'
+            error={errors.returnPolicy?.en?.message}
+          >
+            <Textarea
+              {...register("returnPolicy.en")}
+              rows={2}
+              placeholder="7-day easy return if unused and in original packaging"
+            />
+          </Field>
+
+          <Field
+            label="Return policy (বাংলা)"
+            error={errors.returnPolicy?.bn?.message}
+          >
+            <Textarea
+              {...register("returnPolicy.bn")}
+              rows={2}
+              placeholder="অব্যবহৃত ও মূল প্যাকেজিং থাকলে ৭ দিনের সহজ রিটার্ন"
+            />
+          </Field>
+        </div>
       </Section>
 
       {/* Inventory */}
