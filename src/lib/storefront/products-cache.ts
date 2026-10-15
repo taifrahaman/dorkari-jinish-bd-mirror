@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 
 import { connectToDatabase } from "@/lib/db";
 import {
+  getRelatedProducts,
   getStorefrontProductBySlug,
   listStorefrontProducts,
 } from "@/services/product.service";
@@ -95,6 +96,24 @@ export const getCachedStorefrontSettings = unstable_cache(
   ["storefront:settings"],
   {
     tags: [STOREFRONT_SETTINGS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * Related products — keyed by (slug, limit). Shares the products
+ * tag so an admin product write invalidates everything on the
+ * detail page in a single shot.
+ * ============================================================ */
+
+export const getCachedRelatedProducts = unstable_cache(
+  async (slug: string, limit: number) => {
+    await connectToDatabase();
+    return getRelatedProducts(slug, limit);
+  },
+  ["storefront:related"],
+  {
+    tags: [STOREFRONT_PRODUCTS_TAG],
     revalidate: 60 * 60,
   },
 );

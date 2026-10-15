@@ -48,6 +48,7 @@ import {
   type StorefrontProduct,
   type StorefrontProductDetail,
 } from "@/lib/storefront/product-mapper";
+import { rankRelated } from "@/lib/storefront/related";
 
 /* ============================================================
  * Internal types
@@ -443,6 +444,41 @@ export async function getStorefrontProductBySlug(
   return toStorefrontProductDetail(doc);
 }
 
+/* ============================================================
+ * Related products
+ *
+ * Two queries: the current product (by slug) and up to 1000 active
+ * candidates. Scoring happens in-memory — see lib/storefront/related.ts.
+ * ============================================================ */
+
+const RELATED_CANDIDATE_CAP = 1000;
+
+export async function getRelatedProducts(
+  slug: string,
+  limit: number,
+): Promise<StorefrontProduct[]> {
+  const [currentDoc, candidateDocs] = await Promise.all([
+    Product.findOne({ slug, isActive: true, deletedAt: null })
+      .populate(POPULATE)
+      .lean<Parameters<typeof toStorefrontProductDetail>[0] | null>(),
+    Product.find({
+      slug: { $ne: slug },
+      isActive: true,
+      deletedAt: null,
+      stock: { $gt: 0 },
+    })
+      .limit(RELATED_CANDIDATE_CAP)
+      .populate(POPULATE)
+      .lean<Parameters<typeof toStorefrontProductDetail>[0][]>(),
+  ]);
+
+  if (!currentDoc) return [];
+
+  const current = toStorefrontProductDetail(currentDoc);
+  const candidates = candidateDocs.map(toStorefrontProductDetail);
+
+  return rankRelated(current, candidates, limit);
+}
 /* ============================================================
  * Get by ID
  * ============================================================ */

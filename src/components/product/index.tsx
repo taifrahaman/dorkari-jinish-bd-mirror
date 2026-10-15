@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useProductDetail } from "@/hooks/use-product-detail";
+import { toShopProducts } from "@/lib/shop/adapter";
 import type { Locale } from "@/lib/shop/types";
 import { useCartStore } from "@/lib/stores/useCartStore";
 import { makeCartKey } from "@/lib/cart/cart-key";
@@ -18,6 +19,7 @@ import ProductFaq from "./ProductFaq";
 import ProductReviews from "./ProductReviews";
 import StickyBuyBar from "./StickyBuyBar";
 import ProductDetailSkeleton from "./ProductDetailSkeleton";
+import ShopProductGrid from "@/components/shop/ProductGrid";
 
 type ProductPageProps = {
   slug: string;
@@ -25,7 +27,7 @@ type ProductPageProps = {
 };
 
 export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
-  const { product, faqs, reviews, settings, isLoading, notFound } =
+  const { product, faqs, reviews, settings, related, isLoading, notFound } =
     useProductDetail(slug);
   const [selectedColorHex, setSelectedColorHex] = useState<string | null>(null);
   const infoTopRef = useRef<HTMLDivElement>(null!);
@@ -79,6 +81,8 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
     router.push("/cart");
   };
 
+  const relatedShopProducts = toShopProducts(related, locale);
+
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-[calc(var(--shop-nav)+1rem)] [--shop-nav:4.5rem] sm:px-6 lg:px-8 lg:[--shop-nav:5.75rem]">
       <Breadcrumb
@@ -128,6 +132,15 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
           locale={locale}
         />
       </div>
+
+      {relatedShopProducts.length > 0 && (
+        <div className="mt-14 border-t border-brand-border pt-10">
+          <h2 className="mb-4 font-heading text-xl font-bold text-brand-text sm:text-2xl">
+            {locale === "bn" ? "আপনার পছন্দ হতে পারে" : "You may also like"}
+          </h2>
+          <ShopProductGrid products={relatedShopProducts} locale={locale} />
+        </div>
+      )}
 
       <StickyBuyBar
         price={product.price}

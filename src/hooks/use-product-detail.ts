@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type {
   ProductDetailResponse,
   StorefrontFaq,
+  StorefrontProduct,
   StorefrontProductDetail,
   StorefrontReview,
   StorefrontSettings,
@@ -85,6 +86,7 @@ export function useProductDetail(slug: string) {
     faqs: (data?.faqs ?? []) as StorefrontFaq[],
     reviews: (data?.reviews ?? []) as StorefrontReview[],
     settings: (data?.settings ?? null) as StorefrontSettings | null,
+    related: (data?.related ?? []) as StorefrontProduct[],
     isLoading: isCurrent ? state.data === undefined && !state.notFound : true,
     notFound: isCurrent ? state.notFound : false,
     error: isCurrent ? state.error : null,

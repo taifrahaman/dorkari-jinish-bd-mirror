@@ -33,4 +33,5 @@ export type ProductDetailResponse = {
   faqs: import("@/lib/storefront/faq-mapper").StorefrontFaq[];
   reviews: import("@/lib/storefront/review-mapper").StorefrontReview[];
   settings: StorefrontSettings;
+  related: import("@/lib/storefront/product-mapper").StorefrontProduct[];
 };

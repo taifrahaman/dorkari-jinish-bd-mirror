@@ -5,11 +5,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { withDb } from "@/lib/api/api-handler";
 import { handleApiError, NotFoundError } from "@/lib/errors";
 import {
+  getCachedRelatedProducts,
   getCachedStorefrontFaqs,
   getCachedStorefrontProductBySlug,
   getCachedStorefrontReviews,
   getCachedStorefrontSettings,
 } from "@/lib/storefront/products-cache";
+
+const RELATED_LIMIT = 8;
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -24,8 +27,6 @@ export const GET = withDb(
         throw new NotFoundError("Product not found");
       }
 
-      // Fetch the product first — if it doesn't exist, no reason to
-      // fetch its FAQs or reviews. Settings are global and independent.
       const [product, settings] = await Promise.all([
         getCachedStorefrontProductBySlug(slug),
         getCachedStorefrontSettings(),
@@ -35,10 +36,10 @@ export const GET = withDb(
         throw new NotFoundError("Product not found");
       }
 
-      // FAQs and reviews are keyed by the product's ObjectId, not slug.
-      const [faqs, reviews] = await Promise.all([
+      const [faqs, reviews, related] = await Promise.all([
         getCachedStorefrontFaqs(product.id),
         getCachedStorefrontReviews(product.id),
+        getCachedRelatedProducts(slug, RELATED_LIMIT),
       ]);
 
       return NextResponse.json({
@@ -48,6 +49,7 @@ export const GET = withDb(
           faqs,
           reviews,
           settings,
+          related,
         },
       });
     } catch (err) {

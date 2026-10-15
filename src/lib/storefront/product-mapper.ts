@@ -198,3 +198,35 @@ export function toStorefrontProductDetail(
     boxContents,
   };
 }
+
+/* ============================================================
+ * Downcast helper — detail → base shape.
+ *
+ * Used when a detail product needs to render inside a grid that
+ * only expects base products (e.g. the "You may also like" row).
+ * Explicit field list — new detail-only fields will not silently
+ * leak into base shape when the DTO evolves.
+ * ============================================================ */
+
+export function toBaseProduct(
+  detail: StorefrontProductDetail,
+): StorefrontProduct {
+  return {
+    id: detail.id,
+    slug: detail.slug,
+    name: detail.name,
+    description: detail.description,
+    price: detail.price,
+    compareAtPrice: detail.compareAtPrice,
+    category: detail.category,
+    mainCategory: detail.mainCategory,
+    brand: detail.brand,
+    images: detail.images,
+    colors: detail.colors,
+    inStock: detail.inStock,
+    isFeatured: detail.isFeatured,
+    averageRating: detail.averageRating,
+    totalReviews: detail.totalReviews,
+    createdAt: detail.createdAt,
+  };
+}
