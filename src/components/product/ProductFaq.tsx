@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import gsap from "gsap";
 
-import type { FaqItem } from "@/lib/product/types";
+import type { StorefrontFaq } from "@/lib/product/types";
 import type { Locale } from "@/lib/shop/types";
 
 function FaqRow({
@@ -15,7 +15,7 @@ function FaqRow({
   open,
   onToggle,
 }: {
-  item: FaqItem;
+  item: StorefrontFaq;
   locale: Locale;
   open: boolean;
   onToggle: () => void;
@@ -97,7 +97,7 @@ export default function ProductFaq({
   faqs,
   locale = "en",
 }: {
-  faqs: FaqItem[];
+  faqs: StorefrontFaq[];
   locale?: Locale;
 }) {
   const [openId, setOpenId] = useState<string | null>(faqs[0]?.id ?? null);

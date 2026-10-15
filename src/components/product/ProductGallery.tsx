@@ -6,11 +6,12 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ZoomIn } from "lucide-react";
 
-import type { LocalizedText, ProductImage } from "@/lib/product/types";
-import type { Locale } from "@/lib/shop/types";
+import type { LocalizedText, Locale } from "@/lib/product/types";
+
+type GalleryImage = { url: string; alt: string };
 
 type ProductGalleryProps = {
-  images: ProductImage[];
+  images: GalleryImage[];
   productName: LocalizedText;
   locale?: Locale;
 };
@@ -20,7 +21,7 @@ export default function ProductGallery({
   productName,
   locale = "en",
 }: ProductGalleryProps) {
-  const imageSetKey = images.map((image) => image.id).join("|");
+  const imageSetKey = images.map((image) => image.url).join("|");
 
   return (
     <ProductGalleryInner
@@ -76,11 +77,7 @@ function ProductGalleryInner({
     if (img) {
       gsap.fromTo(
         img,
-        {
-          opacity: 0,
-          x: 14 * dir,
-          scale: 1.02,
-        },
+        { opacity: 0, x: 14 * dir, scale: 1.02 },
         {
           opacity: 1,
           x: 0,
@@ -105,9 +102,7 @@ function ProductGalleryInner({
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = stageRef.current?.getBoundingClientRect();
-
     if (!rect) return;
-
     setPos({
       x: Math.max(
         0,
@@ -120,25 +115,25 @@ function ProductGalleryInner({
     });
   };
 
-  if (!active) return null;
+  if (!active) {
+    return (
+      <div className="aspect-square overflow-hidden rounded-3xl bg-brand-navbar" />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-      {/* Thumbnails: horizontal scroll on mobile, vertical rail on desktop */}
       <div className="relative order-2 flex gap-2 overflow-x-auto pb-1 sm:order-1 sm:w-20 sm:flex-none sm:flex-col sm:overflow-visible sm:pb-0">
         <div
           ref={indicatorRef}
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 z-0 rounded-xl ring-2 ring-brand-primary transition-none"
-          style={{
-            width: 0,
-            height: 0,
-          }}
+          style={{ width: 0, height: 0 }}
         />
 
         {images.map((img, i) => (
           <button
-            key={img.id}
+            key={img.url}
             ref={(el) => {
               if (el) {
                 thumbRefs.current.set(i, el);
@@ -148,13 +143,13 @@ function ProductGalleryInner({
             }}
             type="button"
             onClick={() => setIndex(i)}
-            aria-label={img.alt[locale]}
+            aria-label={img.alt || productName[locale]}
             aria-current={i === index}
             className="relative z-[1] h-16 w-16 flex-none overflow-hidden rounded-xl bg-brand-navbar"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={img.src}
+              src={img.url}
               alt=""
               className="h-full w-full object-cover"
               loading="lazy"
@@ -163,7 +158,6 @@ function ProductGalleryInner({
         ))}
       </div>
 
-      {/* Main stage */}
       <div className="order-1 flex-1 sm:order-2">
         <div
           ref={stageRef}
@@ -175,17 +169,16 @@ function ProductGalleryInner({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={imgRef}
-            src={active.src}
-            alt={active.alt[locale] || productName[locale]}
+            src={active.url}
+            alt={active.alt || productName[locale]}
             className="h-full w-full object-cover"
           />
 
-          {/* Zoom lens */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 hidden opacity-0 transition-opacity duration-150 sm:block"
             style={{
-              backgroundImage: `url(${active.src})`,
+              backgroundImage: `url(${active.url})`,
               backgroundSize: "220%",
               backgroundPosition: `${pos.x}% ${pos.y}%`,
               opacity: zoomed ? 1 : 0,
@@ -198,14 +191,13 @@ function ProductGalleryInner({
           </span>
         </div>
 
-        {/* Dots for mobile */}
         <div className="mt-3 flex justify-center gap-1.5 sm:hidden">
           {images.map((img, i) => (
             <button
-              key={img.id}
+              key={img.url}
               type="button"
               onClick={() => setIndex(i)}
-              aria-label={img.alt[locale]}
+              aria-label={img.alt || productName[locale]}
               aria-current={i === index}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === index ? "w-6 bg-brand-primary" : "w-1.5 bg-brand-border"

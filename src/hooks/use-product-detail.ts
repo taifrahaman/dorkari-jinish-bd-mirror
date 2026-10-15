@@ -4,59 +4,89 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchProductDetail } from "@/lib/product/mock-api";
-import type { ProductDetail } from "@/lib/product/types";
+import type {
+  ProductDetailResponse,
+  StorefrontFaq,
+  StorefrontProductDetail,
+  StorefrontReview,
+  StorefrontSettings,
+} from "@/lib/product/types";
 
-type ProductDetailState = {
+type State = {
   slug: string;
-  product: ProductDetail | null | undefined;
+  data: ProductDetailResponse | null | undefined;
+  notFound: boolean;
   error: Error | null;
 };
 
 export function useProductDetail(slug: string) {
-  const [state, setState] = useState<ProductDetailState>(() => ({
+  const [state, setState] = useState<State>(() => ({
     slug,
-    product: undefined,
+    data: undefined,
+    notFound: false,
     error: null,
   }));
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchProductDetail(slug)
-      .then((data) => {
+    async function load() {
+      try {
+        const res = await fetch(`/api/storefront/products/${slug}`);
+
         if (cancelled) return;
+
+        if (res.status === 404) {
+          setState({ slug, data: null, notFound: true, error: null });
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Failed to load product (${res.status})`);
+        }
+
+        const json = (await res.json()) as {
+          success: boolean;
+          data: ProductDetailResponse;
+        };
 
         setState({
           slug,
-          product: data,
+          data: json.data,
+          notFound: false,
           error: null,
         });
-      })
-      .catch((e) => {
+      } catch (err) {
         if (cancelled) return;
-
         setState({
           slug,
-          product: null,
-          error: e instanceof Error ? e : new Error(String(e)),
+          data: undefined,
+          notFound: false,
+          error: err instanceof Error ? err : new Error(String(err)),
         });
-      });
+      }
+    }
+
+    load();
 
     return () => {
       cancelled = true;
     };
   }, [slug]);
 
-  const isCurrentRequest = state.slug === slug;
+  const isCurrent = state.slug === slug;
 
-  const product = isCurrentRequest ? state.product : undefined;
-  const error = isCurrentRequest ? state.error : null;
+  const data: ProductDetailResponse | null = isCurrent
+    ? (state.data ?? null)
+    : null;
 
   return {
-    product: product ?? null,
-    isLoading: product === undefined && error === null,
-    notFound: product === null && error === null,
-    error,
+    product: (data?.product ?? null) as StorefrontProductDetail | null,
+    faqs: (data?.faqs ?? []) as StorefrontFaq[],
+    reviews: (data?.reviews ?? []) as StorefrontReview[],
+    settings: (data?.settings ?? null) as StorefrontSettings | null,
+    isLoading: isCurrent ? state.data === undefined && !state.notFound : true,
+    notFound: isCurrent ? state.notFound : false,
+    error: isCurrent ? state.error : null,
   };
 }

@@ -3,24 +3,24 @@
 import type { Metadata } from "next";
 
 import ProductPage from "@/components/product";
-import { fetchProductDetail } from "@/lib/product/mock-api";
+import { getCachedStorefrontProductBySlug } from "@/lib/storefront/products-cache";
 import type { Locale } from "@/lib/shop/types";
 
 type PageProps = {
-  params: { slug: string };
-  searchParams?: { lang?: string };
+  params: Promise<{ locale: string; slug: string }>;
 };
 
-function resolveLocale(searchParams?: { lang?: string }): Locale {
-  return searchParams?.lang === "bn" ? "bn" : "en";
+function resolveLocale(raw: string): Locale {
+  return raw === "bn" ? "bn" : "en";
 }
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: PageProps): Promise<Metadata> {
-  const locale = resolveLocale(searchParams);
-  const product = await fetchProductDetail(params.slug);
+  const { locale: rawLocale, slug } = await params;
+  const locale = resolveLocale(rawLocale);
+
+  const product = await getCachedStorefrontProductBySlug(slug);
 
   if (!product) {
     return {
@@ -29,11 +29,11 @@ export async function generateMetadata({
   }
 
   const title = product.name[locale];
-  const description = product.description[locale];
-  const image = product.variants[0]?.images[0]?.src;
+  const description = product.description?.[locale] ?? "";
+  const image = product.images[0]?.url;
 
   return {
-    title: `${title} | Shop All Appliances`,
+    title: `${title} | Dorkari Jinish BD`,
     description,
     openGraph: {
       title,
@@ -45,7 +45,9 @@ export async function generateMetadata({
   };
 }
 
-export default function Page({ params, searchParams }: PageProps) {
-  const locale = resolveLocale(searchParams);
-  return <ProductPage slug={params.slug} locale={locale} />;
+export default async function Page({ params }: PageProps) {
+  const { locale: rawLocale, slug } = await params;
+  const locale = resolveLocale(rawLocale);
+
+  return <ProductPage slug={slug} locale={locale} />;
 }

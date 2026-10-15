@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useProductDetail } from "@/hooks/use-product-detail";
-import { DUMMY_PRODUCTS } from "@/lib/shop/dummy-products";
 import type { Locale } from "@/lib/shop/types";
 import { useCartStore } from "@/lib/stores/useCartStore";
 import { makeCartKey } from "@/lib/cart/cart-key";
@@ -19,7 +18,6 @@ import ProductFaq from "./ProductFaq";
 import ProductReviews from "./ProductReviews";
 import StickyBuyBar from "./StickyBuyBar";
 import ProductDetailSkeleton from "./ProductDetailSkeleton";
-import ShopProductGrid from "@/components/shop/ProductGrid";
 
 type ProductPageProps = {
   slug: string;
@@ -27,10 +25,9 @@ type ProductPageProps = {
 };
 
 export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
-  const { product, isLoading, notFound } = useProductDetail(slug);
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-    null,
-  );
+  const { product, faqs, reviews, settings, isLoading, notFound } =
+    useProductDetail(slug);
+  const [selectedColorHex, setSelectedColorHex] = useState<string | null>(null);
   const infoTopRef = useRef<HTMLDivElement>(null!);
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
@@ -53,24 +50,26 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
     );
   }
 
-  const activeVariant =
-    product.variants.find((v) => v.id === selectedVariantId) ??
-    product.variants[0];
+  const activeColor =
+    product.colors.find((c) => c.hex === selectedColorHex) ??
+    product.colors[0] ??
+    null;
 
-  const related = DUMMY_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  const categoryLabel = product.category.name;
+  const categorySlug = product.category.slug;
 
   const handleAddToCart = (quantity: number) => {
+    const colorKey = activeColor?.hex ?? "default";
     addItem({
-      productId: makeCartKey(product.id, activeVariant.id),
+      productId: makeCartKey(product.id, colorKey),
       name: product.name[locale],
       price: product.price,
-      image: activeVariant.images[0]?.src,
+      image: product.images[0]?.url,
       slug: product.slug,
-      colorName: activeVariant.name[locale],
-      colorHex: activeVariant.hex,
-      originalPrice: product.originalPrice,
-      stock: product.stock,
-      stockCount: product.stockCount,
+      colorName: activeColor?.name?.[locale],
+      colorHex: activeColor?.hex,
+      originalPrice: product.compareAtPrice ?? undefined,
+      stock: product.inStock ? "in-stock" : "out-of-stock",
       quantity,
     });
   };
@@ -87,8 +86,8 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
         items={[
           { label: locale === "bn" ? "হোম" : "Home", href: "/" },
           {
-            label: product.categoryLabel[locale],
-            href: `/shop?category=${product.categoryValue}`,
+            label: categoryLabel[locale],
+            href: `/shop?category=${categorySlug}`,
           },
           { label: product.name[locale] },
         ]}
@@ -99,45 +98,40 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
         className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12"
       >
         <ProductGallery
-          images={activeVariant.images}
+          images={product.images}
           productName={product.name}
           locale={locale}
         />
         <ProductInfo
           product={product}
+          deliveryEstimate={settings?.deliveryEstimate ?? null}
+          returnPolicy={settings?.returnPolicy ?? null}
           locale={locale}
-          selectedVariantId={activeVariant.id}
-          onSelectVariant={setSelectedVariantId}
+          selectedColorHex={activeColor?.hex ?? null}
+          onSelectColor={setSelectedColorHex}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
         />
       </div>
 
-      <div className="mt-14 border-t border-brand-border pt-10">
-        <ProductFaq faqs={product.faqs} locale={locale} />
-      </div>
+      {faqs.length > 0 && (
+        <div className="mt-14 border-t border-brand-border pt-10">
+          <ProductFaq faqs={faqs} locale={locale} />
+        </div>
+      )}
 
       <div className="mt-14 border-t border-brand-border pt-10">
         <ProductReviews
-          rating={product.rating}
-          reviewCount={product.reviewCount}
-          reviews={product.reviews}
+          rating={product.averageRating}
+          reviewCount={product.totalReviews}
+          reviews={reviews}
           locale={locale}
         />
       </div>
 
-      {related.length > 0 && (
-        <div className="mt-14 border-t border-brand-border pt-10">
-          <h2 className="mb-4 font-heading text-xl font-bold text-brand-text sm:text-2xl">
-            {locale === "bn" ? "আপনার পছন্দ হতে পারে" : "You may also like"}
-          </h2>
-          <ShopProductGrid products={related} locale={locale} />
-        </div>
-      )}
-
       <StickyBuyBar
         price={product.price}
-        disabled={product.stock === "out-of-stock"}
+        disabled={!product.inStock}
         watchRef={infoTopRef}
         onAddToCart={() => handleAddToCart(1)}
         locale={locale}

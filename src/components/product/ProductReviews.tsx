@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { Star, ThumbsUp } from "lucide-react";
 
 import type { Locale } from "@/lib/shop/types";
-import type { Review } from "@/lib/product/types";
+import type { StorefrontReview } from "@/lib/product/types";
 import { useLoadMore } from "@/hooks/use-load-more";
 
 type SortOption = "recent" | "helpful";
@@ -17,7 +17,11 @@ function Stars({ value, size = "h-4 w-4" }: { value: number; size?: string }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className={`${size} ${i < Math.round(value) ? "fill-brand-accent text-brand-accent" : "text-brand-border"}`}
+          className={`${size} ${
+            i < Math.round(value)
+              ? "fill-brand-accent text-brand-accent"
+              : "text-brand-border"
+          }`}
         />
       ))}
     </div>
@@ -29,7 +33,7 @@ function WriteReviewForm({
   onSubmit,
 }: {
   locale: Locale;
-  onSubmit: (review: Review) => void;
+  onSubmit: (review: StorefrontReview) => void;
 }) {
   const [rating, setRating] = useState(5);
   const [author, setAuthor] = useState("");
@@ -68,7 +72,11 @@ function WriteReviewForm({
             className="p-0.5"
           >
             <Star
-              className={`h-6 w-6 transition-colors ${i < rating ? "fill-brand-accent text-brand-accent" : "text-brand-border"}`}
+              className={`h-6 w-6 transition-colors ${
+                i < rating
+                  ? "fill-brand-accent text-brand-accent"
+                  : "text-brand-border"
+              }`}
             />
           </button>
         ))}
@@ -110,7 +118,7 @@ export default function ProductReviews({
 }: {
   rating: number;
   reviewCount: number;
-  reviews: Review[];
+  reviews: StorefrontReview[];
   locale?: Locale;
 }) {
   const [reviews, setReviews] = useState(initialReviews);
@@ -207,11 +215,6 @@ export default function ProductReviews({
                 </span>
               )}
             </div>
-            {review.title && (
-              <h3 className="mb-1 text-sm font-semibold text-brand-text">
-                {review.title[locale]}
-              </h3>
-            )}
             <p className="mb-2 text-sm leading-relaxed text-brand-text-secondary">
               {review.body[locale]}
             </p>
@@ -220,11 +223,7 @@ export default function ProductReviews({
                 {review.author} ·{" "}
                 {new Date(review.date).toLocaleDateString(
                   locale === "bn" ? "bn-BD" : "en-US",
-                  {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  },
+                  { month: "short", day: "numeric", year: "numeric" },
                 )}
               </span>
               <button
