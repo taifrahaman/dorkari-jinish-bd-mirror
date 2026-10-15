@@ -3,6 +3,17 @@
 import { z } from "zod";
 
 /* ============================================================
+ * Localized text
+ * ============================================================ */
+
+export const localizedTextSchema = z.object({
+  en: z.string().trim().max(500).default(""),
+  bn: z.string().trim().max(500).default(""),
+});
+
+export type LocalizedTextInput = z.infer<typeof localizedTextSchema>;
+
+/* ============================================================
  * Store info
  * ============================================================ */
 
@@ -39,6 +50,8 @@ export type VatConfigInput = z.infer<typeof vatConfigSchema>;
 export const updateSettingsSchema = z.object({
   store: storeInfoSchema.optional(),
   vat: vatConfigSchema.optional(),
+  deliveryEstimate: localizedTextSchema.optional(),
+  returnPolicy: localizedTextSchema.optional(),
   lowStockThreshold: z.coerce.number().int().min(0).optional(),
 });
 
@@ -52,6 +65,8 @@ export const settingResponseSchema = z.object({
   _id: z.string(),
   store: storeInfoSchema,
   vat: vatConfigSchema,
+  deliveryEstimate: localizedTextSchema,
+  returnPolicy: localizedTextSchema,
   lowStockThreshold: z.number(),
   updatedAt: z.string(),
 });

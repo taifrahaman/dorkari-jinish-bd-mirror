@@ -9,6 +9,11 @@ import mongoose, { Schema, Document, Model } from "mongoose";
  * `getSettings()` upserts the defaults if it doesn't exist.
  * ============================================================ */
 
+export interface ILocalizedText {
+  en: string;
+  bn: string;
+}
+
 export interface IStoreInfo {
   name: string;
   phone?: string;
@@ -29,6 +34,10 @@ export interface ISetting extends Document {
   key: "singleton";
   store: IStoreInfo;
   vat: IVatConfig;
+  /** Shown on every product detail page. */
+  deliveryEstimate: ILocalizedText;
+  /** Shown on every product detail page. */
+  returnPolicy: ILocalizedText;
   lowStockThreshold: number;
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +46,14 @@ export interface ISetting extends Document {
 /* ============================================================
  * Sub-schemas
  * ============================================================ */
+
+const LocalizedTextSchema = new Schema<ILocalizedText>(
+  {
+    en: { type: String, trim: true, default: "" },
+    bn: { type: String, trim: true, default: "" },
+  },
+  { _id: false },
+);
 
 const StoreInfoSchema = new Schema<IStoreInfo>(
   {
@@ -78,6 +95,20 @@ const SettingSchema = new Schema<ISetting>(
     vat: {
       type: VatConfigSchema,
       default: () => ({}),
+    },
+    deliveryEstimate: {
+      type: LocalizedTextSchema,
+      default: () => ({
+        en: "Delivery in 2–4 days across Dhaka",
+        bn: "ঢাকার মধ্যে ২-৪ দিনে ডেলিভারি",
+      }),
+    },
+    returnPolicy: {
+      type: LocalizedTextSchema,
+      default: () => ({
+        en: "7-day easy return if unused and in original packaging",
+        bn: "অব্যবহৃত ও মূল প্যাকেজিং থাকলে ৭ দিনের সহজ রিটার্ন",
+      }),
     },
     lowStockThreshold: { type: Number, default: 5, min: 0 },
   },
