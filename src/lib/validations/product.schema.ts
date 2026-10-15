@@ -24,16 +24,18 @@ export const productColorSchema = z.object({
 export type ProductColorInput = z.infer<typeof productColorSchema>;
 
 /* ============================================================
+ * Box contents
+ * ============================================================ */
+
+export const boxContentSchema = z.object({
+  en: z.string().trim().max(200).default(""),
+  bn: z.string().trim().max(200).default(""),
+});
+
+export type BoxContentInput = z.infer<typeof boxContentSchema>;
+
+/* ============================================================
  * Supplier
- *
- * All fields optional at the Zod layer. Empty supplier is
- * normalized to `undefined` by the service layer. If any field
- * is filled but `name` is empty, the service raises a clear
- * error — see `normalizeSupplier()` in product.service.ts.
- *
- * Kept as a plain object (no preprocess/transform) so that
- * react-hook-form can infer nested field paths like
- * "supplier.name" for register().
  * ============================================================ */
 
 export const productSupplierSchema = z.object({
@@ -87,7 +89,6 @@ export const createProductSchema = z.object({
   lowStockThreshold: z.coerce.number().int().min(0).optional(),
 
   images: z.array(imageRefSchema).max(MAX_IMAGES).default([]),
-
   colors: z.array(productColorSchema).default([]),
 
   sku: z.string().trim().max(50).optional(),
@@ -97,6 +98,7 @@ export const createProductSchema = z.object({
   dimensions: z.string().trim().max(80).optional(),
 
   specifications: specificationsSchema,
+  boxContents: z.array(boxContentSchema).optional(),
 
   supplier: productSupplierSchema.optional(),
 
@@ -136,6 +138,7 @@ export const updateProductSchema = z.object({
   dimensions: z.string().trim().max(80).nullable().optional(),
 
   specifications: z.record(z.string(), z.string()).optional(),
+  boxContents: z.array(boxContentSchema).optional(),
 
   supplier: productSupplierSchema.nullable().optional(),
 
@@ -270,6 +273,7 @@ export const productResponseSchema = z.object({
   dimensions: z.string().optional(),
 
   specifications: z.record(z.string(), z.unknown()).optional(),
+  boxContents: z.array(boxContentSchema).optional(),
 
   supplier: productSupplierSchema.optional(),
 

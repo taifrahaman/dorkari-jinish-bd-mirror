@@ -1,13 +1,18 @@
 // src/models/Review.model.ts
 
 import mongoose, { Schema, Document, Model } from "mongoose";
-import Order from "./Order.model"; // Import to check order history
+import Order from "./Order.model";
+
+export interface IReviewComment {
+  en?: string;
+  bn?: string;
+}
 
 export interface IReview extends Document {
   user: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
   rating: number;
-  comment?: string;
+  comment?: IReviewComment;
   images?: Array<{ url: string; publicId: string }>;
   isVerifiedPurchase: boolean;
   helpfulCount: number;
@@ -18,6 +23,30 @@ export interface IReview extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/* ============================================================
+ * Sub-schemas
+ * ============================================================ */
+
+const ReviewCommentSchema = new Schema<IReviewComment>(
+  {
+    en: { type: String, trim: true },
+    bn: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
+const ReviewImageSchema = new Schema(
+  {
+    url: { type: String, required: true },
+    publicId: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+/* ============================================================
+ * Review
+ * ============================================================ */
 
 const ReviewSchema = new Schema<IReview>(
   {
@@ -37,66 +66,55 @@ const ReviewSchema = new Schema<IReview>(
       min: 1,
       max: 5,
     },
-    comment: {
-      type: String,
-      trim: true,
-    },
-    images: [
-      {
-        url: { type: String, required: true },
-        publicId: { type: String, required: true },
-      },
-    ],
-    isVerifiedPurchase: {
-      type: Boolean,
-      default: false,
-    },
-    helpfulCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+    comment: { type: ReviewCommentSchema, default: undefined },
+    images: { type: [ReviewImageSchema], default: [] },
+
+    isVerifiedPurchase: { type: Boolean, default: false },
+    helpfulCount: { type: Number, default: 0, min: 0 },
+
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
-    moderationNotes: {
-      type: String,
-      trim: true,
-    },
+    moderationNotes: { type: String, trim: true },
     approvedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
-    approvedAt: {
-      type: Date,
-    },
+    approvedAt: { type: Date },
   },
   { timestamps: true },
 );
 
-// --- Pre‑validate hook to auto‑set isVerifiedPurchase ---
+/* ============================================================
+ * Hooks
+ * ============================================================ */
+
 ReviewSchema.pre("validate", async function () {
-  // Only check if we have a user and product, and flag is not already set
   if (this.user && this.product) {
-    // Check if this user has a delivered order containing this product
     const deliveredOrder = await Order.findOne({
       user: this.user,
       status: "delivered",
       "items.product": this.product,
     });
-
-    this.isVerifiedPurchase = !!deliveredOrder; // true if found, false otherwise
+    this.isVerifiedPurchase = !!deliveredOrder;
   }
 });
 
-// Indexes
+/* ============================================================
+ * Indexes
+ * ============================================================ */
+
 ReviewSchema.index({ user: 1, product: 1 }, { unique: true });
 ReviewSchema.index({ product: 1, status: 1 });
 ReviewSchema.index({ status: 1 });
 ReviewSchema.index({ rating: 1 });
+
+/* ============================================================
+ * Model
+ * ============================================================ */
 
 const Review =
   (mongoose.models.Review as Model<IReview>) ||

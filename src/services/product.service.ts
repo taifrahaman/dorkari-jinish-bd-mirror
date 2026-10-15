@@ -1,6 +1,8 @@
 // src/services/product.service.ts
 
 import mongoose from "mongoose";
+import { revalidateTag } from "next/cache";
+import { STOREFRONT_PRODUCTS_TAG } from "@/lib/storefront/cache-tags";
 import Product from "@/models/Product.model";
 import Category from "@/models/Category.model";
 import Brand from "@/models/Brand.model";
@@ -103,6 +105,7 @@ type LeanProduct = {
   weight?: string;
   dimensions?: string;
   specifications?: Record<string, unknown>;
+  boxContents?: Array<{ en: string; bn: string }>;
   supplier?: LeanSupplier | null;
   costHistory?: LeanCostHistoryEntry[];
   totalSold?: number;
@@ -222,6 +225,7 @@ export function toProductResponse(doc: LeanProduct): ProductResponse {
     weight: doc.weight,
     dimensions: doc.dimensions,
     specifications: doc.specifications ?? {},
+    boxContents: doc.boxContents ?? [],
     supplier:
       doc.supplier && doc.supplier.name
         ? {
@@ -487,6 +491,7 @@ export async function createProduct(
       weight: input.weight,
       dimensions: input.dimensions,
       specifications: input.specifications ?? {},
+      boxContents: input.boxContents ?? [],
       supplier,
       isActive: input.isActive ?? true,
       isFeatured: input.isFeatured ?? false,
@@ -497,6 +502,7 @@ export async function createProduct(
       .lean<LeanProduct>();
     if (!populated) throw new NotFoundError("Product not found after create");
 
+    revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
     return toProductResponse(populated);
   } catch (err) {
     mapDuplicateKey(err);
@@ -615,6 +621,9 @@ export async function updateProduct(
   if (input.specifications !== undefined) {
     doc.specifications = input.specifications;
   }
+  if (input.boxContents !== undefined) {
+    doc.boxContents = input.boxContents;
+  }
   if (input.supplier !== undefined) {
     const normalized = normalizeSupplier(input.supplier);
     doc.supplier = normalized;
@@ -638,6 +647,7 @@ export async function updateProduct(
     .lean<LeanProduct>();
   if (!populated) throw new NotFoundError("Product not found after update");
 
+  revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   return toProductResponse(populated);
 }
 
@@ -656,6 +666,7 @@ export async function archiveProduct(id: string): Promise<{ _id: string }> {
   doc.isActive = false;
   await doc.save();
 
+  revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   return { _id: id };
 }
 
@@ -681,6 +692,7 @@ export async function restoreProduct(id: string): Promise<ProductResponse> {
     .lean<LeanProduct>();
   if (!populated) throw new NotFoundError("Product not found after restore");
 
+  revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   return toProductResponse(populated);
 }
 
@@ -727,6 +739,7 @@ export async function permanentDeleteProduct(
 
   await Product.deleteOne({ _id: id });
 
+  revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   return { _id: id, cloudinaryDeleted };
 }
 
@@ -794,6 +807,10 @@ export async function bulkCreateProducts(
       });
       failed += 1;
     }
+  }
+
+  if (created > 0) {
+    revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   }
 
   return {
@@ -956,6 +973,11 @@ export async function importProducts(
       });
       failed += 1;
     }
+  }
+
+  // Skip invalidation entirely for dry runs — no DB writes happened.
+  if (!options.dryRun && (created > 0 || updated > 0)) {
+    revalidateTag(STOREFRONT_PRODUCTS_TAG, "max");
   }
 
   return {

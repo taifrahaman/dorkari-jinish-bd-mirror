@@ -4,11 +4,11 @@ import { NextResponse } from "next/server";
 
 import { withDb } from "@/lib/api/api-handler";
 import { handleApiError } from "@/lib/errors";
-import { listStorefrontProducts } from "@/services/product.service";
+import { getCachedStorefrontProducts } from "@/lib/storefront/products-cache";
 
 export const GET = withDb(async () => {
   try {
-    const data = await listStorefrontProducts();
+    const data = await getCachedStorefrontProducts();
     return NextResponse.json({ success: true, data });
   } catch (err) {
     return handleApiError(err);

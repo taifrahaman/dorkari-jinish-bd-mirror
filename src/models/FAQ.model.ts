@@ -2,39 +2,50 @@
 
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface ILocalizedText {
+  en: string;
+  bn: string;
+}
+
 export interface IFAQ extends Document {
-  question: string;
-  answer: string;
-  // category: string; // We'll replace this with the structured targeting below
+  question: ILocalizedText;
+  answer: ILocalizedText;
 
-  // --- Targeting fields ---
-  targetType: "global" | "product" | "category"; // Where this FAQ appears
-  targetId?: mongoose.Types.ObjectId | null; // Product ID or Category ID (null for global)
+  /** Where this FAQ appears. */
+  targetType: "global" | "product" | "category";
+  /** Product or Category ObjectId; null when targetType is "global". */
+  targetId?: mongoose.Types.ObjectId | null;
 
-  // --- Display fields ---
   order: number;
   isActive: boolean;
 
-  // --- Soft delete ---
   deletedAt?: Date | null;
 
-  // --- Timestamps ---
   createdAt: Date;
   updatedAt: Date;
 }
 
+/* ============================================================
+ * Sub-schemas
+ * ============================================================ */
+
+const LocalizedTextSchema = new Schema<ILocalizedText>(
+  {
+    en: { type: String, required: true, trim: true },
+    bn: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
+/* ============================================================
+ * FAQ
+ * ============================================================ */
+
 const FAQSchema = new Schema<IFAQ>(
   {
-    question: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    answer: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    question: { type: LocalizedTextSchema, required: true },
+    answer: { type: LocalizedTextSchema, required: true },
+
     targetType: {
       type: String,
       enum: ["global", "product", "category"],
@@ -43,31 +54,29 @@ const FAQSchema = new Schema<IFAQ>(
     },
     targetId: {
       type: Schema.Types.ObjectId,
-      refPath: "targetType", // Dynamic reference: if targetType is 'product', ref 'Product'; if 'category', ref 'Category'.
+      refPath: "targetType",
       default: null,
     },
-    order: {
-      type: Number,
-      default: 0,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
+
+    order: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
 
-// Indexes
+/* ============================================================
+ * Indexes
+ * ============================================================ */
+
 FAQSchema.index({ targetType: 1, targetId: 1 });
 FAQSchema.index({ targetType: 1, targetId: 1, order: 1 });
 FAQSchema.index({ isActive: 1 });
 
-// Validation: If targetType is product or category, targetId MUST be provided
+/* ============================================================
+ * Validation
+ * ============================================================ */
+
 FAQSchema.pre("validate", function () {
   if (this.targetType !== "global" && !this.targetId) {
     throw new Error(
@@ -75,9 +84,13 @@ FAQSchema.pre("validate", function () {
     );
   }
   if (this.targetType === "global") {
-    this.targetId = null; // ensure consistency
+    this.targetId = null;
   }
 });
+
+/* ============================================================
+ * Model
+ * ============================================================ */
 
 const FAQ =
   (mongoose.models.FAQ as Model<IFAQ>) ||

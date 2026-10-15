@@ -35,11 +35,16 @@ export interface IProductCostHistoryEntry {
 }
 
 export interface IProductSupplier {
-  /** Optional at the DB layer — Zod enforces it when any field is set. */
   name?: string;
   phone?: string;
   email?: string;
   address?: string;
+}
+
+/** One line item in the "In the box" list. Bilingual. */
+export interface IBoxContent {
+  en: string;
+  bn: string;
 }
 
 /* ============================================================
@@ -75,6 +80,9 @@ export interface IProduct extends Document {
   weight?: string;
   dimensions?: string;
   specifications?: Record<string, unknown>;
+
+  /** Optional list of what ships in the box. Bilingual. */
+  boxContents: IBoxContent[];
 
   supplier?: IProductSupplier;
   costHistory: IProductCostHistoryEntry[];
@@ -135,16 +143,20 @@ const CostHistorySchema = new Schema<IProductCostHistoryEntry>(
   { _id: false },
 );
 
-/**
- * Supplier sub-schema. All fields optional — the Zod layer
- * enforces `name` only when some field is filled.
- */
 const SupplierSchema = new Schema<IProductSupplier>(
   {
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     address: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
+const BoxContentSchema = new Schema<IBoxContent>(
+  {
+    en: { type: String, trim: true, default: "" },
+    bn: { type: String, trim: true, default: "" },
   },
   { _id: false },
 );
@@ -203,6 +215,8 @@ const ProductSchema = new Schema<IProduct>(
     dimensions: { type: String, trim: true },
 
     specifications: { type: Schema.Types.Mixed, default: {} },
+
+    boxContents: { type: [BoxContentSchema], default: [] },
 
     supplier: { type: SupplierSchema, default: undefined },
     costHistory: {
