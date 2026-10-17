@@ -3,13 +3,14 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { dealsOfTheWeek } from "./dealsOfTheWeekData";
 import DealCard, { type DealCardPalette } from "./DealCard";
+import type { DealProduct } from "./dealsOfTheWeek.types";
 
 type Locale = "en" | "bn";
 
 type DealsOfTheWeekProps = {
   locale?: Locale;
+  deals: DealProduct[];
 };
 
 const CARD_PALETTES: DealCardPalette[] = [
@@ -31,15 +32,16 @@ const sectionContent = {
 
 export default function DealsOfTheWeek({
   locale: localeProp,
+  deals,
 }: DealsOfTheWeekProps) {
   const nextLocale = useLocale() as Locale;
   const locale: Locale = localeProp ?? nextLocale;
 
+  if (!deals || deals.length === 0) return null;
+
   const content = sectionContent[locale];
   const isBangla = locale === "bn";
   const banglaClass = isBangla ? "tracking-normal" : "";
-
-  const deals = dealsOfTheWeek.slice(0, 2);
 
   return (
     <section className="w-full bg-white py-12 sm:py-14 md:py-16">

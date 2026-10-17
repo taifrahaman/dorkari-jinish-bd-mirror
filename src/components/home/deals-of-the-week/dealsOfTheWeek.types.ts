@@ -1,11 +1,8 @@
 // src/components/home/deals-of-the-week/dealsOfTheWeek.types.ts
 
-// src/components/home/deals-of-the-week/dealsOfTheWeekData.ts
-
-// src/components/home/deals-of-the-week/dealsOfTheWeek.types.ts
-
 export type DealProduct = {
   id: string;
+  slug: string;
 
   name: {
     en: string;

@@ -540,6 +540,24 @@ export default function CategoryRail({
               />
             </div>
           ))}
+
+          {/* --- SEE MORE CARD --- */}
+          <div data-card className={styles.item}>
+            <Link
+              href={shopHref}
+              className="group flex h-full w-full flex-col items-center justify-center gap-4 rounded-[26px] border-2 border-dashed border-brand-border bg-brand-surface/40 p-6 transition-all duration-300 hover:border-brand-primary hover:bg-brand-surface"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-brand-primary group-hover:text-white">
+                <ArrowRight className="h-6 w-6" />
+              </div>
+              <span
+                className={`text-sm font-semibold text-brand-primary ${banglaClass}`}
+              >
+                {isBangla ? "সব দেখুন" : "See More"}
+              </span>
+            </Link>
+          </div>
+          {/* --------------------- */}
         </div>
       </div>
 

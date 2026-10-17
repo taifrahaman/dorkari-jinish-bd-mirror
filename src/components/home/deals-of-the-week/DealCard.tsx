@@ -170,7 +170,7 @@ export default function DealCard({
             </div>
 
             <Button
-              href={`/products/${product.id}`}
+              href={`/products/${product.slug}`}
               fontSize={15}
               bangla={isBangla}
               trailingIcon={<span className="text-base">→</span>}
