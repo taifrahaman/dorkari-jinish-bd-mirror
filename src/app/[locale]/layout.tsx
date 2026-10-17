@@ -12,6 +12,7 @@ import {
 import Navbar from "@/components/navigation/Navbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Footer } from "@/components/footer";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -32,10 +33,12 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider>
-      <Navbar categories={categories} />
-      {children}
-      <MobileBottomNav />
-      <Footer />
+      <AuthProvider>
+        <Navbar categories={categories} />
+        {children}
+        <MobileBottomNav />
+        <Footer />
+      </AuthProvider>
     </NextIntlClientProvider>
   );
 }

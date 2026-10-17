@@ -2,37 +2,59 @@
 
 import { User } from "@/models";
 import { signJwt, verifyJwt, hashPassword, comparePassword } from "@/lib/auth";
+import { normalizePhone } from "@/lib/admin/phone";
 import { randomUUID } from "crypto";
-import { ConflictError, UnauthorizedError } from "@/lib/errors";
+import {
+  ConflictError,
+  UnauthorizedError,
+  BadRequestError,
+} from "@/lib/errors";
 
 /**
- * Register a new user
+ * Register a new user (Phone required, Email optional)
  */
 export async function registerUser(data: {
-  email: string;
-  password: string;
   name: string;
+  phone: string;
+  email?: string;
+  password: string;
   role?: "admin" | "moderator" | "customer";
 }) {
-  const { email, password, name, role = "customer" } = data;
+  const { name, phone, email, password, role = "customer" } = data;
 
-  // Check for existing user
-  const existing = await User.findOne({ email });
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
+    throw new BadRequestError("Invalid Bangladeshi phone number");
+  }
 
-  if (existing) {
-    throw new ConflictError("User with this email already exists");
+  // Check if phone already exists
+  const existingPhone = await User.findOne({
+    phoneNormalized: normalizedPhone,
+  });
+  if (existingPhone) {
+    throw new ConflictError("An account with this phone number already exists");
+  }
+
+  // Check if email already exists (if provided)
+  if (email && email.trim() !== "") {
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      throw new ConflictError("An account with this email already exists");
+    }
   }
 
   const hashedPassword = await hashPassword(password);
 
   const user = await User.create({
-    email,
-    password: hashedPassword,
     name,
+    phone,
+    phoneNormalized: normalizedPhone,
+    email: email && email.trim() !== "" ? email : undefined,
+    password: hashedPassword,
     role,
+    source: "online",
   });
 
-  // Return user without password
   const userWithoutPassword = user.toObject();
   delete userWithoutPassword.password;
 
@@ -40,33 +62,35 @@ export async function registerUser(data: {
 }
 
 /**
- * Login user with email and password
+ * Login user with Phone OR Email
  */
-export async function loginUser(email: string, password: string) {
-  const user = await User.findOne({ email });
+export async function loginUser(identifier: string, password: string) {
+  const isEmail = identifier.includes("@");
 
-  if (!user) {
-    throw new Error("Invalid email or password");
-  }
+  const query = isEmail
+    ? { email: identifier }
+    : { phoneNormalized: normalizePhone(identifier) };
 
-  // Shadow accounts or social login users may not have a password
-  if (!user.password) {
-    throw new Error("Invalid email or password");
+  const user = await User.findOne(query);
+
+  if (!user || !user.password) {
+    throw new Error("Invalid credentials");
   }
 
   const isValid = await comparePassword(password, user.password);
-
   if (!isValid) {
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid credentials");
   }
 
-  // Update last login timestamp
   user.lastLogin = new Date();
   await user.save();
 
+  // Fallback email to phone for the JWT if email is missing
+  const emailForToken = user.email || user.phone || "";
+
   const token = await signJwt({
     userId: user._id.toString(),
-    email: email,
+    email: emailForToken,
     role: user.role,
   });
 
@@ -93,16 +117,21 @@ export async function getUserFromToken(token: string) {
   try {
     const payload = await verifyJwt(token);
     const user = await User.findById(payload.userId).select("-password");
-
     return user || null;
   } catch {
     return null;
   }
 }
 
+/* ============================================================
+ * ADMIN LOGIN (Restored)
+ * ============================================================ */
+
 const ADMIN_ROLES = ["admin", "moderator"] as const;
 
-// Admin-only login. Rejects customers even with valid credentials.
+/**
+ * Admin-only login. Rejects customers even with valid credentials.
+ */
 export async function loginAdmin(email: string, password: string) {
   const user = await User.findOne({
     email,
@@ -126,7 +155,7 @@ export async function loginAdmin(email: string, password: string) {
 
   const token = await signJwt({
     userId: user._id.toString(),
-    email: email,
+    email: user.email || email, // Fallback to the email provided in the login form
     role: user.role,
   });
 

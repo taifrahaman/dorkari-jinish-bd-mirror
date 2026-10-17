@@ -1471,5 +1471,35 @@ export async function resolveCategoryAndBrandMaps(
   return { categoriesBySlug, brandsBySlug, createdCategories, createdBrands };
 }
 
+/* ============================================================
+ * Storefront Search
+ * ============================================================ */
+
+export async function searchStorefrontProducts(
+  query: string,
+  limit: number = 20,
+): Promise<StorefrontProduct[]> {
+  if (!query || query.trim() === "") return [];
+
+  // Escape special regex characters to prevent crashes
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rx = new RegExp(escapedQuery, "i");
+
+  const docs = await Product.find({
+    isActive: true,
+    deletedAt: null,
+    $or: [
+      { "name.en": rx },
+      { "name.bn": rx },
+      { "brand.name.en": rx }, // Optional: search by brand
+    ],
+  })
+    .limit(limit)
+    .populate(POPULATE)
+    .lean<Parameters<typeof toStorefrontProduct>[0][]>();
+
+  return docs.map(toStorefrontProduct);
+}
+
 /* Re-export types used by routes */
 export type { ImportDuplicateMode };

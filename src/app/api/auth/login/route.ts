@@ -7,7 +7,7 @@ import { loginUser } from "@/services/auth.service";
 import { BadRequestError } from "@/lib/errors";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  identifier: z.string().min(1, "Phone or Email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -25,14 +25,11 @@ export const POST = withDb(async (req: NextRequest) => {
     throw new BadRequestError(errors);
   }
 
-  const { email, password } = parsed.data;
-
-  // loginUser returns { user, token } and throws Error on failure
-  const { user, token } = await loginUser(email, password);
+  const { identifier, password } = parsed.data;
+  const { user, token } = await loginUser(identifier, password);
 
   const response = NextResponse.json({ success: true, user }, { status: 200 });
 
-  // Set the cookie using the token from loginUser
   response.cookies.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

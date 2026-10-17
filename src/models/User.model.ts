@@ -3,13 +3,8 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { normalizePhone } from "@/lib/admin/phone";
 
-/* ============================================================
- * Types
- * ============================================================ */
-
 export type UserRole = "admin" | "moderator" | "customer";
 export type UserStatus = "active" | "inactive";
-
 export type CustomerSource =
   | "online"
   | "google"
@@ -20,19 +15,27 @@ export type CustomerSource =
   | "manual"
   | "import";
 
+export interface IUserAddress {
+  _id?: mongoose.Types.ObjectId;
+  label: string; // e.g., "Home", "Office"
+  address: string;
+  phone: string;
+  isDefault: boolean;
+}
+
 export interface IUser extends Document {
   name: string;
   email?: string;
-  /** Display phone — as entered by whoever created the record. */
   phone?: string;
-  /** Normalized to BD local format — used for matching. */
   phoneNormalized?: string;
   password?: string;
   role: UserRole;
   isShadow: boolean;
   source: CustomerSource;
   createdBy?: mongoose.Types.ObjectId | IUser;
-  address?: string;
+  address?: string; // Old single address field (kept for backward compatibility)
+  addresses: IUserAddress[]; // <-- NEW
+  wishlist: mongoose.Types.ObjectId[]; // <-- NEW
   notes?: string;
   tags: string[];
   status: UserStatus;
@@ -41,10 +44,6 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
-/* ============================================================
- * Constants
- * ============================================================ */
 
 export const CUSTOMER_SOURCES: readonly CustomerSource[] = [
   "online",
@@ -57,9 +56,15 @@ export const CUSTOMER_SOURCES: readonly CustomerSource[] = [
   "import",
 ] as const;
 
-/* ============================================================
- * Schema
- * ============================================================ */
+const UserAddressSchema = new Schema<IUserAddress>(
+  {
+    label: { type: String, required: true, default: "Home", trim: true },
+    address: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: true },
+);
 
 const UserSchema = new Schema<IUser>(
   {
@@ -74,33 +79,19 @@ const UserSchema = new Schema<IUser>(
       default: "customer",
     },
     isShadow: { type: Boolean, default: false },
-    source: {
-      type: String,
-      enum: [...CUSTOMER_SOURCES],
-      default: "online",
-    },
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    source: { type: String, enum: [...CUSTOMER_SOURCES], default: "online" },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     address: { type: String, trim: true },
+    addresses: { type: [UserAddressSchema], default: [] }, // <-- NEW
+    wishlist: { type: [Schema.Types.ObjectId], ref: "Product", default: [] }, // <-- NEW
     notes: { type: String, trim: true, maxlength: 2000 },
     tags: { type: [String], default: [] },
-    status: {
-      type: String,
-      enum: ["active", "inactive"],
-      default: "active",
-    },
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
     lastLogin: { type: Date },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
-
-/* ============================================================
- * Middleware — auto-compute phoneNormalized
- * ============================================================ */
 
 UserSchema.pre("save", async function () {
   if (this.isModified("phone") || this.isNew) {
@@ -108,10 +99,6 @@ UserSchema.pre("save", async function () {
     this.phoneNormalized = raw ? normalizePhone(raw) || undefined : undefined;
   }
 });
-
-/* ============================================================
- * Indexes
- * ============================================================ */
 
 UserSchema.index({ email: 1 }, { unique: true, sparse: true });
 UserSchema.index(

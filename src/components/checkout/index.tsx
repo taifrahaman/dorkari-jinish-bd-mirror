@@ -2,17 +2,18 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ShieldCheck, ChevronLeft } from "lucide-react";
+import { Loader2, ShieldCheck, ChevronLeft, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Locale } from "@/lib/shop/types";
 import { useCartStore } from "@/lib/stores/useCartStore";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { useHydration } from "@/lib/stores/useHydration";
 import { parseCartKey } from "@/lib/cart/cart-key";
 
@@ -40,16 +41,61 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
   const items = useCartStore((s) => s.items);
   const totalPrice = useCartStore((s) => s.totalPrice);
   const clearCart = useCartStore((s) => s.clearCart);
+
+  const { user } = useAuthStore();
+  const defaultAddress =
+    user?.addresses?.find((a) => a.isDefault) || user?.addresses?.[0];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // New state for "Ordering for someone else"
+  const [isForSomeoneElse, setIsForSomeoneElse] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "cod" },
+    defaultValues: {
+      name: user?.name || "",
+      phone: user?.phone || defaultAddress?.phone || "",
+      email: user?.email || "",
+      address: defaultAddress?.address || "",
+      paymentMethod: "cod",
+    },
   });
+
+  // Autofill logic (only runs if they haven't checked the "someone else" box)
+  useEffect(() => {
+    if (user && !isForSomeoneElse) {
+      if (!watch("name")) setValue("name", user.name);
+      if (!watch("phone"))
+        setValue("phone", user.phone || defaultAddress?.phone || "");
+      if (!watch("email") && user.email) setValue("email", user.email);
+      if (!watch("address") && defaultAddress)
+        setValue("address", defaultAddress.address);
+    }
+  }, [user, defaultAddress, setValue, watch, isForSomeoneElse]);
+
+  // Handle toggling "Ordering for someone else"
+  const handleToggleForSomeoneElse = (checked: boolean) => {
+    setIsForSomeoneElse(checked);
+
+    if (checked) {
+      // Clear the shipping fields so they can type new ones
+      setValue("name", "");
+      setValue("phone", "");
+      setValue("address", "");
+    } else {
+      // Restore their default profile data
+      setValue("name", user?.name || "");
+      setValue("phone", user?.phone || defaultAddress?.phone || "");
+      setValue("address", defaultAddress?.address || "");
+    }
+  };
 
   if (!hydrated) return <div className="min-h-screen bg-brand-background" />;
 
@@ -59,7 +105,10 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
         <h1 className="mb-4 text-2xl font-bold text-brand-text">
           {locale === "bn" ? "আপনার কার্ট খালি" : "Your cart is empty"}
         </h1>
-        <Link href="/shop" className="text-brand-primary hover:underline">
+        <Link
+          href={`/${locale}/shop`}
+          className="text-brand-primary hover:underline"
+        >
           {locale === "bn" ? "শপে ফিরে যান" : "Return to shop"}
         </Link>
       </div>
@@ -72,9 +121,8 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
   const onSubmit = async (data: CheckoutForm) => {
     setIsSubmitting(true);
     try {
-      // Map cart items to API payload
       const payloadItems = items.map((i) => ({
-        productId: parseCartKey(i.productId).productId, // Extract original ID
+        productId: parseCartKey(i.productId).productId,
         quantity: i.quantity,
       }));
 
@@ -91,10 +139,8 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
       });
 
       const json = await res.json();
-
       if (!res.ok) throw new Error(json.message || "Failed to place order");
 
-      // Success!
       clearCart();
       router.push(`/${locale}/checkout/success?orderId=${json.data._id}`);
     } catch (err) {
@@ -120,6 +166,32 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
             <h2 className="mb-4 font-heading text-lg font-bold text-brand-text">
               {locale === "bn" ? "ডেলিভারি তথ্য" : "Delivery Information"}
             </h2>
+
+            {/* "Ordering for someone else" Toggle */}
+            {user && (
+              <div className="mb-6 flex items-center gap-3 rounded-xl border border-brand-border bg-brand-navbar/50 p-4">
+                <div className="flex h-5 w-5 items-center justify-center rounded bg-white ring-1 ring-inset ring-brand-border">
+                  <input
+                    type="checkbox"
+                    id="forSomeoneElse"
+                    checked={isForSomeoneElse}
+                    onChange={(e) =>
+                      handleToggleForSomeoneElse(e.target.checked)
+                    }
+                    className="h-4 w-4 accent-brand-primary cursor-pointer"
+                  />
+                </div>
+                <label
+                  htmlFor="forSomeoneElse"
+                  className="flex cursor-pointer items-center gap-2 text-sm font-medium text-brand-text"
+                >
+                  <Gift className="h-4 w-4 text-brand-primary" />
+                  {locale === "bn"
+                    ? "অন্য কারো জন্য অর্ডার করছেন?"
+                    : "Ordering for someone else?"}
+                </label>
+              </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -207,6 +279,20 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
                   />
                   <span className="text-sm font-semibold text-brand-text">
                     Cash on Delivery
+                  </span>
+                </div>
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-brand-border p-4 hover:bg-brand-navbar/50 has-[:checked]:border-brand-primary has-[:checked]:bg-brand-primary/5">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    value="mobile_payment"
+                    {...register("paymentMethod")}
+                    className="h-4 w-4 accent-brand-primary"
+                  />
+                  <span className="text-sm font-semibold text-brand-text">
+                    bKash / Nagad
                   </span>
                 </div>
               </label>

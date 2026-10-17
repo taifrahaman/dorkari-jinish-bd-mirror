@@ -6,16 +6,22 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { ArrowRight, Search, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Search as SearchIcon, X, Loader2 } from "lucide-react";
 import gsap from "gsap";
 
 import { useUIStore } from "@/lib/stores/useUIStore";
+import type { StorefrontProduct } from "@/lib/storefront/product-mapper";
+import { toShopProducts } from "@/lib/shop/adapter";
 
 export default function SearchOverlay() {
   const router = useRouter();
   const locale = useLocale();
   const { isSearchOpen, setIsSearchOpen } = useUIStore();
+
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<StorefrontProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -23,6 +29,35 @@ export default function SearchOverlay() {
   const [mounted, setMounted] = useState(false);
   const [isDomReady, setIsDomReady] = useState(false);
 
+  // 1. Debounced Search Logic
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Wait 350ms after the user stops typing before hitting the API
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/storefront/search?q=${encodeURIComponent(query)}&limit=4`,
+        );
+        const json = await res.json();
+        if (json.success) setResults(json.data);
+      } catch (err) {
+        console.error("Search failed", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // 2. Animation & Scroll Lock
   useEffect(() => {
     setIsDomReady(true);
   }, []);
@@ -38,9 +73,7 @@ export default function SearchOverlay() {
     if (!overlay || !panel) return;
 
     if (isSearchOpen) {
-      document.body.style.overflow = "hidden"; // Lock body scroll
-
-      // Animate in
+      document.body.style.overflow = "hidden";
       gsap.to(overlay, { opacity: 1, duration: 0.25, ease: "power2.out" });
       gsap.fromTo(
         panel,
@@ -55,8 +88,6 @@ export default function SearchOverlay() {
       );
     } else {
       document.body.style.overflow = "";
-
-      // Animate out
       gsap.to(overlay, { opacity: 0, duration: 0.2, ease: "power2.in" });
       gsap.to(panel, {
         y: -20,
@@ -65,7 +96,8 @@ export default function SearchOverlay() {
         ease: "power2.in",
         onComplete: () => {
           setMounted(false);
-          setQuery(""); // Clear query on close
+          setQuery(""); // Clear on close
+          setResults([]);
         },
       });
     }
@@ -84,7 +116,12 @@ export default function SearchOverlay() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    setIsSearchOpen(false);
+    router.push(`/${locale}/search?q=${encodeURIComponent(query.trim())}`);
+  };
 
+  const handleViewAll = () => {
+    if (!query.trim()) return;
     setIsSearchOpen(false);
     router.push(`/${locale}/search?q=${encodeURIComponent(query.trim())}`);
   };
@@ -107,7 +144,7 @@ export default function SearchOverlay() {
           onSubmit={handleSubmit}
           className="relative flex w-full items-center"
         >
-          <Search className="absolute left-5 h-5 w-5 text-brand-text-secondary" />
+          <SearchIcon className="absolute left-5 h-5 w-5 text-brand-text-secondary" />
 
           <input
             ref={inputRef}
@@ -121,26 +158,78 @@ export default function SearchOverlay() {
           />
 
           <div className="absolute right-3 flex items-center gap-1">
-            {query && (
+            {isLoading ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin text-brand-text-secondary" />
+            ) : query ? (
               <button
                 type="button"
                 onClick={() => setQuery("")}
                 className="grid h-8 w-8 place-items-center rounded-full text-brand-text-secondary hover:bg-brand-navbar"
-                aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
               </button>
-            )}
+            ) : null}
+
             <button
               type="submit"
               disabled={!query.trim()}
               className="grid h-10 w-10 place-items-center rounded-full bg-brand-primary text-white transition-transform active:scale-95 disabled:opacity-50"
-              aria-label="Search"
             >
               <ArrowRight className="h-5 w-5" />
             </button>
           </div>
         </form>
+
+        {/* Elastic Results Dropdown */}
+        {query.trim().length > 0 && !isLoading && (
+          <div className="mt-4 overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-2xl">
+            {results.length > 0 ? (
+              <div className="flex flex-col">
+                {results.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/${locale}/product/${product.slug}`}
+                    onClick={() => setIsSearchOpen(false)}
+                    className="flex items-center gap-4 border-b border-brand-border/50 p-3 transition-colors hover:bg-brand-navbar last:border-0"
+                  >
+                    <div className="h-12 w-12 flex-none overflow-hidden rounded-lg bg-brand-navbar">
+                      <img
+                        src={
+                          product.images[0]?.url || "/placeholder-product.svg"
+                        }
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="line-clamp-1 text-sm font-medium text-brand-text">
+                        {product.name[locale as "en" | "bn"]}
+                      </p>
+                      <p className="text-xs text-brand-text-secondary">
+                        ৳{product.price}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+
+                {/* See All Button */}
+                <button
+                  onClick={handleViewAll}
+                  className="flex items-center justify-center gap-2 bg-brand-navbar/50 p-3 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-navbar"
+                >
+                  {locale === "bn" ? "সব ফলাফল দেখুন" : "See all results"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="p-6 text-center text-sm text-brand-text-secondary">
+                {locale === "bn"
+                  ? "কোনো পণ্য পাওয়া যায়নি"
+                  : "No products found."}
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           onClick={() => setIsSearchOpen(false)}

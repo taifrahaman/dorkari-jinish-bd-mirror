@@ -8,7 +8,8 @@ import { useLocale } from "next-intl";
 import { Home, Search, ShoppingCart, MessageCircle, User } from "lucide-react";
 
 import { bottomNavItems } from "./navItems";
-import { useUIStore } from "@/lib/stores/useUIStore"; // <-- Added
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { useAuthStore } from "@/lib/stores/useAuthStore"; // <-- Added
 import styles from "./MobileBottomNav.module.css";
 
 const ICONS = { Home, Search, ShoppingCart, MessageCircle, User } as const;
@@ -16,9 +17,8 @@ const ICONS = { Home, Search, ShoppingCart, MessageCircle, User } as const;
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const locale = useLocale();
-
-  // Get search state from UI store
   const { isSearchOpen, setIsSearchOpen } = useUIStore();
+  const user = useAuthStore((s) => s.user); // <-- Added
 
   // Strip the locale prefix: "/en/cart" → "/cart", "/en" → "/"
   const path = pathname.replace(new RegExp(`^/${locale}(?=/|$)`), "") || "/";
@@ -32,7 +32,7 @@ export default function MobileBottomNav() {
         {bottomNavItems.map((item) => {
           const Icon = ICONS[item.icon as keyof typeof ICONS];
 
-          // Special handling for the search button
+          // Handle Search Button
           if (item.id === "search") {
             return (
               <li key={item.id} className={styles.item}>
@@ -52,7 +52,31 @@ export default function MobileBottomNav() {
             );
           }
 
-          // Normal links for everything else
+          // Handle Account Button (Dynamic Link)
+          if (item.id === "account") {
+            const accountHref = user
+              ? `/${locale}/profile`
+              : `/${locale}/login`;
+            const active = isActive(accountHref);
+
+            return (
+              <li key={item.id} className={styles.item}>
+                <Link
+                  href={accountHref}
+                  className={styles.link}
+                  data-active={active}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span className={styles.iconWrap}>
+                    <Icon size={20} strokeWidth={active ? 2.4 : 1.9} />
+                  </span>
+                  <span className={styles.label}>{item.label}</span>
+                </Link>
+              </li>
+            );
+          }
+
+          // Handle normal links
           const active = isActive(item.href);
           return (
             <li key={item.id} className={styles.item}>

@@ -5,15 +5,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, ShoppingCart } from "lucide-react"; // Added ShoppingCart
+import { Menu, ShoppingCart, User } from "lucide-react";
+import { useLocale } from "next-intl";
 
 import NotificationBell from "@/components/shared/NotificationBell";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 import CategoryDrawer from "./CategoryDrawer";
 import { primaryNavLinks, type CategoryNode } from "./navItems";
-import { useHydration } from "@/lib/stores/useHydration"; // Added
-import { useCartStore } from "@/lib/stores/useCartStore"; // Added
-import { useUIStore } from "@/lib/stores/useUIStore"; // Added
+import { useHydration } from "@/lib/stores/useHydration";
+import { useCartStore } from "@/lib/stores/useCartStore";
+import { useUIStore } from "@/lib/stores/useUIStore";
+import { useAuthStore } from "@/lib/stores/useAuthStore"; // <-- Added
 import styles from "./MobileNav.module.css";
 
 type Props = {
@@ -22,9 +24,12 @@ type Props = {
 
 export default function MobileNav({ categories }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const toggleCart = useUIStore((s) => s.toggleCart); // Added
-  const hydrated = useHydration(); // Added
-  const totalItems = useCartStore((s) => s.totalItems); // Added
+  const locale = useLocale();
+
+  const toggleCart = useUIStore((s) => s.toggleCart);
+  const hydrated = useHydration();
+  const totalItems = useCartStore((s) => s.totalItems);
+  const user = useAuthStore((s) => s.user); // <-- Added
 
   return (
     <div className={styles.root}>
@@ -39,7 +44,11 @@ export default function MobileNav({ categories }: Props) {
         </button>
       </div>
 
-      <Link href="/" className={styles.logo} aria-label="Dorkari Jinish — Home">
+      <Link
+        href={`/${locale}`}
+        className={styles.logo}
+        aria-label="Dorkari Jinish — Home"
+      >
         <Image
           src="/logo/logo.png"
           alt=""
@@ -51,7 +60,15 @@ export default function MobileNav({ categories }: Props) {
       </Link>
 
       <div className={styles.right}>
-        {/* Added Mobile Cart Button */}
+        {/* Added User Profile Icon */}
+        <Link
+          href={user ? `/${locale}/profile` : `/${locale}/login`}
+          className={styles.iconButton}
+          aria-label="Account"
+        >
+          <User size={20} />
+        </Link>
+
         <button
           type="button"
           className={`${styles.iconButton} relative`}
@@ -66,7 +83,6 @@ export default function MobileNav({ categories }: Props) {
           )}
         </button>
 
-        <NotificationBell />
         <LanguageSwitcher />
       </div>
 
