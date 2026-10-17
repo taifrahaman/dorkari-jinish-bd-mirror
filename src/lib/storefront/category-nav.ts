@@ -50,6 +50,7 @@ export function toCategoryNav(
     slug: node.slug,
     label: node.name[locale] || node.name.en,
     href: `/c/${node.slug}`,
+    image: node.image?.url, // <-- Add this
     children: node.children?.length
       ? node.children.map((child) => ({
           id: child._id,

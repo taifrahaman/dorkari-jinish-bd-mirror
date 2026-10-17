@@ -1,16 +1,16 @@
 // src/lib/stores/useCartStore.ts
+
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { useUIStore } from "./useUIStore";
 
-// ---- 1. Type Definitions ----
 export type CartItem = {
   productId: string;
   name: string;
   price: number;
   quantity: number;
   image?: string;
-  slug?: string; // for quick navigation
-  // Added for color-variant support:
+  slug?: string;
   colorName?: string;
   colorHex?: string;
   originalPrice?: number;
@@ -20,16 +20,15 @@ export type CartItem = {
 
 type CartState = {
   items: CartItem[];
-  totalItems: number; // derived count (sum of quantities)
-  totalPrice: number; // derived total
+  totalItems: number;
+  totalPrice: number;
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  mergeGuestCart: (guestItems: CartItem[]) => void; // for login flow
+  mergeGuestCart: (guestItems: CartItem[]) => void;
 };
 
-// ---- 2. Custom storage object for Next.js SSR safety ----
 const safeLocalStorage = {
   getItem: (key: string): string | null => {
     if (typeof window === "undefined") return null;
@@ -45,7 +44,6 @@ const safeLocalStorage = {
   },
 };
 
-// ---- 3. Zustand Store with Persist ----
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -53,7 +51,6 @@ export const useCartStore = create<CartState>()(
       totalItems: 0,
       totalPrice: 0,
 
-      // ---- Add item (or increment if exists) ----
       addItem: (item) => {
         const { productId, quantity = 1, ...rest } = item;
         const currentItems = get().items;
@@ -70,7 +67,6 @@ export const useCartStore = create<CartState>()(
           newItems = [...currentItems, { ...rest, productId, quantity }];
         }
 
-        // Recalculate totals
         const totalItems = newItems.reduce((sum, i) => sum + i.quantity, 0);
         const totalPrice = newItems.reduce(
           (sum, i) => sum + i.price * i.quantity,
@@ -80,7 +76,6 @@ export const useCartStore = create<CartState>()(
         set({ items: newItems, totalItems, totalPrice });
       },
 
-      // ---- Remove item entirely ----
       removeItem: (productId) => {
         const newItems = get().items.filter((i) => i.productId !== productId);
         const totalItems = newItems.reduce((sum, i) => sum + i.quantity, 0);
@@ -91,7 +86,6 @@ export const useCartStore = create<CartState>()(
         set({ items: newItems, totalItems, totalPrice });
       },
 
-      // ---- Update specific item quantity ----
       updateQuantity: (productId, quantity) => {
         if (quantity <= 0) {
           get().removeItem(productId);
@@ -108,14 +102,10 @@ export const useCartStore = create<CartState>()(
         set({ items: newItems, totalItems, totalPrice });
       },
 
-      // ---- Clear cart (used after checkout or logout) ----
       clearCart: () => set({ items: [], totalItems: 0, totalPrice: 0 }),
 
-      // ---- Merge guest cart after login (deduplicate by productId) ----
       mergeGuestCart: (guestItems) => {
         const currentItems = get().items;
-        // Simple merge: if product exists in current, keep the higher quantity or sum them?
-        // Industry standard: sum quantities.
         const merged = [...currentItems];
         guestItems.forEach((guestItem) => {
           const existing = merged.find(
@@ -137,7 +127,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "dorkari-cart", // key in localStorage
+      name: "dorkari-cart",
       storage: createJSONStorage(() => safeLocalStorage),
     },
   ),

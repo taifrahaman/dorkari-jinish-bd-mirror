@@ -11,6 +11,7 @@ export type CategoryNode = {
   slug: string;
   label: string;
   href: string;
+  image?: string;
   children?: { id: string; slug: string; label: string; href: string }[];
 };
 

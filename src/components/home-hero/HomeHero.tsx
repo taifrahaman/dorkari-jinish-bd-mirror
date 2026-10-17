@@ -493,7 +493,16 @@ export default function HomeHero({
                   className={styles.tileLink}
                 >
                   <span className={styles.ico}>
-                    <Icon size={24} strokeWidth={1.5} />
+                    {c.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.image}
+                        alt=""
+                        className="h-6 w-6 rounded-md object-cover"
+                      />
+                    ) : (
+                      <Icon size={24} strokeWidth={1.5} />
+                    )}
                   </span>
                   <span className={styles.label}>{c.label}</span>
                 </Link>

@@ -1,4 +1,5 @@
 // src/components/navigation/DesktopNav.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -14,6 +15,7 @@ import NotificationBell from "@/components/shared/NotificationBell";
 import { primaryNavLinks, type CategoryNode } from "./navItems";
 import { useHydration } from "@/lib/stores/useHydration";
 import { useCartStore } from "@/lib/stores/useCartStore";
+import { useUIStore } from "@/lib/stores/useUIStore"; // Added
 import styles from "./DesktopNav.module.css";
 
 type Props = {
@@ -25,13 +27,13 @@ export default function DesktopNav({ categories }: Props) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const hydrated = useHydration();
   const totalItems = useCartStore((s) => s.totalItems);
+  const toggleCart = useUIStore((s) => s.toggleCart); // Added
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <div className={styles.root}>
-      {/* Logo */}
       <Link href="/" className={styles.logo} aria-label="Dorkari Jinish — Home">
         <Image
           src="/logo/logo.png"
@@ -42,7 +44,6 @@ export default function DesktopNav({ categories }: Props) {
         />
       </Link>
 
-      {/* Center nav */}
       <nav className={styles.nav} aria-label="Primary">
         <button
           type="button"
@@ -78,7 +79,6 @@ export default function DesktopNav({ categories }: Props) {
         />
       </nav>
 
-      {/* Right cluster */}
       <div className={styles.actions}>
         <NavSearch />
 
@@ -92,7 +92,13 @@ export default function DesktopNav({ categories }: Props) {
 
         <NotificationBell />
 
-        <button type="button" className={styles.iconButton} aria-label="Cart">
+        {/* Added onClick={toggleCart} */}
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label="Cart"
+          onClick={toggleCart}
+        >
           <ShoppingCart size={18} />
           {hydrated && totalItems > 0 && (
             <span className={styles.badge}>{totalItems}</span>

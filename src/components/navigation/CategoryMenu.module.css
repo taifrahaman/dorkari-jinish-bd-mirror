@@ -1,4 +1,5 @@
 /* src/components/navigation/CategoryMenu.module.css */
+
 .panel {
   position: absolute;
   top: calc(100% + 12px);
@@ -7,12 +8,10 @@
   padding: 8px;
   border-radius: 16px;
 
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur))
-    saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  /* Solid background instead of blur */
+  background: var(--brand-surface, #ffffff);
+  border: 1px solid var(--brand-border, #e5e7eb);
+  box-shadow: 0 12px 32px -10px rgba(23, 38, 66, 0.15);
 
   opacity: 0;
   transform: translateY(-6px);
@@ -76,12 +75,10 @@
   padding: 8px;
   border-radius: 14px;
 
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur))
-    saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  /* Solid background instead of blur */
+  background: var(--brand-surface, #ffffff);
+  border: 1px solid var(--brand-border, #e5e7eb);
+  box-shadow: 0 12px 32px -10px rgba(23, 38, 66, 0.15);
 
   opacity: 0;
   transform: translateX(-6px);

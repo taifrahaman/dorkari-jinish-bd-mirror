@@ -1,4 +1,5 @@
 // src/components/hero/HeroSearch.tsx
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -89,7 +90,16 @@ export default function HeroSearch({ categories }: Props) {
             <ChevronDown size={14} className={styles.chev} />
           </button>
 
-          <div className={styles.panel} data-open={open} role="listbox">
+          {/* 
+            Notice we added `bg-brand-surface shadow-xl border border-brand-border` 
+            to force a solid background and remove the blur 
+          */}
+          <div
+            className={`${styles.panel} bg-brand-surface shadow-xl border border-brand-border`}
+            data-open={open}
+            role="listbox"
+            style={{ backdropFilter: "none", WebkitBackdropFilter: "none" }}
+          >
             <ul className={styles.panelList}>
               {filterOptions.map((opt) => (
                 <li key={opt.id}>
