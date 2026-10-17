@@ -8,7 +8,8 @@ import { ArrowLeft } from "lucide-react";
 import gsap from "gsap";
 
 import type { Locale } from "@/lib/shop/types";
-import { DUMMY_PRODUCTS } from "@/lib/shop/dummy-products";
+import type { StorefrontProduct } from "@/lib/storefront/product-mapper";
+import { toShopProducts } from "@/lib/shop/adapter";
 import ShopProductGrid from "@/components/shop/ProductGrid";
 import { useCartStore } from "@/lib/stores/useCartStore";
 import { parseCartKey } from "@/lib/cart/cart-key";
@@ -18,7 +19,15 @@ import CartLineItem from "./CartLineItem";
 import CartSummary from "./CartSummary";
 import EmptyCart from "./EmptyCart";
 
-export default function CartPage({ locale = "en" }: { locale?: Locale }) {
+type CartPageProps = {
+  locale?: Locale;
+  recommendedProducts: StorefrontProduct[];
+};
+
+export default function CartPage({
+  locale = "en",
+  recommendedProducts,
+}: CartPageProps) {
   const hydrated = useHydration();
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
@@ -52,12 +61,17 @@ export default function CartPage({ locale = "en" }: { locale?: Locale }) {
     );
   }
 
+  // Filter out recommended products that are already in the cart
   const cartProductIds = new Set(
     items.map((i) => parseCartKey(i.productId).productId),
   );
-  const recommended = DUMMY_PRODUCTS.filter(
-    (p) => !cartProductIds.has(p.id),
-  ).slice(0, 4);
+
+  const filteredRecommended = recommendedProducts
+    .filter((p) => !cartProductIds.has(p.id))
+    .slice(0, 4);
+
+  // Convert to the shape ShopProductGrid expects
+  const recommendedShopProducts = toShopProducts(filteredRecommended, locale);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-[calc(var(--shop-nav)+1rem)] [--shop-nav:4.5rem] sm:px-6 lg:px-8 lg:[--shop-nav:5.75rem]">
@@ -91,12 +105,12 @@ export default function CartPage({ locale = "en" }: { locale?: Locale }) {
         <CartSummary locale={locale} />
       </div>
 
-      {recommended.length > 0 && (
+      {recommendedShopProducts.length > 0 && (
         <div className="mt-14 border-t border-brand-border pt-10">
           <h2 className="mb-4 font-heading text-xl font-bold text-brand-text sm:text-2xl">
             {locale === "bn" ? "আপনার পছন্দ হতে পারে" : "You may also like"}
           </h2>
-          <ShopProductGrid products={recommended} locale={locale} />
+          <ShopProductGrid products={recommendedShopProducts} locale={locale} />
         </div>
       )}
     </div>
