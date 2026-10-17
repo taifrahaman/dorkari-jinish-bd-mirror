@@ -1,0 +1,22 @@
+name: Mirror to Personal Repo
+
+on:
+  push:
+    branches: [ main, master ] # Triggers whenever you push to main or master
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Personal Repo
+        run: |
+          # Replace YOUR_PERSONAL_USERNAME and YOUR_PRIVATE_REPO with your actual details
+          git remote add mirror https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/YOUR_PERSONAL_USERNAME/YOUR_PRIVATE_REPO.git
+          
+          # Push to the main branch of your personal repo
+          git push mirror HEAD:main --force
