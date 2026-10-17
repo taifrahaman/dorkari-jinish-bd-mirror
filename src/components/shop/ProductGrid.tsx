@@ -67,25 +67,17 @@ function readBoxes(grid: HTMLElement) {
   return { g, boxes };
 }
 
+// Removed onWishlist and onAddToCart from GridItem
 const GridItem = memo(function GridItem({
   product,
   locale,
-  onWishlist,
-  onAddToCart,
 }: {
   product: ShopProduct;
   locale: Locale;
-  onWishlist?: CardProps["onWishlist"];
-  onAddToCart?: CardProps["onAddToCart"];
 }) {
   return (
     <div data-id={product.id} className="min-w-0">
-      <ProductCard
-        product={product}
-        locale={locale}
-        onWishlist={onWishlist}
-        onAddToCart={onAddToCart}
-      />
+      <ProductCard product={product} locale={locale} />
     </div>
   );
 });
@@ -98,8 +90,6 @@ type ProductGridProps = {
   empty?: ReactNode;
   /** True while a refetch is in flight (keep the previous products on screen meanwhile). */
   isFetching?: boolean;
-  onWishlist?: (id: string) => void;
-  onAddToCart?: (id: string, hex?: string) => void;
 };
 
 export default function ProductGrid({
@@ -107,8 +97,6 @@ export default function ProductGrid({
   locale = "en",
   empty,
   isFetching = false,
-  onWishlist,
-  onAddToCart,
 }: ProductGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const emptyRef = useRef<HTMLDivElement>(null);
@@ -121,22 +109,6 @@ export default function ProductGrid({
   const timeline = useRef<gsap.core.Timeline | null>(null);
   const animated = useRef<HTMLElement[]>([]);
   const fading = useRef<HTMLElement[]>([]);
-
-  // Stable callbacks so memoised cards don't re-render on every parent render.
-  const cartRef = useRef(onAddToCart);
-  const wishRef = useRef(onWishlist);
-
-  useEffect(() => {
-    cartRef.current = onAddToCart;
-    wishRef.current = onWishlist;
-  });
-
-  const handleAddToCart = useCallback<NonNullable<CardProps["onAddToCart"]>>(
-    (id, color) => cartRef.current?.(id, color?.hex),
-    [],
-  );
-
-  const handleWishlist = useCallback((id: string) => wishRef.current?.(id), []);
 
   // Phase 1: products changed -> fade out the cards that are leaving, THEN commit.
   useEffect(() => {
@@ -441,13 +413,7 @@ export default function ProductGrid({
         }`}
       >
         {displayedProducts.map((product) => (
-          <GridItem
-            key={product.id}
-            product={product}
-            locale={locale}
-            onWishlist={handleWishlist}
-            onAddToCart={handleAddToCart}
-          />
+          <GridItem key={product.id} product={product} locale={locale} />
         ))}
       </div>
 

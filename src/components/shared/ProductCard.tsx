@@ -6,21 +6,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation"; // <-- Added
 
-import { useCartStore } from "@/lib/stores/useCartStore"; // <-- Added
+import { useCartStore } from "@/lib/stores/useCartStore";
+import { useAuthStore } from "@/lib/stores/useAuthStore"; // <-- Added
 import styles from "./ProductCard.module.css";
 
 type Locale = "en" | "bn";
+type LocalizedText = { en: string; bn: string };
 
-type LocalizedText = {
-  en: string;
-  bn: string;
-};
-
-export type ProductColor = {
-  hex: string;
-  name?: LocalizedText;
-};
+export type ProductColor = { hex: string; name?: LocalizedText };
 
 export type ProductCardData = {
   id: string;
@@ -39,8 +36,6 @@ type ProductCardProps = {
   product: ProductCardData;
   locale?: Locale;
   palette?: "cream" | "sage" | "neutral" | "slate";
-  onWishlist?: (id: string) => void;
-  onAddToCart?: (id: string, color?: ProductColor) => void;
   className?: string;
 };
 
@@ -57,7 +52,6 @@ function formatPrice(price: number, locale: Locale) {
   const value = new Intl.NumberFormat(locale === "bn" ? "bn-BD" : "en-BD", {
     maximumFractionDigits: 0,
   }).format(price);
-
   return `৳${value}`;
 }
 
@@ -67,23 +61,26 @@ function calculateDiscount(price: number, original: number) {
 
 export default function ProductCard({
   product,
-  locale = "en",
+  locale: propLocale,
   palette = "cream",
-  onWishlist,
-  onAddToCart,
   className = "",
 }: ProductCardProps) {
-  const [wishlisted, setWishlisted] = useState(false);
   const [colorIndex, setColorIndex] = useState(0);
 
-  // Connect directly to cart store
-  const addItem = useCartStore((s) => s.addItem);
-
+  const nextLocale = useLocale() as "en" | "bn";
+  const locale = propLocale || nextLocale || "en";
   const isBangla = locale === "bn";
+  const router = useRouter();
+
+  const addItem = useCartStore((s) => s.addItem);
+  const { user, setUser } = useAuthStore(); // <-- Added
 
   const name = product.name[locale];
   const brand = product.brand?.[locale];
   const tag = product.tag?.[locale];
+
+  // Check if this product is in the user's wishlist
+  const isWishlisted = user?.wishlist?.includes(product.id) || false;
 
   const discount =
     product.originalPrice && product.originalPrice > product.price
@@ -103,24 +100,14 @@ export default function ProductCard({
   const hasRating = (product.rating ?? 0) > 0;
   const hasChips = swatches.length > 0 || hasRating;
 
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setWishlisted((p) => !p);
-    onWishlist?.(product.id);
-  };
-
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Extract slug from href (e.g., "/product/some-slug" -> "some-slug")
     const slug = product.href.split("/").pop();
-
-    // Add directly to global cart store
     addItem({
       productId: product.id,
-      name: product.name[locale],
+      name: name,
       price: product.price,
       originalPrice: product.originalPrice,
       image: product.image,
@@ -131,8 +118,71 @@ export default function ProductCard({
       stock: "in-stock",
     });
 
-    // Call prop if provided for extra logic
-    onAddToCart?.(product.id, selectedColor);
+    toast.success(isBangla ? "কার্টে যোগ করা হয়েছে" : "Added to cart", {
+      description: (
+        <div className="mt-2 flex items-center gap-3">
+          <img
+            src={product.image}
+            alt=""
+            className="h-10 w-10 rounded-md object-cover bg-brand-navbar"
+          />
+          <div className="flex flex-col">
+            <span className="line-clamp-1 text-sm font-medium text-brand-text">
+              {name}
+            </span>
+            <span className="text-xs text-brand-text-secondary">
+              {formatPrice(product.price, locale)}
+            </span>
+          </div>
+        </div>
+      ),
+    });
+  };
+
+  const handleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error(
+        isBangla
+          ? "উইশলিস্টে যোগ করতে লগইন করুন"
+          : "Please login to add to wishlist",
+      );
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    // Optimistic UI update
+    const newWishlist = isWishlisted
+      ? user.wishlist?.filter((id) => id !== product.id) || []
+      : [...(user.wishlist || []), product.id];
+
+    setUser({ ...user, wishlist: newWishlist });
+
+    try {
+      const res = await fetch("/api/auth/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update wishlist");
+
+      toast.success(
+        isWishlisted
+          ? isBangla
+            ? "উইশলিস্ট থেকে সরানো হয়েছে"
+            : "Removed from wishlist"
+          : isBangla
+            ? "উইশলিস্টে যোগ করা হয়েছে"
+            : "Added to wishlist",
+      );
+    } catch {
+      // Revert if API fails
+      setUser(user);
+      toast.error("Something went wrong");
+    }
   };
 
   return (
@@ -165,7 +215,6 @@ export default function ProductCard({
                   −{discount}%
                 </span>
               )}
-
               {tag && (
                 <span className="inline-flex items-center rounded-full bg-brand-surface px-2.5 py-1 text-[11px] font-medium leading-none text-brand-primary shadow-[0_1px_2px_rgba(23,38,66,0.08)]">
                   {tag}
@@ -195,13 +244,10 @@ export default function ProductCard({
                       >
                         <span
                           className={styles.dot}
-                          style={{
-                            backgroundColor: color.hex,
-                          }}
+                          style={{ backgroundColor: color.hex }}
                         />
                       </button>
                     ))}
-
                     {hiddenCount > 0 && (
                       <span className={styles.more}>+{hiddenCount}</span>
                     )}
@@ -220,7 +266,6 @@ export default function ProductCard({
               </div>
             )}
           </div>
-
           <span aria-hidden="true" className={styles.notch} />
         </div>
 
@@ -233,12 +278,12 @@ export default function ProductCard({
                 aria-label={
                   isBangla ? "পছন্দের তালিকায় যোগ করুন" : "Add to wishlist"
                 }
-                aria-pressed={wishlisted}
+                aria-pressed={isWishlisted}
                 className={styles.tabBtn}
               >
                 <Heart
                   className={`h-4 w-4 transition-colors ${
-                    wishlisted
+                    isWishlisted
                       ? "fill-red-500 text-red-500"
                       : "text-brand-primary"
                   }`}
@@ -262,14 +307,12 @@ export default function ProductCard({
               {brand ? <p className={styles.brand}>{brand}</p> : null}
               <h3 className={styles.name}>{name}</h3>
             </div>
-
             <div className={styles.priceBlock}>
               {discount !== null && product.originalPrice !== undefined && (
                 <span className={styles.was}>
                   {formatPrice(product.originalPrice, locale)}
                 </span>
               )}
-
               <span className={styles.now}>
                 {formatPrice(product.price, locale)}
               </span>
