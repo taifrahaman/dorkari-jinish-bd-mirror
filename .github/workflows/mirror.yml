@@ -16,7 +16,7 @@ jobs:
       - name: Push to Personal Repo
         run: |
           # Replace YOUR_PERSONAL_USERNAME and YOUR_PRIVATE_REPO with your actual details
-          git remote add mirror https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/taifrahaman/dorkari-jinish-mirror.git
+          git remote add mirror https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/taifrahaman/dorkari-jinish-bd-mirror.git
           
           # Push to the main branch of your personal repo
           git push mirror HEAD:main --force
