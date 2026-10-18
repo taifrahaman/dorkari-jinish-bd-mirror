@@ -24,10 +24,27 @@ function invalidateCategoryCaches(qc: ReturnType<typeof useQueryClient>) {
 
 function errorMessage(err: unknown): string | null {
   if (isAbortError(err)) return null;
-  if (err instanceof AdminApiError) return err.message;
-  if (err instanceof Error) return err.message;
+
+  // Helper to safely extract a string from whatever the API returned
+  const extractString = (val: unknown): string => {
+    if (typeof val === "string") return val;
+    if (val && typeof val === "object") {
+      // Check if there's a nested "message" property
+      const record = val as Record<string, unknown>;
+      if (typeof record.message === "string") {
+        return record.message;
+      }
+      // Fallback to stringifying the object so you can see the exact data
+      return JSON.stringify(val);
+    }
+    return String(val);
+  };
+
+  if (err instanceof AdminApiError) return extractString(err.message);
+  if (err instanceof Error) return extractString(err.message);
   return "Something went wrong";
 }
+
 /* ============================================================
  * Queries
  * ============================================================ */

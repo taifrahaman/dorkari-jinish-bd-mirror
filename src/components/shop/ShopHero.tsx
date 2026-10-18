@@ -2,30 +2,31 @@
 
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 
 import ShopSearch from "./Search";
-import type { Locale } from "@/lib/shop/types";
+import ShopCategoryTabs, { type CategoryTab } from "./ShopCategoryTabs";
+import { glowForCategory } from "./categoryGlow";
+import type { CategoryFacetNode, Locale } from "@/lib/shop/types";
+import styles from "./ShopHero.module.css";
 
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+type CSSVars = React.CSSProperties & Record<`--${string}`, string | number>;
+
 const COPY = {
-  lead: { en: "Shop All", bn: "সকল" },
-  highlight: { en: "Appliances", bn: "পণ্য" },
-  sub: {
-    en: "Everything for your home, in one place.",
-    bn: "আপনার বাড়ির জন্য সেরা যন্ত্রপাতি খুঁজে নিন।",
-  },
+  brand: { en: "Dorkari Jinish", bn: "দরকারি জিনিশ" },
+  headline: { en: "Browse everything", bn: "সব পণ্য, এক জায়গায়" },
+  all: { en: "All", bn: "সব" },
+  categories: { en: "Categories", bn: "ক্যাটাগরি" },
 };
 
-const SUGGESTIONS = [
-  "Rice cooker",
-  "Refrigerator",
-  "Air conditioner",
-  "Blender",
-];
+const SUGGESTIONS: Record<Locale, string[]> = {
+  en: ["Fan", "LED bulb", "Fry pan", "Toy", "Gift"],
+  bn: ["ফ্যান", "এলইডি বাল্ব", "ফ্রাই প্যান", "খেলনা", "উপহার"],
+};
 
 type ShopHeroProps = {
   locale?: Locale;
@@ -33,6 +34,10 @@ type ShopHeroProps = {
   query: string;
   onQueryChange: (value: string) => void;
   onSearchSubmit?: () => void;
+  categoryFacets: CategoryFacetNode[];
+  topCategorySlugs: string[];
+  activeCategory: string | null;
+  onCategoryChange: (value: string | null) => void;
 };
 
 export default function ShopHero({
@@ -41,9 +46,35 @@ export default function ShopHero({
   query,
   onQueryChange,
   onSearchSubmit,
+  categoryFacets,
+  topCategorySlugs,
+  activeCategory,
+  onCategoryChange,
 }: ShopHeroProps) {
   const rootRef = useRef<HTMLElement>(null);
+  const glowA = useRef<HTMLDivElement>(null);
+  const glowB = useRef<HTMLDivElement>(null);
+  const glowIdx = useRef(0);
+  const firstRun = useRef(true);
 
+  // Constant across renders so React never overwrites what GSAP animates.
+  const [initialRgb] = useState(() => glowForCategory(activeCategory));
+
+  const tabs = useMemo<CategoryTab[]>(
+    () =>
+      topCategorySlugs
+        .map((slug) => categoryFacets.find((f) => f.value === slug))
+        .filter((f): f is CategoryFacetNode => Boolean(f))
+        .map((f) => ({
+          value: f.value,
+          label: f.label[locale],
+          count: f.count,
+          rgb: glowForCategory(f.value),
+        })),
+    [topCategorySlugs, categoryFacets, locale],
+  );
+
+  /* entrance */
   useIsoLayoutEffect(() => {
     const root = rootRef.current;
     if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
@@ -52,30 +83,51 @@ export default function ShopHero({
     const ctx = gsap.context(() => {
       gsap.from("[data-in]", {
         opacity: 0,
-        y: 20,
-        duration: 0.7,
+        y: 16,
+        duration: 0.6,
         ease: "power3.out",
-        stagger: 0.09,
-      });
-      gsap.from("[data-underline]", {
-        scaleX: 0,
-        transformOrigin: "left center",
-        duration: 0.8,
-        delay: 0.45,
-        ease: "power3.out",
-      });
-      gsap.to("[data-glow]", {
-        xPercent: 10,
-        yPercent: -8,
-        duration: 9,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
+        stagger: 0.07,
       });
     }, root);
 
     return () => ctx.revert();
   }, []);
+
+  /* crossfade the glow when the category changes */
+  useEffect(() => {
+    const root = rootRef.current;
+    const a = glowA.current;
+    const b = glowB.current;
+    if (!root || !a || !b) return;
+
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
+
+    const rgb = glowForCategory(activeCategory);
+    const layers = [a, b];
+    const out = layers[glowIdx.current];
+    const inn = layers[1 - glowIdx.current];
+    glowIdx.current = 1 - glowIdx.current;
+
+    root.style.setProperty("--rgb", rgb);
+    inn.style.setProperty("--rgb", rgb);
+    gsap.killTweensOf(layers);
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.set(out, { opacity: 0 });
+      gsap.set(inn, { opacity: 0.6, scale: 1 });
+      return;
+    }
+
+    gsap.to(out, { opacity: 0, duration: 1, ease: "power1.inOut" });
+    gsap.fromTo(
+      inn,
+      { opacity: 0, scale: 0.7 },
+      { opacity: 0.6, scale: 1, duration: 1.1, ease: "power3.out" },
+    );
+  }, [activeCategory]);
 
   const count = productCount.toLocaleString(
     locale === "bn" ? "bn-BD" : "en-US",
@@ -84,74 +136,58 @@ export default function ShopHero({
   return (
     <section
       ref={rootRef}
-      className="relative isolate overflow-hidden rounded-[28px] bg-brand-primary px-5 pb-8 pt-10 text-white sm:px-10 sm:pb-12 sm:pt-14 lg:px-14 lg:pb-14 lg:pt-16"
+      className={styles.root}
+      style={{ "--rgb": initialRgb } as CSSVars}
     >
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div
-          data-glow
-          className="absolute -right-24 -top-32 h-80 w-80 rounded-full bg-brand-accent/30 blur-3xl sm:h-[28rem] sm:w-[28rem]"
-        />
-        <div
-          data-glow
-          className="absolute -bottom-40 -left-24 h-72 w-72 rounded-full bg-brand-accent/15 blur-3xl"
-        />
-        <div
-          className="absolute inset-0 opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255,255,255,.14) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
-      </div>
+      <div
+        ref={glowA}
+        className={styles.glow}
+        aria-hidden
+        style={{ "--rgb": initialRgb, opacity: 0.6 } as CSSVars}
+      />
+      <div
+        ref={glowB}
+        className={styles.glow}
+        aria-hidden
+        style={{ opacity: 0 }}
+      />
 
-      <p
-        data-in
-        className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/85 ring-1 ring-white/15 backdrop-blur"
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
-        {locale === "bn" ? `${count}টি পণ্য` : `${count} products`}
-      </p>
+      <div className={styles.content}>
+        <p data-in className={styles.brand}>
+          {COPY.brand[locale]}
+        </p>
 
-      <h1
-        data-in
-        className="font-heading text-[2.5rem] font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl"
-      >
-        {COPY.lead[locale]}{" "}
-        <span className="relative inline-block text-brand-accent">
-          {COPY.highlight[locale]}
-          <svg
-            data-underline
-            aria-hidden
-            viewBox="0 0 200 10"
-            preserveAspectRatio="none"
-            className="absolute -bottom-2 left-0 h-2.5 w-full"
-          >
-            <path
-              d="M2 7 C 40 1, 70 9, 110 4 S 170 2, 198 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-        </span>
-      </h1>
+        <h1 data-in className={styles.headline}>
+          {COPY.headline[locale]}
+        </h1>
 
-      <p data-in className="mt-4 max-w-xl text-base text-white/70 sm:text-lg">
-        {COPY.sub[locale]}
-      </p>
+        {productCount > 0 && (
+          <p data-in className={styles.countChip}>
+            <span className={styles.countDot} />
+            {locale === "bn" ? `${count}টি পণ্য` : `${count} products`}
+          </p>
+        )}
 
-      <div data-in className="mt-8 max-w-2xl">
-        <ShopSearch
-          locale={locale}
-          variant="onDark"
-          value={query}
-          onChange={onQueryChange}
-          onSubmit={onSearchSubmit}
-          suggestions={SUGGESTIONS}
-        />
+        <div data-in className={styles.searchWrap}>
+          <ShopSearch
+            locale={locale}
+            variant="onLight"
+            value={query}
+            onChange={onQueryChange}
+            onSubmit={onSearchSubmit}
+            suggestions={SUGGESTIONS[locale]}
+          />
+        </div>
+
+        <div data-in className={styles.tabsWrap}>
+          <ShopCategoryTabs
+            tabs={tabs}
+            active={activeCategory}
+            onChange={onCategoryChange}
+            allLabel={COPY.all[locale]}
+            groupLabel={COPY.categories[locale]}
+          />
+        </div>
       </div>
     </section>
   );

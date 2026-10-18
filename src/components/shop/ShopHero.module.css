@@ -1,0 +1,247 @@
+/* src/components/shop/ShopHero.module.css */
+
+.root {
+  --rgb: 251, 167, 5; /* current category light, changed by JS */
+  --pt: calc(var(--nav-h-mobile, 56px) + var(--nav-top-mobile, 12px));
+  --glow: min(150vw, 900px);
+  --fg: var(--foreground, #0f172a);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: calc(var(--pt) + 20px) 20px 8px;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    #fffaf0 0%,
+    var(--background, #faf8f5) 100%
+  );
+}
+@media (min-width: 1024px) {
+  .root {
+    --pt: calc(var(--nav-h-desktop, 68px) + var(--nav-top-desktop, 16px));
+    padding: calc(var(--pt) + 28px) 48px 12px;
+  }
+}
+
+.glow {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: var(--glow);
+  height: var(--glow);
+  top: calc(var(--glow) * -0.38);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgba(var(--rgb, 251, 167, 5), 0.5) 0%,
+    rgba(var(--rgb, 251, 167, 5), 0.3) 14%,
+    rgba(var(--rgb, 251, 167, 5), 0.15) 28%,
+    rgba(var(--rgb, 251, 167, 5), 0.06) 42%,
+    rgba(var(--rgb, 251, 167, 5), 0.02) 54%,
+    rgba(var(--rgb, 251, 167, 5), 0) 64%
+  );
+  will-change: transform, opacity;
+}
+
+.content {
+  position: relative;
+  z-index: 4;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.brand {
+  margin: 0 0 6px;
+  font-family: var(--font-heading);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand-teal, #599088);
+}
+:global([lang="bn"]) .brand {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.9rem;
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.9rem, 7vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+@media (min-width: 1024px) {
+  .headline {
+    font-size: 3.25rem;
+    font-weight: 300;
+    letter-spacing: -0.035em;
+  }
+}
+:global([lang="bn"]) .headline {
+  letter-spacing: 0;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.countChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid color-mix(in oklab, var(--fg) 8%, transparent);
+  box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.28);
+}
+.countDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(var(--rgb, 251, 167, 5));
+  box-shadow: 0 0 6px rgba(var(--rgb, 251, 167, 5), 0.8);
+  transition: background 0.7s ease;
+}
+
+.searchWrap {
+  position: relative;
+  z-index: 5;
+  max-width: 680px;
+  margin: 16px auto 0;
+  text-align: start;
+}
+
+/* ---------- category tabs (same look as the home hero) ---------- */
+
+.tabsWrap {
+  margin-top: 10px;
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  margin: 0 -20px;
+  padding: 6px 20px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .tabs {
+    margin-inline: 0;
+    padding-inline: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* centre the row when it fits, scroll from the start when it doesn't */
+.tab:first-child {
+  margin-inline-start: auto;
+}
+.tab:last-child {
+  margin-inline-end: auto;
+}
+
+.tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  scroll-snap-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+:global([lang="bn"]) .tab {
+  font-family: var(--font-heading-bn);
+}
+.tab::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(var(--tab-rgb, 251, 167, 5));
+  box-shadow: 0 0 6px rgba(var(--tab-rgb, 251, 167, 5), 0.8);
+}
+@media (hover: hover) {
+  .tab:hover:not(:disabled) {
+    background: rgba(var(--tab-rgb, 251, 167, 5), 0.28);
+  }
+}
+.tab:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tab[aria-pressed="true"] {
+  background: rgb(var(--tab-rgb, 251, 167, 5));
+  border-color: transparent;
+  box-shadow: 0 8px 18px -8px rgba(var(--tab-rgb, 251, 167, 5), 0.85);
+}
+.tab[aria-pressed="true"]::before {
+  background: var(--fg);
+  box-shadow: none;
+}
+.tab:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #172642);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .countDot {
+    transition: none;
+  }
+}

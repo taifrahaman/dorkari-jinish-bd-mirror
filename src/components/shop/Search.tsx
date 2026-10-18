@@ -86,7 +86,11 @@ export default function ShopSearch({
           e.preventDefault();
           onSubmit?.(current.trim());
         }}
-        className="flex items-center gap-2 rounded-full bg-brand-surface p-1.5 pl-5 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)] ring-1 ring-brand-border transition-shadow duration-300 focus-within:ring-4 focus-within:ring-brand-accent/40"
+        className={`flex items-center gap-2 rounded-full bg-brand-surface p-1.5 pl-5 ring-1 ring-brand-border transition-shadow duration-300 focus-within:ring-4 focus-within:ring-brand-accent/40 ${
+          variant === "onDark"
+            ? "shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]"
+            : "shadow-[0_14px_32px_-18px_rgba(15,23,42,0.3)]"
+        }`}
       >
         <label htmlFor={id} className="sr-only">
           {COPY.label[locale]}
@@ -145,7 +149,7 @@ export default function ShopSearch({
       </form>
 
       {suggestions.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-3 hidden flex-wrap items-center gap-2 sm:flex">
           <span
             className={`text-xs font-medium ${
               variant === "onDark"

@@ -85,8 +85,14 @@ type Props = {
 
 export default function HomeHero({
   categories,
-  collections = HERO_COLLECTIONS,
+  collections: passedCollections,
 }: Props) {
+  // THE FIX: If database is empty, fallback to HERO_COLLECTIONS
+  const collections =
+    passedCollections && passedCollections.length > 0
+      ? passedCollections
+      : HERO_COLLECTIONS;
+
   const locale: Lang = useLocale() === "bn" ? "bn" : "en";
   const copy = COPY[locale];
   const fmt = useMemo(
@@ -129,8 +135,6 @@ export default function HomeHero({
     let touchTimer = 0;
     const pauses = new Set<string>();
 
-    // Everything created later (timers, clicks) is registered in this context
-    // so ctx.revert() cleans it up.
     const ctx = gsap.context(() => {});
     const scoped = (fn: () => void) => ctx.add(fn);
 
@@ -164,8 +168,6 @@ export default function HomeHero({
         const prev = activeRef.current;
         if (next === prev || next < 0 || next >= panels.length) return;
 
-        // Once the visitor takes control (tab, swipe, arrow, lamp),
-        // stop the automatic pulls so the content never moves on its own again.
         if (manual) {
           autoCount = MAX_AUTO;
           lamp?.dismissHint();
@@ -175,11 +177,17 @@ export default function HomeHero({
 
         activeRef.current = next;
         setActive(next);
-        root.style.setProperty("--rgb", collections[next].glow);
+        root.style.setProperty(
+          "--rgb",
+          collections[next]?.glow || "255, 255, 255",
+        );
 
         const gOut = glows[glowIdx];
         const gIn = glows[1 - glowIdx];
-        gIn.style.setProperty("--rgb", collections[next].glow);
+        gIn.style.setProperty(
+          "--rgb",
+          collections[next]?.glow || "255, 255, 255",
+        );
         glowIdx = 1 - glowIdx;
 
         if (reduce) {
@@ -224,14 +232,11 @@ export default function HomeHero({
         startTimer(INTERVAL);
       });
 
-    // `pull` = also pull the lamp cord (tabs, arrows). When the lamp itself
-    // started the change it has already animated, so it passes pull = false.
     goToRef.current = (i, manual, pull) => {
       if (pull && i !== activeRef.current) lamp?.pullVisual();
       goTo(i, manual);
     };
 
-    /* ---------- swipe left / right on the product panel (touch + pen) ---------- */
     let sx = 0;
     let sy = 0;
     let tracking = false;
@@ -249,7 +254,6 @@ export default function HomeHero({
       const dx = e.clientX - sx;
       const dy = e.clientY - sy;
       if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      // swallow the click that would follow, so a swipe never opens a product
       swiped = true;
       window.setTimeout(() => {
         swiped = false;
@@ -272,7 +276,6 @@ export default function HomeHero({
     panelsEl?.addEventListener("pointercancel", onSwipeCancel);
     panelsEl?.addEventListener("click", onSwipeClick, true);
 
-    /* ---------- when to pause the automatic pulls ---------- */
     const onEnter = (e: PointerEvent) => {
       if (e.pointerType === "mouse") {
         pauses.add("hover");
@@ -356,7 +359,6 @@ export default function HomeHero({
     };
   }, [collections, locale]);
 
-  /* keep the active tab centred in the (horizontally scrollable) tab row */
   useEffect(() => {
     const box = tabsRef.current;
     const el = box?.children[active] as HTMLElement | undefined;
@@ -378,19 +380,25 @@ export default function HomeHero({
       pull,
     );
 
-  // the lamp already animates its own cord, so no extra pull here
   const pullNext = () => step(1, false);
 
-  const rootVars: CSSVars = { "--rgb": collections[0].glow };
+  // FIX: Safe fallback for root CSS vars
+  const rootVars: CSSVars = {
+    "--rgb": collections[0]?.glow || "255, 255, 255",
+  };
 
   return (
     <section ref={rootRef} className={styles.root} style={rootVars}>
-      {/* two glow layers that crossfade between collection colors */}
       <div
         className={styles.glow}
         data-glow
         aria-hidden
-        style={{ "--rgb": collections[0].glow, opacity: 0.6 } as CSSVars}
+        style={
+          {
+            "--rgb": collections[0]?.glow || "255, 255, 255",
+            opacity: 0.6,
+          } as CSSVars
+        }
       />
       <div
         className={styles.glow}
@@ -421,9 +429,7 @@ export default function HomeHero({
           ))}
         </ul>
 
-        {/* ---------------- Collections ---------------- */}
         <div className={styles.collection}>
-          {/* labelled tabs: the obvious way to switch collection */}
           <div
             ref={tabsRef}
             className={styles.tabs}
@@ -445,10 +451,9 @@ export default function HomeHero({
           </div>
 
           <span className={styles.srOnly} aria-live="polite">
-            {collections[active].label[locale]}
+            {collections[active]?.label[locale]}
           </span>
 
-          {/* prev / next arrows: shown on desktop with a mouse; phones swipe */}
           <button
             type="button"
             className={`${styles.arrow} ${styles.arrowPrev}`}
@@ -482,7 +487,6 @@ export default function HomeHero({
           </div>
         </div>
 
-        {/* ---------------- Category tiles ---------------- */}
         <ul className={styles.tiles}>
           {categories.map((c) => {
             const Icon = iconForCategory(c.slug);

@@ -2,6 +2,7 @@
 
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
+import { Toaster } from "@/components/ui/sonner";
 
 import { routing, type Locale } from "@/i18n/routing";
 import {
@@ -38,6 +39,7 @@ export default async function LocaleLayout({
         {children}
         <MobileBottomNav />
         <Footer />
+        <Toaster />
       </AuthProvider>
     </NextIntlClientProvider>
   );

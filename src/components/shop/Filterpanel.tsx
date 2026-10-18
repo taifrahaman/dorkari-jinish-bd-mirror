@@ -7,13 +7,13 @@ import { ChevronDown, X } from "lucide-react";
 import gsap from "gsap";
 
 import styles from "./FilterPanel.module.css";
+import PriceRangeFilter from "./PriceRangeFilter";
 import type {
   CategoryFacetNode,
   ColorFacet,
   Facet,
   FilterState,
   Locale,
-  PriceRange,
 } from "@/lib/shop/types";
 
 type FilterPanelProps = {
@@ -27,7 +27,8 @@ type FilterPanelProps = {
   brandFacets: Facet[];
   colorFacets: ColorFacet[];
   resultCount: number;
-  priceMax: number;
+  /** Every product price in the catalog. */
+  prices: number[];
 };
 
 const COPY = {
@@ -297,31 +298,12 @@ export default function FilterPanel({
   brandFacets,
   colorFacets,
   resultCount,
-  priceMax,
+  prices,
 }: FilterPanelProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [mountedInDom, setMountedInDom] = useState(open);
-
-  const pricePresets: { label: string; range: PriceRange }[] = [
-    {
-      label: locale === "bn" ? "৳১০,০০০ এর নিচে" : "Under ৳10,000",
-      range: [0, 10000],
-    },
-    {
-      label: locale === "bn" ? "৳১০,০০০ – ৩০,০০০" : "৳10,000 – 30,000",
-      range: [10000, 30000],
-    },
-    {
-      label: locale === "bn" ? "৳৩০,০০০ – ৬০,০০০" : "৳30,000 – 60,000",
-      range: [30000, 60000],
-    },
-    {
-      label: locale === "bn" ? "৳৬০,০০০ এর বেশি" : "Over ৳60,000",
-      range: [60000, priceMax],
-    },
-  ];
 
   useEffect(() => {
     if (!open) return;
@@ -426,6 +408,15 @@ export default function FilterPanel({
             </div>
           </FilterSection>
 
+          <FilterSection title={COPY.price[locale]} defaultOpen>
+            <PriceRangeFilter
+              prices={prices}
+              value={filters.priceRange}
+              onChange={(priceRange) => onChange({ ...filters, priceRange })}
+              locale={locale}
+            />
+          </FilterSection>
+
           <FilterSection title={COPY.brand[locale]}>
             <div className="flex max-h-48 flex-col gap-2.5 overflow-y-auto pr-1">
               {brandFacets.map((facet) => (
@@ -454,36 +445,6 @@ export default function FilterPanel({
                   </span>
                 </label>
               ))}
-            </div>
-          </FilterSection>
-
-          <FilterSection title={COPY.price[locale]}>
-            <div className="flex flex-wrap gap-2">
-              {pricePresets.map((preset) => {
-                const active =
-                  filters.priceRange?.[0] === preset.range[0] &&
-                  filters.priceRange?.[1] === preset.range[1];
-
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() =>
-                      onChange({
-                        ...filters,
-                        priceRange: active ? null : preset.range,
-                      })
-                    }
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      active
-                        ? "border-brand-primary bg-brand-primary text-white"
-                        : "border-brand-border text-brand-text hover:bg-brand-navbar"
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
             </div>
           </FilterSection>
 

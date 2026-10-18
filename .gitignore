@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+playwright-report/
+test-results/
+.auth/
 
 # next.js
 /.next/
@@ -30,9 +33,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — commit only the templates
 .env*
 !.env.example
+!.env.test.example
 
 # vercel
 .vercel
@@ -47,5 +51,7 @@ repomix*
 # vs code
 .vscode/settings.local.json
 
-# script
-/scripts
+# scripts — ignore local-only helpers, track committed tooling
+/scripts/*
+!/scripts/create-admin.ts
+!/scripts/seed-test-users.ts

@@ -1,0 +1,245 @@
+/* src/components/shop/PriceRangeFilter.module.css */
+
+.root {
+  --thumb: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* ---------- histogram ---------- */
+.hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 44px;
+  margin-inline: calc(var(--thumb) / 2);
+}
+.bar {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 3px 3px 1px 1px;
+  background: color-mix(
+    in oklab,
+    var(--color-brand-primary, #172642) 12%,
+    transparent
+  );
+  transition:
+    background 0.25s ease,
+    height 0.25s ease;
+}
+.barOn {
+  background: color-mix(
+    in oklab,
+    var(--color-brand-accent, #fba705) 70%,
+    transparent
+  );
+}
+
+/* ---------- slider ---------- */
+.rail {
+  position: relative;
+  height: var(--thumb);
+  margin-top: -4px;
+}
+
+.track {
+  position: absolute;
+  left: calc(var(--thumb) / 2);
+  right: calc(var(--thumb) / 2);
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: color-mix(
+    in oklab,
+    var(--color-brand-primary, #172642) 14%,
+    transparent
+  );
+}
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--color-brand-accent, #fba705);
+}
+
+/* both inputs overlap; only their thumbs catch pointer events */
+.range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: pan-y;
+  outline: none;
+}
+.range::-webkit-slider-runnable-track {
+  background: transparent;
+  height: var(--thumb);
+}
+.range::-moz-range-track {
+  background: transparent;
+  height: var(--thumb);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-brand-primary, #172642);
+  box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.3);
+  cursor: grab;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.range::-moz-range-thumb {
+  pointer-events: auto;
+  width: calc(var(--thumb) - 4px);
+  height: calc(var(--thumb) - 4px);
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-brand-primary, #172642);
+  box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.3);
+  cursor: grab;
+}
+.range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.12);
+}
+.range:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 4px rgba(251, 167, 5, 0.4),
+    0 4px 10px -2px rgba(15, 23, 42, 0.3);
+}
+.range:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px rgba(251, 167, 5, 0.4),
+    0 4px 10px -2px rgba(15, 23, 42, 0.3);
+}
+
+/* ---------- min / max fields ---------- */
+.fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.fieldWrap {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 8px;
+}
+.dash {
+  padding-bottom: 12px;
+  color: var(--color-brand-text-secondary, #334155);
+}
+.field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.fieldLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-text-secondary, #334155);
+}
+:global([lang="bn"]) .fieldLabel {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.78rem;
+}
+.fieldBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--color-brand-surface, #fff);
+  border: 1px solid var(--color-brand-border, #e2e8f0);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.fieldBox:focus-within {
+  border-color: var(--color-brand-accent, #fba705);
+  box-shadow: 0 0 0 3px rgba(251, 167, 5, 0.25);
+}
+.fieldBox b {
+  font-weight: 600;
+  color: var(--color-brand-text-secondary, #334155);
+}
+.fieldBox input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem; /* 16px: stops iOS zooming on focus */
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-text, #0f172a);
+}
+
+/* ---------- quick presets ---------- */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.preset {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-brand-border, #e2e8f0);
+  background: var(--color-brand-surface, #fff);
+  color: var(--color-brand-text, #0f172a);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+@media (hover: hover) {
+  .preset:hover {
+    border-color: var(--color-brand-accent, #fba705);
+  }
+}
+.preset:active {
+  transform: scale(0.96);
+}
+.preset[aria-pressed="true"] {
+  background: var(--color-brand-primary, #172642);
+  border-color: transparent;
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .preset,
+  .fieldBox,
+  .range::-webkit-slider-thumb {
+    transition: none;
+  }
+}

@@ -40,6 +40,11 @@ export function rateLimit(
   key: string,
   opts: { max: number; windowMs: number },
 ): RateLimitResult {
+  // Bypass rate limiting for automated tests
+  if (process.env.DISABLE_RATE_LIMIT === "true") {
+    return { allowed: true, remaining: 99, retryAfterMs: 0 };
+  }
+
   const now = Date.now();
   maybeSweep(now);
 

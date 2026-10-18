@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Pipette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,12 +36,22 @@ export function ColorEyedropperButton({
   compact = false,
 }: ColorEyedropperButtonProps) {
   const picker = useColorPicker();
+  const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [working, setWorking] = useState(false);
 
+  // Feature detection must run AFTER hydration to avoid SSR/CSR mismatch.
+  // The server renders a neutral placeholder; the client upgrades on mount.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // "Native support" is only trustworthy after mount
+  const isNative = mounted && picker.isNativeSupported;
+
   const handleClick = async () => {
     // Try native first (Chrome/Edge 95+)
-    if (picker.isNativeSupported) {
+    if (isNative) {
       setWorking(true);
       const hex = await picker.pickNative();
       setWorking(false);
@@ -49,8 +59,7 @@ export function ColorEyedropperButton({
         onPick(hex);
         return;
       }
-      // If user cancelled, fall through silently — don't open the modal
-      // unless they explicitly click again.
+      // If user cancelled, fall through silently
       return;
     }
 
@@ -74,9 +83,11 @@ export function ColorEyedropperButton({
         className={cn(compact && "h-9 w-9", className)}
         aria-label="Pick color from screen or image"
         title={
-          picker.isNativeSupported
-            ? "Pick from anywhere on screen"
-            : "Pick from a product image"
+          mounted
+            ? isNative
+              ? "Pick from anywhere on screen"
+              : "Pick from a product image"
+            : "Pick a color"
         }
       >
         {working ? (
@@ -93,7 +104,8 @@ export function ColorEyedropperButton({
         {!compact && "Pick color"}
       </Button>
 
-      {!picker.isNativeSupported && (
+      {/* Only render the modal after mount — it's context-dependent */}
+      {mounted && !isNative && (
         <ColorImagePickerModal
           open={modalOpen}
           onOpenChange={setModalOpen}

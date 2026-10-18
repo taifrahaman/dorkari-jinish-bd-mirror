@@ -32,12 +32,15 @@ export default function WishlistPage({
     }
 
     // Fetch all products, then filter by the IDs in the wishlist
-    // (In a large app, you'd create a specific API endpoint to fetch by IDs)
     fetch("/api/storefront/products")
       .then((res) => res.json())
       .then((json) => {
         if (json.success) {
-          const wishlistedProducts = json.data.filter((p: StorefrontProduct) =>
+          // FIX: Handle both direct arrays and nested { items: [] } responses
+          const itemsArray = Array.isArray(json.data)
+            ? json.data
+            : json.data?.items || [];
+          const wishlistedProducts = itemsArray.filter((p: StorefrontProduct) =>
             user.wishlist?.includes(p.id),
           );
           setProducts(wishlistedProducts);

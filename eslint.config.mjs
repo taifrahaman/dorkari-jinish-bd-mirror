@@ -38,6 +38,37 @@ const eslintConfig = defineConfig([
   },
 
   /* ============================================================
+   * Playwright tests are not React code
+   *
+   * - The `use` parameter in fixtures is Playwright's teardown
+   *   callback, not React's `use()` hook. react-hooks rules
+   *   produce false positives.
+   * - Test files sometimes need `any` in API-response shapes;
+   *   that's acceptable in test code.
+   * ============================================================ */
+  {
+    files: ["tests/**/*.ts"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+
+  /* ============================================================
+   * Scripts run with tsx outside Next.js
+   *
+   * Seed scripts and one-off tooling don't follow React
+   * conventions and often need `any` for dynamic API shapes.
+   * ============================================================ */
+  {
+    files: ["scripts/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+
+  /* ============================================================
    * React 19 rule tuning
    *
    * `set-state-in-effect` flags every setState inside useEffect.

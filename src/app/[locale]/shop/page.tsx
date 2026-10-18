@@ -18,11 +18,11 @@ export async function generateMetadata({
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
   return {
-    title: locale === "bn" ? "সকল পণ্য" : "Shop All Appliances",
+    title: locale === "bn" ? "দোকান | সকল পণ্য" : "Shop all products",
     description:
       locale === "bn"
-        ? "আপনার বাড়ির জন্য সেরা যন্ত্রপাতি খুঁজে নিন।"
-        : "Everything for your home, in one place.",
+        ? "রান্নাঘর, আলো, উপহার, খেলনা ও আরও অনেক কিছু, সব এক জায়গায়।"
+        : "Kitchen, lights, gifts, toys and more, all in one place.",
   };
 }
 
@@ -32,15 +32,29 @@ export default async function ShopRoute({
 }: ShopRouteProps) {
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
+  const sp = await searchParams;
 
-  // Read (but don't yet use) search params so the route opts into dynamic
-  // rendering correctly. Wire these into ShopPage when you're ready to
-  // hydrate filters from the URL (e.g. ?category=kitchen&sale=kitchen-week).
-  await searchParams;
+  const first = (key: string) => {
+    const v = sp[key];
+    return Array.isArray(v) ? v[0] : v;
+  };
+
+  const initialCategories = (first("category") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  const initialQuery = (first("q") ?? "").slice(0, 80);
 
   return (
     <main>
-      <ShopPage locale={locale} />
+      {/* key: a real navigation (e.g. from a home tile) remounts with fresh state */}
+      <ShopPage
+        key={`${initialCategories.join(",")}|${initialQuery}`}
+        locale={locale}
+        initialCategories={initialCategories}
+        initialQuery={initialQuery}
+      />
     </main>
   );
 }

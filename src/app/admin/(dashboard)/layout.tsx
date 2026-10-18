@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { Toaster } from "@/components/ui/sonner"; // <-- ADDED IMPORT
 import { verifyJwt } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export default async function AdminDashboardLayout({
           <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">{children}</div>
         </main>
       </div>
+      <Toaster />
     </QueryProvider>
   );
 }
