@@ -484,7 +484,9 @@ export async function getTopProducts(
     if (!p) continue;
     out.push({
       productId: String(p._id),
-      name: p.name.en,
+      // Bangla-only products have empty `en` — fall back so the
+      // dashboard doesn't show blank rows.
+      name: p.name.en || p.name.bn,
       sku: p.sku ?? "",
       imageUrl: p.images?.[0]?.url,
       unitsSold: r.unitsSold,
@@ -573,7 +575,9 @@ export async function getCategoryBreakdown(
     if (!cat) continue;
     out.push({
       categoryId: String(cat._id),
-      name: cat.name.en,
+      // Same fallback as top products — categories may be
+      // Bangla-only in the storefront.
+      name: cat.name.en || cat.name.bn,
       unitsSold: r.unitsSold,
       revenue: r.revenue,
       profit: r.profit,

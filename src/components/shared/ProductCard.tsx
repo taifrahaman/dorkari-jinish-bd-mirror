@@ -31,6 +31,8 @@ export type ProductCardData = {
   colors?: (string | ProductColor)[];
   image: string;
   href: string;
+  /** Optional — defaults to available when undefined. */
+  inStock?: boolean;
 };
 
 type ProductCardProps = {
@@ -104,6 +106,32 @@ export default function ProductCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // OOS guard — the cart store caps quantity but doesn't know
+    // availability. Reject the add here with a clear message so
+    // the customer understands why nothing happened.
+    if (product.inStock === false) {
+      toast.error(
+        isBangla
+          ? "এই পণ্যটি বর্তমানে স্টকে নেই"
+          : "This product is currently out of stock",
+        {
+          description: (
+            <div className="mt-2 flex items-center gap-3">
+              <img
+                src={product.image}
+                alt=""
+                className="h-10 w-10 rounded-md object-cover bg-brand-navbar"
+              />
+              <span className="line-clamp-1 text-sm font-medium text-brand-text">
+                {name}
+              </span>
+            </div>
+          ),
+        },
+      );
+      return;
+    }
 
     const slug = product.href.split("/").pop();
     addItem({
@@ -295,8 +323,18 @@ export default function ProductCard({
               <button
                 type="button"
                 onClick={handleAddToCart}
-                aria-label={isBangla ? "কার্টে যোগ করুন" : "Add to cart"}
-                className={`${styles.tabBtn} ${styles.tabBtnPrimary}`}
+                aria-label={
+                  product.inStock === false
+                    ? isBangla
+                      ? "স্টকে নেই"
+                      : "Out of stock"
+                    : isBangla
+                      ? "কার্টে যোগ করুন"
+                      : "Add to cart"
+                }
+                className={`${styles.tabBtn} ${styles.tabBtnPrimary} ${
+                  product.inStock === false ? "opacity-60" : ""
+                }`}
               >
                 <ShoppingBag className="h-4 w-4" strokeWidth={1.7} />
               </button>

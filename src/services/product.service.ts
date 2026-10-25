@@ -1485,14 +1485,30 @@ export async function searchStorefrontProducts(
   const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const rx = new RegExp(escapedQuery, "i");
 
+  // Brand lives as an ObjectId reference on the product — filtering
+  // by `brand.name.en` doesn't work because populate() runs after
+  // the query. Two-pass approach: find matching brand IDs first,
+  // then filter products by those IDs alongside name matching.
+  const brandIds = await Brand.find({
+    $or: [{ "name.en": rx }, { "name.bn": rx }],
+  })
+    .select("_id")
+    .limit(100)
+    .lean<Array<{ _id: mongoose.Types.ObjectId }>>();
+
+  const orClauses: Record<string, unknown>[] = [
+    { "name.en": rx },
+    { "name.bn": rx },
+  ];
+
+  if (brandIds.length > 0) {
+    orClauses.push({ brand: { $in: brandIds.map((b) => b._id) } });
+  }
+
   const docs = await Product.find({
     isActive: true,
     deletedAt: null,
-    $or: [
-      { "name.en": rx },
-      { "name.bn": rx },
-      { "brand.name.en": rx }, // Optional: search by brand
-    ],
+    $or: orClauses,
   })
     .limit(limit)
     .populate(POPULATE)
