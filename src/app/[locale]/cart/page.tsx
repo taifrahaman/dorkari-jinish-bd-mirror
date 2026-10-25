@@ -3,6 +3,7 @@
 import CartPage from "@/components/cart";
 import type { Locale } from "@/lib/shop/types";
 import { getCachedStorefrontProducts } from "@/lib/storefront/products-cache";
+import { getCachedStorefrontSettings } from "@/lib/storefront/products-cache";
 
 export default async function Page({
   params,
@@ -12,11 +13,18 @@ export default async function Page({
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
-  // Fetch real products for the "You may also like" section
-  const allProducts = await getCachedStorefrontProducts();
+  const [allProducts, settings] = await Promise.all([
+    getCachedStorefrontProducts(),
+    getCachedStorefrontSettings(),
+  ]);
 
-  // Take the top 8 products to pass to the cart recommendation grid
   const recommended = allProducts.slice(0, 8);
 
-  return <CartPage locale={locale} recommendedProducts={recommended} />;
+  return (
+    <CartPage
+      locale={locale}
+      recommendedProducts={recommended}
+      delivery={settings.delivery}
+    />
+  );
 }

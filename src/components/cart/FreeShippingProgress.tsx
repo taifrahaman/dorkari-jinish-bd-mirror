@@ -7,7 +7,7 @@ import gsap from "gsap";
 import { PartyPopper, Truck } from "lucide-react";
 
 import type { Locale } from "@/lib/shop/types";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/cart/constants";
+import type { DeliveryConfig } from "@/lib/product/types";
 
 const fmtPrice = (n: number, locale: Locale) =>
   new Intl.NumberFormat(locale === "bn" ? "bn-BD" : "en-US", {
@@ -18,20 +18,31 @@ const fmtPrice = (n: number, locale: Locale) =>
 
 export default function FreeShippingProgress({
   subtotal,
+  delivery,
   locale = "en",
 }: {
   subtotal: number;
+  delivery: DeliveryConfig;
   locale?: Locale;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
-  const wasReached = useRef(subtotal >= FREE_SHIPPING_THRESHOLD);
 
-  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
-  const reached = remaining === 0;
+  const threshold = delivery.freeShippingThreshold;
+  const reached =
+    delivery.freeShippingEnabled && threshold > 0 && subtotal >= threshold;
+  const wasReached = useRef(reached);
+
+  const remaining = delivery.freeShippingEnabled
+    ? Math.max(0, threshold - subtotal)
+    : 0;
+  const pct =
+    delivery.freeShippingEnabled && threshold > 0
+      ? Math.min(100, (subtotal / threshold) * 100)
+      : 0;
 
   useEffect(() => {
+    if (!delivery.freeShippingEnabled) return;
     if (fillRef.current) {
       gsap.to(fillRef.current, {
         width: `${pct}%`,
@@ -54,7 +65,10 @@ export default function FreeShippingProgress({
       );
     }
     wasReached.current = reached;
-  }, [pct, reached]);
+  }, [pct, reached, delivery.freeShippingEnabled]);
+
+  // Free shipping disabled by admin → hide the whole card entirely.
+  if (!delivery.freeShippingEnabled) return null;
 
   return (
     <div ref={cardRef} className="rounded-2xl bg-brand-navbar/70 p-4">

@@ -22,14 +22,16 @@ export type { StorefrontReview } from "@/lib/storefront/review-mapper";
 export type { Locale, LocalizedText };
 export type StockStatus = "in-stock" | "low-stock" | "out-of-stock";
 
+export type DeliveryConfig = {
+  fee: number;
+  freeShippingThreshold: number;
+  freeShippingEnabled: boolean;
+};
+
 export type StorefrontSettings = {
   deliveryEstimate: LocalizedText;
   returnPolicy: LocalizedText;
-  delivery: {
-    fee: number;
-    freeShippingThreshold: number;
-    freeShippingEnabled: boolean;
-  };
+  delivery: DeliveryConfig;
 };
 
 /** Full payload returned by /api/storefront/products/[slug]. */

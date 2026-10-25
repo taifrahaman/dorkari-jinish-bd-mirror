@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import gsap from "gsap";
 
 import type { Locale } from "@/lib/shop/types";
+import type { DeliveryConfig } from "@/lib/product/types";
 import type { StorefrontProduct } from "@/lib/storefront/product-mapper";
 import { toShopProducts } from "@/lib/shop/adapter";
 import ShopProductGrid from "@/components/shop/ProductGrid";
@@ -22,11 +23,13 @@ import EmptyCart from "./EmptyCart";
 type CartPageProps = {
   locale?: Locale;
   recommendedProducts: StorefrontProduct[];
+  delivery: DeliveryConfig;
 };
 
 export default function CartPage({
   locale = "en",
   recommendedProducts,
+  delivery,
 }: CartPageProps) {
   const hydrated = useHydration();
   const items = useCartStore((s) => s.items);
@@ -88,7 +91,7 @@ export default function CartPage({
           </h1>
         </div>
         <Link
-          href="/shop"
+          href={`/${locale}/shop`}
           className="flex items-center gap-1.5 text-sm font-medium text-brand-text-secondary transition-colors hover:text-brand-primary"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -102,7 +105,7 @@ export default function CartPage({
             <CartLineItem key={item.productId} item={item} locale={locale} />
           ))}
         </div>
-        <CartSummary locale={locale} />
+        <CartSummary locale={locale} delivery={delivery} />
       </div>
 
       {recommendedShopProducts.length > 0 && (

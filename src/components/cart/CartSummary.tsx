@@ -7,12 +7,9 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Truck } from "lucide-react";
 
 import type { Locale } from "@/lib/shop/types";
+import type { DeliveryConfig } from "@/lib/product/types";
 import { useCartStore } from "@/lib/stores/useCartStore";
-import {
-  DELIVERY_FEE,
-  FREE_SHIPPING_THRESHOLD,
-  PROMO_CODES,
-} from "@/lib/cart/constants";
+import { PROMO_CODES } from "@/lib/cart/constants";
 
 import FreeShippingProgress from "./FreeShippingProgress";
 
@@ -23,7 +20,13 @@ const fmtPrice = (n: number, locale: Locale) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export default function CartSummary({ locale = "en" }: { locale?: Locale }) {
+export default function CartSummary({
+  locale = "en",
+  delivery,
+}: {
+  locale?: Locale;
+  delivery: DeliveryConfig;
+}) {
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.totalPrice);
   const [code, setCode] = useState("");
@@ -57,8 +60,10 @@ export default function CartSummary({ locale = "en" }: { locale?: Locale }) {
   const totalSavings = itemSavings + promoDiscount;
 
   const freeDelivery =
-    applied?.type === "shipping" || subtotal >= FREE_SHIPPING_THRESHOLD;
-  const deliveryFee = freeDelivery ? 0 : subtotal > 0 ? DELIVERY_FEE : 0;
+    applied?.type === "shipping" ||
+    (delivery.freeShippingEnabled &&
+      subtotal >= delivery.freeShippingThreshold);
+  const deliveryFee = freeDelivery ? 0 : subtotal > 0 ? delivery.fee : 0;
   const total = subtotal - promoDiscount + deliveryFee;
 
   return (
@@ -67,7 +72,11 @@ export default function CartSummary({ locale = "en" }: { locale?: Locale }) {
         {locale === "bn" ? "অর্ডার সারসংক্ষেপ" : "Order summary"}
       </h2>
 
-      <FreeShippingProgress subtotal={subtotal} locale={locale} />
+      <FreeShippingProgress
+        subtotal={subtotal}
+        delivery={delivery}
+        locale={locale}
+      />
 
       <form onSubmit={handleApply} className="flex gap-2">
         <input
@@ -139,7 +148,7 @@ export default function CartSummary({ locale = "en" }: { locale?: Locale }) {
       </div>
 
       <Link
-        href="/checkout"
+        href={`/${locale}/checkout`}
         className="flex h-12 items-center justify-center gap-2 rounded-full bg-brand-accent text-sm font-semibold text-white transition-transform active:scale-95"
       >
         {locale === "bn" ? "চেকআউট করুন" : "Proceed to Checkout"}
