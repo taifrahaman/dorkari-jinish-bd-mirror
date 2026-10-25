@@ -68,7 +68,7 @@ export default function CartLineItem({
 
       <div className="flex gap-4 pr-8">
         <Link
-          href={item.slug ? `/product/${item.slug}` : "#"}
+          href={item.slug ? `/${locale}/product/${item.slug}` : "#"}
           className="relative h-24 w-24 flex-none overflow-hidden rounded-2xl bg-brand-navbar sm:h-28 sm:w-28"
         >
           {item.image && (
@@ -89,7 +89,7 @@ export default function CartLineItem({
         <div className="flex flex-1 flex-col gap-1.5">
           <div>
             <Link
-              href={item.slug ? `/product/${item.slug}` : "#"}
+              href={item.slug ? `/${locale}/product/${item.slug}` : "#"}
               className="text-sm font-semibold text-brand-text hover:text-brand-primary sm:text-base"
             >
               {item.name}

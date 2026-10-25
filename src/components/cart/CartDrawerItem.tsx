@@ -27,7 +27,7 @@ export default function CartDrawerItem({
   return (
     <div className="flex gap-4 py-4">
       <Link
-        href={item.slug ? `/product/${item.slug}` : "#"}
+        href={item.slug ? `/${locale}/product/${item.slug}` : "#"}
         className="relative h-20 w-20 flex-none overflow-hidden rounded-xl bg-brand-navbar"
       >
         {item.image ? (
@@ -43,7 +43,7 @@ export default function CartDrawerItem({
         <div>
           <div className="flex items-start justify-between gap-2">
             <Link
-              href={item.slug ? `/product/${item.slug}` : "#"}
+              href={item.slug ? `/${locale}/product/${item.slug}` : "#"}
               className="line-clamp-2 text-sm font-semibold text-brand-text hover:text-brand-primary"
             >
               {item.name}

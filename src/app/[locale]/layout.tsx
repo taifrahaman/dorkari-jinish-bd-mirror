@@ -35,7 +35,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider>
       <AuthProvider>
-        <Navbar categories={categories} />
+        <Navbar categories={categories} locale={locale as Locale} />
         {children}
         <MobileBottomNav />
         <Footer />

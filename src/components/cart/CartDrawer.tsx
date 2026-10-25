@@ -170,7 +170,7 @@ export default function CartDrawer({ locale = "en" }: { locale?: Locale }) {
               </div>
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/checkout"
+                  href={`/${locale}/checkout`}
                   onClick={() => setIsCartOpen(false)}
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-primary text-sm font-semibold text-white transition-transform active:scale-95"
                 >
@@ -178,7 +178,7 @@ export default function CartDrawer({ locale = "en" }: { locale?: Locale }) {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/cart"
+                  href={`/${locale}/cart`}
                   onClick={() => setIsCartOpen(false)}
                   className="flex h-11 w-full items-center justify-center rounded-full border border-brand-border bg-transparent text-sm font-semibold text-brand-text transition-colors hover:bg-brand-navbar"
                 >

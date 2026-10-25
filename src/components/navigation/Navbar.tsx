@@ -13,9 +13,10 @@ import SearchOverlay from "./SearchOverlay"; // <-- Import this
 
 type Props = {
   categories: CategoryNode[];
+  locale: "en" | "bn";
 };
 
-export default function Navbar({ categories }: Props) {
+export default function Navbar({ categories, locale }: Props) {
   const { visible, scrolledUp } = useNavVisibility();
 
   return (
@@ -29,7 +30,7 @@ export default function Navbar({ categories }: Props) {
         <MobileNav categories={categories} />
       </div>
       {/* Global Overlays */}
-      <CartDrawer />
+      <CartDrawer locale={locale} />
       <SearchOverlay /> {/* <-- Render it here */}
     </header>
   );

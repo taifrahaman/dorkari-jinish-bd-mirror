@@ -24,7 +24,7 @@ export default function EmptyCart({ locale = "en" }: { locale?: Locale }) {
         </p>
       </div>
       <Link
-        href="/shop"
+        href={`/${locale}/shop`}
         className="rounded-full bg-brand-primary px-6 py-3 text-sm font-semibold text-white"
       >
         {locale === "bn" ? "শপিং করুন" : "Continue shopping"}

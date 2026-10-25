@@ -43,7 +43,7 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
           {locale === "bn" ? "পণ্যটি পাওয়া যায়নি" : "Product not found"}
         </h1>
         <Link
-          href="/shop"
+          href={`/${locale}/shop`}
           className="text-sm font-medium text-brand-primary hover:underline"
         >
           {locale === "bn" ? "শপে ফিরে যান" : "Back to shop"}
@@ -78,7 +78,9 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
 
   const handleBuyNow = (quantity: number) => {
     handleAddToCart(quantity);
-    router.push("/cart");
+    // Buy Now jumps straight to checkout — cart page is skipped
+    // intentionally so the buyer never has to re-confirm intent.
+    router.push(`/${locale}/checkout`);
   };
 
   const relatedShopProducts = toShopProducts(related, locale);
