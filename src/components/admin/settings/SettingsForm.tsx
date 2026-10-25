@@ -16,7 +16,6 @@ import { AdminApiError } from "@/lib/admin/api";
 import { updateSettingsSchema } from "@/lib/validations/setting.schema";
 import { useSettings, useUpdateSettings } from "@/hooks/admin";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 /* ============================================================
  * Types
@@ -41,6 +40,11 @@ const DEFAULTS: FormInput = {
     enabled: false,
     defaultRate: 15,
     inclusive: true,
+  },
+  delivery: {
+    fee: 60,
+    freeShippingThreshold: 3000,
+    freeShippingEnabled: true,
   },
   deliveryEstimate: {
     en: "",
@@ -93,13 +97,19 @@ export function SettingsForm() {
         defaultRate: query.data.vat.defaultRate,
         inclusive: query.data.vat.inclusive,
       },
+      delivery: {
+        fee: query.data.delivery?.fee ?? 60,
+        freeShippingThreshold:
+          query.data.delivery?.freeShippingThreshold ?? 3000,
+        freeShippingEnabled: query.data.delivery?.freeShippingEnabled ?? true,
+      },
       deliveryEstimate: {
-        en: query.data.deliveryEstimate.en,
-        bn: query.data.deliveryEstimate.bn,
+        en: query.data.deliveryEstimate?.en ?? "",
+        bn: query.data.deliveryEstimate?.bn ?? "",
       },
       returnPolicy: {
-        en: query.data.returnPolicy.en,
-        bn: query.data.returnPolicy.bn,
+        en: query.data.returnPolicy?.en ?? "",
+        bn: query.data.returnPolicy?.bn ?? "",
       },
       lowStockThreshold: query.data.lowStockThreshold,
     });
@@ -271,6 +281,57 @@ export function SettingsForm() {
             />
           </div>
         )}
+      </Section>
+
+      {/* Delivery */}
+      <Section
+        title="Delivery"
+        description="Flat fee and free-shipping threshold used at checkout."
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field
+            label="Delivery fee (BDT)"
+            hint="Charged on every order below the free-shipping threshold."
+            error={errors.delivery?.fee?.message}
+          >
+            <Input
+              type="number"
+              min="0"
+              step="1"
+              {...register("delivery.fee", { valueAsNumber: true })}
+              placeholder="60"
+            />
+          </Field>
+
+          <Field
+            label="Free shipping threshold (BDT)"
+            hint="Orders at or above this subtotal ship free."
+            error={errors.delivery?.freeShippingThreshold?.message}
+          >
+            <Input
+              type="number"
+              min="0"
+              step="1"
+              {...register("delivery.freeShippingThreshold", {
+                valueAsNumber: true,
+              })}
+              placeholder="3000"
+            />
+          </Field>
+        </div>
+
+        <Controller
+          control={control}
+          name="delivery.freeShippingEnabled"
+          render={({ field }) => (
+            <ToggleRow
+              label="Enable free shipping"
+              description="When on, orders at or above the threshold ship free. When off, every order pays the delivery fee."
+              checked={field.value ?? true}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
       </Section>
 
       {/* Storefront messaging */}

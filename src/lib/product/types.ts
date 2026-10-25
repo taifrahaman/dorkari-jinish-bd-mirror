@@ -25,6 +25,11 @@ export type StockStatus = "in-stock" | "low-stock" | "out-of-stock";
 export type StorefrontSettings = {
   deliveryEstimate: LocalizedText;
   returnPolicy: LocalizedText;
+  delivery: {
+    fee: number;
+    freeShippingThreshold: number;
+    freeShippingEnabled: boolean;
+  };
 };
 
 /** Full payload returned by /api/storefront/products/[slug]. */

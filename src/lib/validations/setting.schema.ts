@@ -44,12 +44,25 @@ export const vatConfigSchema = z.object({
 export type VatConfigInput = z.infer<typeof vatConfigSchema>;
 
 /* ============================================================
+ * Delivery config
+ * ============================================================ */
+
+export const deliveryConfigSchema = z.object({
+  fee: z.coerce.number().min(0).default(60),
+  freeShippingThreshold: z.coerce.number().min(0).default(3000),
+  freeShippingEnabled: z.boolean().default(true),
+});
+
+export type DeliveryConfigInput = z.infer<typeof deliveryConfigSchema>;
+
+/* ============================================================
  * Update — all fields optional (partial patch)
  * ============================================================ */
 
 export const updateSettingsSchema = z.object({
   store: storeInfoSchema.optional(),
   vat: vatConfigSchema.optional(),
+  delivery: deliveryConfigSchema.optional(),
   deliveryEstimate: localizedTextSchema.optional(),
   returnPolicy: localizedTextSchema.optional(),
   lowStockThreshold: z.coerce.number().int().min(0).optional(),
@@ -65,6 +78,7 @@ export const settingResponseSchema = z.object({
   _id: z.string(),
   store: storeInfoSchema,
   vat: vatConfigSchema,
+  delivery: deliveryConfigSchema,
   deliveryEstimate: localizedTextSchema,
   returnPolicy: localizedTextSchema,
   lowStockThreshold: z.number(),

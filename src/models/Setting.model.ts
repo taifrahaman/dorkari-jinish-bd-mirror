@@ -30,10 +30,20 @@ export interface IVatConfig {
   inclusive: boolean;
 }
 
+export interface IDeliveryConfig {
+  /** Flat delivery fee in BDT. */
+  fee: number;
+  /** Order subtotal at or above this amount ships free. Ignored when freeShippingEnabled is false. */
+  freeShippingThreshold: number;
+  /** Master switch for the free-shipping rule above. */
+  freeShippingEnabled: boolean;
+}
+
 export interface ISetting extends Document {
   key: "singleton";
   store: IStoreInfo;
   vat: IVatConfig;
+  delivery: IDeliveryConfig;
   /** Shown on every product detail page. */
   deliveryEstimate: ILocalizedText;
   /** Shown on every product detail page. */
@@ -75,6 +85,14 @@ const VatConfigSchema = new Schema<IVatConfig>(
   { _id: false },
 );
 
+const DeliveryConfigSchema = new Schema<IDeliveryConfig>(
+  {
+    fee: { type: Number, default: 60, min: 0 },
+    freeShippingThreshold: { type: Number, default: 3000, min: 0 },
+    freeShippingEnabled: { type: Boolean, default: true },
+  },
+  { _id: false },
+);
 /* ============================================================
  * Main schema
  * ============================================================ */
@@ -94,6 +112,10 @@ const SettingSchema = new Schema<ISetting>(
     },
     vat: {
       type: VatConfigSchema,
+      default: () => ({}),
+    },
+    delivery: {
+      type: DeliveryConfigSchema,
       default: () => ({}),
     },
     deliveryEstimate: {

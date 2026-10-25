@@ -15,6 +15,12 @@ import type {
 
 type LocalizedText = { en: string; bn: string };
 
+type LeanDelivery = {
+  fee?: number;
+  freeShippingThreshold?: number;
+  freeShippingEnabled?: boolean;
+};
+
 type LeanSetting = {
   _id: unknown;
   store: {
@@ -29,6 +35,7 @@ type LeanSetting = {
     defaultRate?: number;
     inclusive?: boolean;
   };
+  delivery?: LeanDelivery;
   deliveryEstimate?: { en?: string; bn?: string };
   returnPolicy?: { en?: string; bn?: string };
   lowStockThreshold: number;
@@ -43,7 +50,13 @@ const DEFAULT_STORE_NAME = "Dorkari Jinish BD";
 const DEFAULT_VAT_RATE = 15;
 const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
-const DEFAULT_DELIVERY: LocalizedText = {
+const DEFAULT_DELIVERY = {
+  fee: 60,
+  freeShippingThreshold: 3000,
+  freeShippingEnabled: true,
+};
+
+const DEFAULT_DELIVERY_TEXT: LocalizedText = {
   en: "Delivery in 2–4 days across Dhaka",
   bn: "ঢাকার মধ্যে ২-৪ দিনে ডেলিভারি",
 };
@@ -67,6 +80,28 @@ function toLocalizedText(
   };
 }
 
+function toDeliveryConfig(delivery: LeanDelivery | undefined): {
+  fee: number;
+  freeShippingThreshold: number;
+  freeShippingEnabled: boolean;
+} {
+  return {
+    fee:
+      typeof delivery?.fee === "number" && delivery.fee >= 0
+        ? delivery.fee
+        : DEFAULT_DELIVERY.fee,
+    freeShippingThreshold:
+      typeof delivery?.freeShippingThreshold === "number" &&
+      delivery.freeShippingThreshold >= 0
+        ? delivery.freeShippingThreshold
+        : DEFAULT_DELIVERY.freeShippingThreshold,
+    freeShippingEnabled:
+      typeof delivery?.freeShippingEnabled === "boolean"
+        ? delivery.freeShippingEnabled
+        : DEFAULT_DELIVERY.freeShippingEnabled,
+  };
+}
+
 function toSettingResponse(doc: LeanSetting): SettingResponse {
   return {
     _id: String(doc._id),
@@ -82,7 +117,11 @@ function toSettingResponse(doc: LeanSetting): SettingResponse {
       defaultRate: doc.vat?.defaultRate ?? DEFAULT_VAT_RATE,
       inclusive: doc.vat?.inclusive ?? true,
     },
-    deliveryEstimate: toLocalizedText(doc.deliveryEstimate, DEFAULT_DELIVERY),
+    delivery: toDeliveryConfig(doc.delivery),
+    deliveryEstimate: toLocalizedText(
+      doc.deliveryEstimate,
+      DEFAULT_DELIVERY_TEXT,
+    ),
     returnPolicy: toLocalizedText(doc.returnPolicy, DEFAULT_RETURN_POLICY),
     lowStockThreshold: doc.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD,
     updatedAt: doc.updatedAt.toISOString(),
@@ -105,7 +144,8 @@ export async function getSettings(): Promise<SettingResponse> {
           defaultRate: DEFAULT_VAT_RATE,
           inclusive: true,
         },
-        deliveryEstimate: DEFAULT_DELIVERY,
+        delivery: DEFAULT_DELIVERY,
+        deliveryEstimate: DEFAULT_DELIVERY_TEXT,
         returnPolicy: DEFAULT_RETURN_POLICY,
         lowStockThreshold: DEFAULT_LOW_STOCK_THRESHOLD,
       },
@@ -137,6 +177,13 @@ export async function updateSettings(
     update["vat.enabled"] = input.vat.enabled;
     update["vat.defaultRate"] = input.vat.defaultRate;
     update["vat.inclusive"] = input.vat.inclusive;
+  }
+
+  if (input.delivery) {
+    update["delivery.fee"] = input.delivery.fee;
+    update["delivery.freeShippingThreshold"] =
+      input.delivery.freeShippingThreshold;
+    update["delivery.freeShippingEnabled"] = input.delivery.freeShippingEnabled;
   }
 
   if (input.deliveryEstimate !== undefined) {
@@ -172,6 +219,11 @@ export async function updateSettings(
 export type StorefrontSettings = {
   deliveryEstimate: LocalizedText;
   returnPolicy: LocalizedText;
+  delivery: {
+    fee: number;
+    freeShippingThreshold: number;
+    freeShippingEnabled: boolean;
+  };
 };
 
 export async function getStorefrontSettings(): Promise<StorefrontSettings> {
@@ -179,5 +231,6 @@ export async function getStorefrontSettings(): Promise<StorefrontSettings> {
   return {
     deliveryEstimate: settings.deliveryEstimate,
     returnPolicy: settings.returnPolicy,
+    delivery: settings.delivery,
   };
 }
