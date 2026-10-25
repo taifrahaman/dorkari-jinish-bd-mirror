@@ -17,11 +17,13 @@ import {
   findOrCreateCustomer,
   channelToSource,
 } from "@/lib/admin/customers/find-or-create";
-import type {
-  CreateOrderInput,
-  UpdateOrderInput,
-  OrderListQuery,
-  OrderResponse,
+import {
+  getAllowedTransitions,
+  restoresStock,
+  type CreateOrderInput,
+  type UpdateOrderInput,
+  type OrderListQuery,
+  type OrderResponse,
 } from "@/lib/validations/order.schema";
 
 /* ============================================================
@@ -604,6 +606,54 @@ export async function updateOrder(
     throw new ConflictError("Cannot update an archived order");
   }
 
+  const previousStatus = doc.status;
+  const statusChanging =
+    input.status !== undefined && input.status !== previousStatus;
+
+  /* ----- 1. Validate status transition ----- */
+
+  if (statusChanging) {
+    const allowed = getAllowedTransitions(previousStatus);
+    if (!allowed.includes(input.status!)) {
+      throw new BadRequestError(
+        `Cannot change order status from "${previousStatus}" to "${input.status}". Allowed next statuses: ${allowed.length > 0 ? allowed.join(", ") : "(none — terminal state)"}.`,
+      );
+    }
+  }
+
+  /* ----- 2. Restore stock (cancellation / return) ----- */
+
+  const willRestoreStock = statusChanging && restoresStock(input.status!);
+
+  const restoredStock: Array<{
+    productId: mongoose.Types.ObjectId;
+    quantity: number;
+  }> = [];
+
+  if (willRestoreStock) {
+    for (const item of doc.items) {
+      try {
+        const result = await Product.updateOne(
+          { _id: item.product },
+          { $inc: { stock: item.quantity } },
+        );
+        // matchedCount === 0 means the product no longer exists
+        // (hard-deleted). Skip; admin sees mismatch and adjusts.
+        if (result.matchedCount > 0) {
+          restoredStock.push({
+            productId: item.product,
+            quantity: item.quantity,
+          });
+        }
+      } catch {
+        // Swallow — stock restore is best-effort. Rollback below
+        // only rolls back what actually succeeded.
+      }
+    }
+  }
+
+  /* ----- 3. Apply field updates ----- */
+
   if (input.status !== undefined) doc.status = input.status;
   if (input.paymentStatus !== undefined) {
     doc.paymentStatus = input.paymentStatus;
@@ -625,11 +675,25 @@ export async function updateOrder(
     doc.notes = input.notes === null ? undefined : input.notes;
   }
 
-  if (input.status === "delivered" && !doc.deliveredDate) {
+  // Auto-stamp deliveredDate on transition TO delivered (not on
+  // re-save of an already-delivered order).
+  if (statusChanging && input.status === "delivered" && !doc.deliveredDate) {
     doc.deliveredDate = new Date();
   }
 
-  await doc.save();
+  /* ----- 4. Save (rollback stock restore on failure) ----- */
+
+  try {
+    await doc.save();
+  } catch (err) {
+    for (const entry of restoredStock) {
+      await Product.updateOne(
+        { _id: entry.productId },
+        { $inc: { stock: -entry.quantity } },
+      );
+    }
+    throw err;
+  }
 
   const populated = await Order.findById(doc._id)
     .populate(POPULATE)
@@ -638,7 +702,6 @@ export async function updateOrder(
 
   return toOrderResponse(populated);
 }
-
 /* ============================================================
  * Archive / Restore / Permanent delete
  * ============================================================ */

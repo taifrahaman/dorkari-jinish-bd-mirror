@@ -256,3 +256,41 @@ export const orderResponseSchema = z.object({
 });
 
 export type OrderResponse = z.infer<typeof orderResponseSchema>;
+
+/* ============================================================
+ * Status state machine
+ *
+ * Which statuses can follow which. Terminal states (cancelled,
+ * returned) have no allowed successors — the order is closed.
+ *
+ * Lives here (not in the service) so both server and admin UI
+ * can import it — the UI filters the status dropdown by these
+ * rules, the service rejects any bypass attempt.
+ * ============================================================ */
+
+export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "cancelled"],
+  processing: ["shipped", "cancelled"],
+  shipped: ["delivered", "returned"],
+  delivered: ["returned"],
+  cancelled: [],
+  returned: [],
+};
+
+/**
+ * Returns the list of statuses the order can move to from `current`.
+ * Empty array means the order is in a terminal state.
+ */
+export function getAllowedTransitions(current: OrderStatus): OrderStatus[] {
+  return ORDER_STATUS_TRANSITIONS[current] ?? [];
+}
+
+/**
+ * True when cancelling or returning an order should return its
+ * line-item quantities to product stock. Called by the service
+ * before every status update.
+ */
+export function restoresStock(status: OrderStatus): boolean {
+  return status === "cancelled" || status === "returned";
+}

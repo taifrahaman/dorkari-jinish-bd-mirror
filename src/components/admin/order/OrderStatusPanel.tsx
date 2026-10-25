@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateOrder } from "@/hooks/admin";
+import { getAllowedTransitions } from "@/lib/validations/order.schema";
 import type { OrderResponse } from "@/lib/validations/order.schema";
 import type {
   OrderStatus,
@@ -88,6 +89,15 @@ export function OrderStatusPanel({ order, className }: OrderStatusPanelProps) {
     trackingNumber !== (order.trackingNumber ?? "") ||
     notes !== (order.notes ?? "");
 
+  // Allowed transitions for the order's *server* status, not the
+  // local draft. Using `order.status` means the list re-filters
+  // correctly after a successful save.
+  const allowedTransitions = getAllowedTransitions(order.status);
+  const availableStatuses: OrderStatus[] = [
+    order.status,
+    ...allowedTransitions,
+  ];
+
   const handleSave = async () => {
     await mutation.mutateAsync({
       status,
@@ -126,13 +136,23 @@ export function OrderStatusPanel({ order, className }: OrderStatusPanelProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {STATUSES.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
+            {/* Current status + the legal transitions from it.
+                Terminal states show only their own value. */}
+            {availableStatuses.map((value) => {
+              const found = STATUSES.find((s) => s.value === value);
+              return (
+                <SelectItem key={value} value={value}>
+                  {found?.label ?? value}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
+        {allowedTransitions.length === 0 && (
+          <p className="text-xs text-brand-text-secondary">
+            This status is final — no further transitions.
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5">
