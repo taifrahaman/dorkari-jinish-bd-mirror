@@ -12,6 +12,7 @@ import { Loader2, ShieldCheck, ChevronLeft, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Locale } from "@/lib/shop/types";
+import type { DeliveryConfig } from "@/lib/product/types";
 import { useCartStore } from "@/lib/stores/useCartStore";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import { useHydration } from "@/lib/stores/useHydration";
@@ -23,7 +24,8 @@ const checkoutSchema = z.object({
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   address: z.string().min(10, "Full delivery address is required"),
   notes: z.string().optional(),
-  paymentMethod: z.enum(["cod", "mobile_payment"]),
+  // bKash/Nagad is not live yet — only cash on delivery is offered.
+  paymentMethod: z.literal("cod"),
 });
 
 type CheckoutForm = z.infer<typeof checkoutSchema>;
@@ -35,7 +37,15 @@ const fmtPrice = (n: number, locale: Locale) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
+type CheckoutPageProps = {
+  locale?: Locale;
+  delivery: DeliveryConfig;
+};
+
+export default function CheckoutPage({
+  locale = "en",
+  delivery,
+}: CheckoutPageProps) {
   const router = useRouter();
   const hydrated = useHydration();
   const items = useCartStore((s) => s.items);
@@ -47,8 +57,6 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
     user?.addresses?.find((a) => a.isDefault) || user?.addresses?.[0];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // New state for "Ordering for someone else"
   const [isForSomeoneElse, setIsForSomeoneElse] = useState(false);
 
   const {
@@ -68,7 +76,6 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
     },
   });
 
-  // Autofill logic (only runs if they haven't checked the "someone else" box)
   useEffect(() => {
     if (user && !isForSomeoneElse) {
       if (!watch("name")) setValue("name", user.name);
@@ -80,17 +87,14 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
     }
   }, [user, defaultAddress, setValue, watch, isForSomeoneElse]);
 
-  // Handle toggling "Ordering for someone else"
   const handleToggleForSomeoneElse = (checked: boolean) => {
     setIsForSomeoneElse(checked);
 
     if (checked) {
-      // Clear the shipping fields so they can type new ones
       setValue("name", "");
       setValue("phone", "");
       setValue("address", "");
     } else {
-      // Restore their default profile data
       setValue("name", user?.name || "");
       setValue("phone", user?.phone || defaultAddress?.phone || "");
       setValue("address", defaultAddress?.address || "");
@@ -115,7 +119,10 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
     );
   }
 
-  const shippingFee = totalPrice >= 3000 ? 0 : 60;
+  const freeShipping =
+    delivery.freeShippingEnabled &&
+    totalPrice >= delivery.freeShippingThreshold;
+  const shippingFee = freeShipping ? 0 : delivery.fee;
   const finalTotal = totalPrice + shippingFee;
 
   const onSubmit = async (data: CheckoutForm) => {
@@ -139,8 +146,13 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
         }),
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to place order");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Server error shape: { success: false, error: { message, code } }
+        throw new Error(
+          json?.error?.message || json?.message || "Failed to place order",
+        );
+      }
 
       clearCart();
       router.push(`/${locale}/checkout/success?orderId=${json.data._id}`);
@@ -168,7 +180,6 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
               {locale === "bn" ? "ডেলিভারি তথ্য" : "Delivery Information"}
             </h2>
 
-            {/* "Ordering for someone else" Toggle */}
             {user && (
               <div className="mb-6 flex items-center gap-3 rounded-xl border border-brand-border bg-brand-navbar/50 p-4">
                 <div className="flex h-5 w-5 items-center justify-center rounded bg-white ring-1 ring-inset ring-brand-border">
@@ -179,7 +190,7 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
                     onChange={(e) =>
                       handleToggleForSomeoneElse(e.target.checked)
                     }
-                    className="h-4 w-4 accent-brand-primary cursor-pointer"
+                    className="h-4 w-4 cursor-pointer accent-brand-primary"
                   />
                 </div>
                 <label
@@ -270,7 +281,7 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
             </h2>
 
             <div className="flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-brand-border p-4 hover:bg-brand-navbar/50 has-[:checked]:border-brand-primary has-[:checked]:bg-brand-primary/5">
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-brand-border p-4 has-[:checked]:border-brand-primary has-[:checked]:bg-brand-primary/5">
                 <div className="flex items-center gap-3">
                   <input
                     type="radio"
@@ -280,20 +291,6 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
                   />
                   <span className="text-sm font-semibold text-brand-text">
                     Cash on Delivery
-                  </span>
-                </div>
-              </label>
-
-              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-brand-border p-4 hover:bg-brand-navbar/50 has-[:checked]:border-brand-primary has-[:checked]:bg-brand-primary/5">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    value="mobile_payment"
-                    {...register("paymentMethod")}
-                    className="h-4 w-4 accent-brand-primary"
-                  />
-                  <span className="text-sm font-semibold text-brand-text">
-                    bKash / Nagad
                   </span>
                 </div>
               </label>
@@ -324,6 +321,7 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
               <div key={item.productId} className="flex gap-3">
                 <div className="h-14 w-14 flex-none overflow-hidden rounded-lg bg-brand-navbar">
                   {item.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.image}
                       alt=""
@@ -358,7 +356,7 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
             <div className="flex justify-between text-brand-text-secondary">
               <span>Shipping</span>
               <span className="text-brand-text">
-                {shippingFee === 0 ? "Free" : fmtPrice(shippingFee, locale)}
+                {freeShipping ? "Free" : fmtPrice(shippingFee, locale)}
               </span>
             </div>
           </div>

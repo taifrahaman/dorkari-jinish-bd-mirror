@@ -2,6 +2,7 @@
 
 import CheckoutPage from "@/components/checkout";
 import type { Locale } from "@/lib/shop/types";
+import { getCachedStorefrontSettings } from "@/lib/storefront/products-cache";
 
 export default async function Page({
   params,
@@ -11,5 +12,7 @@ export default async function Page({
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
-  return <CheckoutPage locale={locale} />;
+  const settings = await getCachedStorefrontSettings();
+
+  return <CheckoutPage locale={locale} delivery={settings.delivery} />;
 }

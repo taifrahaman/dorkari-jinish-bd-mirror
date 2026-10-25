@@ -34,7 +34,7 @@ const checkoutSchema = z.object({
   }),
   shippingAddress: z.string().min(10),
   notes: z.string().optional(),
-  paymentMethod: z.enum(["cod", "mobile_payment"]),
+  paymentMethod: z.enum(["cod"]),
   items: z.array(
     z.object({
       productId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid product ID"),
