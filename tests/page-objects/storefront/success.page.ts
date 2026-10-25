@@ -9,6 +9,6 @@ export class SuccessPage {
     await expect(
       this.page.getByRole("heading", { name: "Order Confirmed!" }),
     ).toBeVisible();
-    await expect(this.page.getByText("Order ID")).toBeVisible();
+    await expect(this.page.getByText("Order number")).toBeVisible();
   }
 }
