@@ -90,10 +90,13 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
       <Breadcrumb
         locale={locale}
         items={[
-          { label: locale === "bn" ? "হোম" : "Home", href: "/" },
+          {
+            label: locale === "bn" ? "হোম" : "Home",
+            href: `/${locale}`,
+          },
           {
             label: categoryLabel[locale],
-            href: `/shop?category=${categorySlug}`,
+            href: `/${locale}/shop?category=${categorySlug}`,
           },
           { label: product.name[locale] },
         ]}

@@ -26,6 +26,11 @@ export default function MobileBottomNav() {
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`);
 
+  // Prefix a locale-less path with the active locale for rendering.
+  // "/" → "/en", "/cart" → "/en/cart".
+  const localizedHref = (href: string) =>
+    href === "/" ? `/${locale}` : `/${locale}${href}`;
+
   return (
     <nav className={styles.nav} aria-label="Primary">
       <ul className={styles.list}>
@@ -54,15 +59,13 @@ export default function MobileBottomNav() {
 
           // Handle Account Button (Dynamic Link)
           if (item.id === "account") {
-            const accountHref = user
-              ? `/${locale}/profile`
-              : `/${locale}/login`;
-            const active = isActive(accountHref);
+            const accountPath = user ? "/profile" : "/login";
+            const active = isActive(accountPath);
 
             return (
               <li key={item.id} className={styles.item}>
                 <Link
-                  href={accountHref}
+                  href={localizedHref(accountPath)}
                   className={styles.link}
                   data-active={active}
                   aria-current={active ? "page" : undefined}
@@ -81,7 +84,7 @@ export default function MobileBottomNav() {
           return (
             <li key={item.id} className={styles.item}>
               <Link
-                href={item.href}
+                href={localizedHref(item.href)}
                 className={styles.link}
                 data-active={active}
                 aria-current={active ? "page" : undefined}

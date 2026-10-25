@@ -14,7 +14,7 @@ export default function CartBadge({ locale = "en" }: { locale?: "en" | "bn" }) {
 
   return (
     <Link
-      href="/cart"
+      href={`/${locale}/cart`}
       aria-label={locale === "bn" ? "কার্ট" : "Cart"}
       className="relative grid h-10 w-10 place-items-center rounded-full text-brand-text hover:bg-brand-navbar"
     >
