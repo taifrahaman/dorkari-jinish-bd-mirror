@@ -19,6 +19,7 @@ import type {
   LocalizedText,
   StorefrontProductDetail,
 } from "@/lib/product/types";
+import { MAX_QTY_PER_LINE } from "@/lib/stores/useCartStore";
 
 const COPY = {
   description: { en: "Description", bn: "বিবরণ" },
@@ -252,7 +253,7 @@ export default function ProductInfo({
             </span>
             <button
               type="button"
-              onClick={() => setQty((q) => Math.min(99, q + 1))}
+              onClick={() => setQty((q) => Math.min(MAX_QTY_PER_LINE, q + 1))}
               aria-label={locale === "bn" ? "বাড়ান" : "Increase quantity"}
               className="grid h-11 w-11 place-items-center text-brand-text disabled:opacity-40"
               disabled={!inStock}

@@ -8,10 +8,11 @@ import { Heart, ShoppingBag, Star } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation"; // <-- Added
+import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/lib/stores/useCartStore";
-import { useAuthStore } from "@/lib/stores/useAuthStore"; // <-- Added
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { makeCartKey } from "@/lib/cart/cart-key";
 import styles from "./ProductCard.module.css";
 
 type Locale = "en" | "bn";
@@ -73,7 +74,7 @@ export default function ProductCard({
   const router = useRouter();
 
   const addItem = useCartStore((s) => s.addItem);
-  const { user, setUser } = useAuthStore(); // <-- Added
+  const { user, setUser } = useAuthStore();
 
   const name = product.name[locale];
   const brand = product.brand?.[locale];
@@ -106,7 +107,7 @@ export default function ProductCard({
 
     const slug = product.href.split("/").pop();
     addItem({
-      productId: product.id,
+      productId: makeCartKey(product.id, selectedColor?.hex ?? "default"),
       name: name,
       price: product.price,
       originalPrice: product.originalPrice,
@@ -187,7 +188,7 @@ export default function ProductCard({
 
   return (
     <article
-      className={`group relative rounded-[26px] bg-brand-surface p-2.5 ring-1 ring-brand-primary/6 shadow-[0_1px_2px_rgba(23,38,66,0.05),0_12px_28px_-16px_rgba(23,38,66,0.18)] transition-shadow duration-300 hover:shadow-[0_2px_4px_rgba(23,38,66,0.06),0_20px_40px_-16px_rgba(23,38,66,0.26)] ${className}`}
+      className={`group relative flex h-full flex-col rounded-[26px] bg-brand-surface p-2.5 ring-1 ring-brand-primary/6 shadow-[0_1px_2px_rgba(23,38,66,0.05),0_12px_28px_-16px_rgba(23,38,66,0.18)] transition-shadow duration-300 hover:shadow-[0_2px_4px_rgba(23,38,66,0.06),0_20px_40px_-16px_rgba(23,38,66,0.26)] ${className}`}
     >
       <div
         className={`${styles.shape} ${PALETTE_CLASS[palette]}`}

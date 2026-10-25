@@ -110,6 +110,43 @@ function displayName(
  * as "used" — their assets would be re-attached if restored.
  * ============================================================ */
 
+/**
+ * These projection types exist to satisfy Mongoose 9's stricter
+ * `.lean()` inference. Dotted-path projections like
+ * `{ "images.publicId": 1 }` no longer infer the parent array type
+ * — Mongoose drops `images` from the inferred shape. We tell
+ * TypeScript what we're actually asking Mongo to return.
+ *
+ * The fields listed here must match what the projection in the
+ * `.find()` call actually fetches, otherwise the type lies.
+ */
+
+type ProductMediaProjection = {
+  _id: mongoose.Types.ObjectId;
+  name?: { en?: string; bn?: string };
+  slug?: string;
+  images?: Array<{ publicId?: string }>;
+};
+
+type CategoryMediaProjection = {
+  _id: mongoose.Types.ObjectId;
+  name?: { en?: string; bn?: string };
+  slug?: string;
+  image?: { publicId?: string };
+};
+
+type BrandMediaProjection = {
+  _id: mongoose.Types.ObjectId;
+  name?: { en?: string; bn?: string };
+  slug?: string;
+  logo?: { publicId?: string };
+};
+
+type ProductImageOnlyProjection = {
+  _id: mongoose.Types.ObjectId;
+  images?: Array<{ publicId?: string }>;
+};
+
 export async function getUsageMap(
   publicIds: string[],
 ): Promise<Record<string, UsageEntry>> {
@@ -124,7 +161,7 @@ export async function getUsageMap(
   const products = await Product.find(
     { "images.publicId": { $in: publicIds } },
     { _id: 1, name: 1, slug: 1, "images.publicId": 1 },
-  ).lean();
+  ).lean<ProductMediaProjection[]>();
 
   for (const p of products) {
     const seen = new Set<string>();
@@ -148,7 +185,7 @@ export async function getUsageMap(
   const categories = await Category.find(
     { "image.publicId": { $in: publicIds } },
     { _id: 1, name: 1, slug: 1, "image.publicId": 1 },
-  ).lean();
+  ).lean<CategoryMediaProjection[]>();
 
   for (const c of categories) {
     const pid = c.image?.publicId;
@@ -175,7 +212,7 @@ export async function getUsageMap(
   const brands = await Brand.find(
     { "logo.publicId": { $in: publicIds } },
     { _id: 1, name: 1, slug: 1, "logo.publicId": 1 },
-  ).lean();
+  ).lean<BrandMediaProjection[]>();
 
   for (const b of brands) {
     const pid = b.logo?.publicId;
@@ -254,7 +291,7 @@ export async function listMedia(
     const products = await Product.find(
       { category: { $in: catIds } },
       { "images.publicId": 1 },
-    ).lean();
+    ).lean<ProductImageOnlyProjection[]>();
 
     categoryPublicIds = new Set<string>();
     for (const p of products) {
@@ -410,24 +447,6 @@ export async function deleteMedia(
     { "logo.publicId": publicId },
     { $unset: { logo: 1 } },
   );
-
-  /* -------- Delete from Cloudinary -------- */
-
-  //   const result = await cloudinary.uploader.destroy(publicId, {
-  //     invalidate: true,
-  //   });
-
-  //   if (result.result !== "ok" && result.result !== "not found") {
-  //     throw new NotFoundError(
-  //       `Cloudinary delete failed for "${publicId}": ${result.result}`,
-  //     );
-  //   }
-
-  //   return {
-  //     deleted: [publicId],
-  //     affectedProducts,
-  //   };
-  // }
 
   /* -------- Delete from Cloudinary -------- */
 

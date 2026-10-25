@@ -2,7 +2,13 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { useUIStore } from "./useUIStore";
+
+/**
+ * Hard cap per cart line. Real stock validation happens server-side
+ * on order placement — this is a soft UX cap so customers can't build
+ * a 99-unit cart they won't be able to buy.
+ */
+export const MAX_QTY_PER_LINE = 10;
 
 export type CartItem = {
   productId: string;
@@ -44,6 +50,25 @@ const safeLocalStorage = {
   },
 };
 
+/**
+ * Single helper for derived totals — used by every mutation so the
+ * three fields can never drift apart.
+ */
+function recomputeTotals(items: CartItem[]): {
+  totalItems: number;
+  totalPrice: number;
+} {
+  return {
+    totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
+    totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+  };
+}
+
+function clampQty(quantity: number): number {
+  if (!Number.isFinite(quantity) || quantity <= 0) return 0;
+  return Math.min(MAX_QTY_PER_LINE, Math.floor(quantity));
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -60,30 +85,22 @@ export const useCartStore = create<CartState>()(
         if (existing) {
           newItems = currentItems.map((i) =>
             i.productId === productId
-              ? { ...i, quantity: i.quantity + quantity }
+              ? { ...i, quantity: clampQty(i.quantity + quantity) }
               : i,
           );
         } else {
-          newItems = [...currentItems, { ...rest, productId, quantity }];
+          newItems = [
+            ...currentItems,
+            { ...rest, productId, quantity: clampQty(quantity) },
+          ];
         }
 
-        const totalItems = newItems.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = newItems.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0,
-        );
-
-        set({ items: newItems, totalItems, totalPrice });
+        set({ items: newItems, ...recomputeTotals(newItems) });
       },
 
       removeItem: (productId) => {
         const newItems = get().items.filter((i) => i.productId !== productId);
-        const totalItems = newItems.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = newItems.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0,
-        );
-        set({ items: newItems, totalItems, totalPrice });
+        set({ items: newItems, ...recomputeTotals(newItems) });
       },
 
       updateQuantity: (productId, quantity) => {
@@ -91,15 +108,11 @@ export const useCartStore = create<CartState>()(
           get().removeItem(productId);
           return;
         }
+        const clamped = clampQty(quantity);
         const newItems = get().items.map((i) =>
-          i.productId === productId ? { ...i, quantity } : i,
+          i.productId === productId ? { ...i, quantity: clamped } : i,
         );
-        const totalItems = newItems.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = newItems.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0,
-        );
-        set({ items: newItems, totalItems, totalPrice });
+        set({ items: newItems, ...recomputeTotals(newItems) });
       },
 
       clearCart: () => set({ items: [], totalItems: 0, totalPrice: 0 }),
@@ -108,22 +121,23 @@ export const useCartStore = create<CartState>()(
         const currentItems = get().items;
         const merged = [...currentItems];
         guestItems.forEach((guestItem) => {
-          const existing = merged.find(
+          const idx = merged.findIndex(
             (i) => i.productId === guestItem.productId,
           );
-          if (existing) {
-            existing.quantity += guestItem.quantity;
+          if (idx >= 0) {
+            merged[idx] = {
+              ...merged[idx],
+              quantity: clampQty(merged[idx].quantity + guestItem.quantity),
+            };
           } else {
-            merged.push(guestItem);
+            merged.push({
+              ...guestItem,
+              quantity: clampQty(guestItem.quantity),
+            });
           }
         });
 
-        const totalItems = merged.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = merged.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0,
-        );
-        set({ items: merged, totalItems, totalPrice });
+        set({ items: merged, ...recomputeTotals(merged) });
       },
     }),
     {

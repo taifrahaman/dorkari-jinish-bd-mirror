@@ -44,6 +44,12 @@
     --brand-surface
   ); /* MUST match the card background (bg-brand-surface) */
 
+  /* FIX: height reserved for the brand / name / price row, so every card
+     has the same height with or without a compare price or brand.
+     English: brand 14 + gap 2 + name 20 = 36 (price column is also 36).
+     Bengali has taller line boxes, so it gets more room (see below). */
+  --info-h: 38px;
+
   /* product image: space kept clear above / below it */
   --img-top: 38px;
   --img-bottom: calc(
@@ -66,11 +72,17 @@
   ); /* keeps the gutter an even width       */
 
   display: flex;
+  flex: 1 1 auto; /* FIX: fills the article, which fills its slot in the rail / grid */
   flex-direction: column;
   gap: var(--g);
 
   /* body font for everything; the name and price switch to the heading font below */
   font-family: var(--font-body, system-ui, sans-serif);
+}
+
+/* FIX: Bengali brand (12px x 1.5) + gap + name (16px x 1.45) = 43px */
+.shape[data-locale="bn"] {
+  --info-h: 46px;
 }
 
 /* tile colours, picked by the `palette` prop — all derived from the logo */
@@ -285,6 +297,7 @@
 .bar {
   position: relative;
   display: flex;
+  flex: 1 1 auto; /* FIX: absorbs any extra height if a neighbour card is taller */
   align-items: flex-end;
   padding: 8px 0 4px;
   color: var(--brand-navy);
@@ -381,6 +394,7 @@
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
+  min-height: var(--info-h); /* FIX: same row height on every card */
   color: inherit;
   text-decoration: none;
 }
@@ -428,11 +442,13 @@
   line-height: 1.45;
 }
 
+/* FIX: price sits on the bottom line whether or not a compare price exists */
 .priceBlock {
   display: flex;
   flex: none;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .was {

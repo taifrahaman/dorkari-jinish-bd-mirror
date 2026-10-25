@@ -53,5 +53,32 @@ setup("authenticate as admin", async ({ page }) => {
     throw error;
   }
 
+  // ---------------------------------------------------------------
+  // Warmup: pre-compile heavy admin routes so specs don't time out
+  // on Turbopack's cold compile. Next.js 16.4's Turbopack compiles
+  // admin pages on-demand; ProductForm in particular takes 15-20s
+  // on first hit. Once compiled, subsequent navigations are instant.
+  // ---------------------------------------------------------------
+  setup.setTimeout(180_000); // give warmup plenty of time
+
+  const warmupRoutes = [
+    "/admin/products",
+    "/admin/products/new",
+    "/admin/pos",
+    "/admin/orders",
+    "/admin/settings",
+    "/admin/categories",
+    "/admin/brands",
+    "/admin/brands/new",
+    "/admin/colors",
+    "/admin/colors/new",
+  ];
+
+  for (const route of warmupRoutes) {
+    await page.goto(route, { waitUntil: "networkidle" });
+    // Small delay so Turbopack can finish background compilation
+    await page.waitForTimeout(200);
+  }
+
   await page.context().storageState({ path: adminAuthFile });
 });
