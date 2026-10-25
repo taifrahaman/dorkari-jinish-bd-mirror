@@ -124,6 +124,7 @@ export default function CheckoutPage({ locale = "en" }: { locale?: Locale }) {
       const payloadItems = items.map((i) => ({
         productId: parseCartKey(i.productId).productId,
         quantity: i.quantity,
+        colorHex: i.colorHex,
       }));
 
       const res = await fetch("/api/storefront/orders", {

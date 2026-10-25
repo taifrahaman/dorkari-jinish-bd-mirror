@@ -50,6 +50,7 @@ export function OrderItemsTable({ items, className }: OrderItemsTableProps) {
               const product =
                 typeof item.product === "string" ? null : item.product;
               const image = product?.images?.[0];
+              const displayName = item.nameSnapshot.en || item.nameSnapshot.bn;
 
               return (
                 <tr
@@ -62,7 +63,7 @@ export function OrderItemsTable({ items, className }: OrderItemsTableProps) {
                         {image ? (
                           <Image
                             src={image.url}
-                            alt={image.alt || item.nameSnapshot}
+                            alt={image.alt || displayName}
                             width={40}
                             height={40}
                             className="h-full w-full object-cover"
@@ -79,16 +80,27 @@ export function OrderItemsTable({ items, className }: OrderItemsTableProps) {
                             href={`/admin/products/${product._id}`}
                             className="block truncate text-sm text-brand-primary hover:underline"
                           >
-                            {item.nameSnapshot}
+                            {displayName}
                           </Link>
                         ) : (
                           <span className="block truncate text-sm text-brand-primary">
-                            {item.nameSnapshot}
+                            {displayName}
                           </span>
                         )}
                         {item.skuSnapshot && (
                           <p className="truncate text-xs text-brand-text-secondary">
                             {item.skuSnapshot}
+                          </p>
+                        )}
+                        {item.colorHex && (
+                          <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-brand-text-secondary">
+                            <span
+                              className="inline-block h-3 w-3 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.14)]"
+                              style={{ backgroundColor: item.colorHex }}
+                            />
+                            {item.colorName?.en ||
+                              item.colorName?.bn ||
+                              item.colorHex}
                           </p>
                         )}
                       </div>

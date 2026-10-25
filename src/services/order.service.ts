@@ -43,14 +43,29 @@ type PopulatedUserRef = {
 
 type LeanOrderItem = {
   product: mongoose.Types.ObjectId | PopulatedProductRef;
-  nameSnapshot: string;
+  nameSnapshot: { en: string; bn: string } | string;
   skuSnapshot: string;
+  colorName?: { en: string; bn: string };
+  colorHex?: string;
   quantity: number;
   priceAtTime: number;
   costPriceAtTime: number;
   discount: number;
   lineTotal: number;
 };
+
+/**
+ * Coerces legacy string snapshots (pre-Phase-0.2) into the new
+ * bilingual object shape. New orders already write objects, so
+ * this is a no-op for them.
+ */
+function normalizeNameSnapshot(
+  value: { en: string; bn: string } | string | undefined,
+): { en: string; bn: string } {
+  if (typeof value === "string") return { en: value, bn: value };
+  if (!value) return { en: "", bn: "" };
+  return { en: value.en || "", bn: value.bn || value.en || "" };
+}
 
 type LeanOrder = {
   _id: mongoose.Types.ObjectId;
@@ -125,8 +140,10 @@ function toOrderItemResponse(
 
   return {
     product: productOut,
-    nameSnapshot: item.nameSnapshot,
+    nameSnapshot: normalizeNameSnapshot(item.nameSnapshot),
     skuSnapshot: item.skuSnapshot,
+    colorName: item.colorName,
+    colorHex: item.colorHex,
     quantity: item.quantity,
     priceAtTime: item.priceAtTime,
     costPriceAtTime: item.costPriceAtTime,
@@ -235,7 +252,8 @@ function buildListFilter(query: OrderListQuery): Record<string, unknown> {
       { "customerSnapshot.name": rx },
       { "customerSnapshot.phone": rx },
       { "customerSnapshot.email": rx },
-      { "items.nameSnapshot": rx },
+      { "items.nameSnapshot.en": rx },
+      { "items.nameSnapshot.bn": rx },
       { "items.skuSnapshot": rx },
     ];
   }
@@ -354,7 +372,7 @@ export async function createOrder(
     customerSnapshot = { name: "Walk-in customer" };
   }
 
-  /* ----- 2. Validate items + snapshot products ----- */
+  /* ----- 2. Fetch products (active only) ----- */
 
   const productIds = input.items.map(
     (i) => new mongoose.Types.ObjectId(i.product),
@@ -363,8 +381,9 @@ export async function createOrder(
   const products = await Product.find({
     _id: { $in: productIds },
     deletedAt: null,
+    isActive: true,
   })
-    .select("_id name sku costPrice stock")
+    .select("_id name sku costPrice stock colors")
     .lean<
       Array<{
         _id: mongoose.Types.ObjectId;
@@ -372,39 +391,138 @@ export async function createOrder(
         sku?: string;
         costPrice?: number;
         stock: number;
+        colors?: Array<{
+          hex: string;
+          name?: { en?: string; bn?: string };
+        }>;
       }>
     >();
 
   const productMap = new Map(products.map((p) => [String(p._id), p]));
 
-  const orderItems: IOrderItem[] = [];
+  /* ----- 3. Validate every line (exists, in stock, color valid) ----- */
+
+  const validationErrors: string[] = [];
 
   for (const item of input.items) {
     const product = productMap.get(item.product);
     if (!product) {
-      throw new BadRequestError(
-        `Product ${item.product} does not exist or is archived`,
+      validationErrors.push(
+        `Product ${item.product} is unavailable or has been deactivated`,
+      );
+      continue;
+    }
+    if (product.stock < item.quantity) {
+      const label = product.name.en || product.name.bn;
+      validationErrors.push(
+        `"${label}" has only ${product.stock} in stock, requested ${item.quantity}`,
+      );
+      continue;
+    }
+    if (item.colorHex) {
+      const matched = (product.colors ?? []).find(
+        (c) => c.hex.toLowerCase() === item.colorHex!.toLowerCase(),
+      );
+      if (!matched) {
+        validationErrors.push(
+          `Color ${item.colorHex} is no longer available for "${product.name.en || product.name.bn}"`,
+        );
+      }
+    }
+  }
+
+  if (validationErrors.length > 0) {
+    throw new BadRequestError(validationErrors.join(". "));
+  }
+
+  /* ----- 4. Atomically reserve stock (rollback on failure) ----- */
+
+  const reservedStock: Array<{
+    productId: mongoose.Types.ObjectId;
+    quantity: number;
+  }> = [];
+
+  try {
+    for (const item of input.items) {
+      const product = productMap.get(item.product)!;
+      const updated = await Product.findOneAndUpdate(
+        {
+          _id: product._id,
+          stock: { $gte: item.quantity },
+          isActive: true,
+          deletedAt: null,
+        },
+        { $inc: { stock: -item.quantity } },
+        { new: true },
+      );
+
+      if (!updated) {
+        throw new BadRequestError(
+          `Stock for "${product.name.en || product.name.bn}" changed while processing. Please review your cart and try again.`,
+        );
+      }
+
+      reservedStock.push({
+        productId: product._id,
+        quantity: item.quantity,
+      });
+    }
+  } catch (err) {
+    // Rollback every successful decrement
+    for (const entry of reservedStock) {
+      await Product.updateOne(
+        { _id: entry.productId },
+        { $inc: { stock: entry.quantity } },
       );
     }
+    throw err;
+  }
+
+  /* ----- 5. Build order items ----- */
+
+  const orderItems: IOrderItem[] = input.items.map((item) => {
+    const product = productMap.get(item.product)!;
 
     const costPriceAtTime =
       item.costPriceAtTime > 0
         ? item.costPriceAtTime
         : (product.costPrice ?? 0);
 
-    orderItems.push({
+    let colorName: { en: string; bn: string } | undefined;
+    let colorHex: string | undefined;
+    if (item.colorHex) {
+      const matched = (product.colors ?? []).find(
+        (c) => c.hex.toLowerCase() === item.colorHex!.toLowerCase(),
+      );
+      if (matched) {
+        colorHex = matched.hex;
+        if (matched.name && (matched.name.en || matched.name.bn)) {
+          colorName = {
+            en: matched.name.en ?? matched.name.bn ?? "",
+            bn: matched.name.bn ?? matched.name.en ?? "",
+          };
+        }
+      }
+    }
+
+    return {
       product: product._id,
-      nameSnapshot: product.name.en,
+      nameSnapshot: {
+        en: product.name.en || product.name.bn || "",
+        bn: product.name.bn || product.name.en || "",
+      },
       skuSnapshot: product.sku ?? "",
+      colorName,
+      colorHex,
       quantity: item.quantity,
       priceAtTime: item.priceAtTime,
       costPriceAtTime,
       discount: item.discount ?? 0,
       lineTotal: 0,
-    });
-  }
+    };
+  });
 
-  /* ----- 3. Totals ----- */
+  /* ----- 6. Totals ----- */
 
   const totals = calculateOrderTotals(
     orderItems.map((i) => ({
@@ -416,39 +534,51 @@ export async function createOrder(
     input.shippingFee ?? 0,
   );
 
-  /* ----- 4. Order number ----- */
+  /* ----- 7. Order number ----- */
 
   const orderNumber = await generateOrderNumber(Order);
 
-  /* ----- 5. Insert ----- */
+  /* ----- 8. Insert (rollback stock on failure) ----- */
 
   const createdByOid =
     createdBy && mongoose.Types.ObjectId.isValid(createdBy)
       ? new mongoose.Types.ObjectId(createdBy)
       : undefined;
 
-  const doc = await Order.create({
-    orderNumber,
-    channel: input.channel,
-    user: userOid,
-    customerSnapshot,
-    items: orderItems,
-    subtotal: totals.subtotal,
-    discountTotal: totals.discountTotal,
-    taxTotal: totals.taxTotal,
-    shippingFee: totals.shippingFee,
-    totalAmount: totals.totalAmount,
-    costTotal: totals.costTotal,
-    profitTotal: totals.profitTotal,
-    status: input.status,
-    paymentStatus: input.paymentStatus,
-    paymentMethod: input.paymentMethod,
-    shippingAddress: input.shippingAddress,
-    trackingNumber: input.trackingNumber,
-    orderDate: new Date(),
-    createdBy: createdByOid,
-    notes: input.notes,
-  });
+  let doc;
+  try {
+    doc = await Order.create({
+      orderNumber,
+      channel: input.channel,
+      user: userOid,
+      customerSnapshot,
+      items: orderItems,
+      subtotal: totals.subtotal,
+      discountTotal: totals.discountTotal,
+      taxTotal: totals.taxTotal,
+      shippingFee: totals.shippingFee,
+      totalAmount: totals.totalAmount,
+      costTotal: totals.costTotal,
+      profitTotal: totals.profitTotal,
+      status: input.status,
+      paymentStatus: input.paymentStatus,
+      paymentMethod: input.paymentMethod,
+      shippingAddress: input.shippingAddress,
+      trackingNumber: input.trackingNumber,
+      orderDate: new Date(),
+      createdBy: createdByOid,
+      notes: input.notes,
+    });
+  } catch (err) {
+    // Rollback stock if the order insert fails
+    for (const entry of reservedStock) {
+      await Product.updateOne(
+        { _id: entry.productId },
+        { $inc: { stock: entry.quantity } },
+      );
+    }
+    throw err;
+  }
 
   const populated = await Order.findById(doc._id)
     .populate(POPULATE)

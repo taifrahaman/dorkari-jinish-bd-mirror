@@ -137,7 +137,7 @@ export function POSReceipt({
                   className="border-b border-dashed border-brand-border last:border-b-0"
                 >
                   <td className="py-1.5 pr-2 text-brand-primary">
-                    {item.nameSnapshot}
+                    {item.nameSnapshot.en || item.nameSnapshot.bn}
                   </td>
                   <td className="py-1.5 text-right tabular-nums text-brand-primary">
                     {item.quantity}

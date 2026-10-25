@@ -53,10 +53,18 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
  * Interfaces
  * ============================================================ */
 
+export interface ILocalizedSnapshot {
+  en: string;
+  bn: string;
+}
+
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
-  nameSnapshot: string;
+
+  nameSnapshot: ILocalizedSnapshot | string;
   skuSnapshot: string;
+  colorName?: ILocalizedSnapshot;
+  colorHex?: string;
   quantity: number;
   priceAtTime: number;
   costPriceAtTime: number;
@@ -71,56 +79,46 @@ export interface ICustomerSnapshot {
 }
 
 export interface IOrder extends Document {
-  /* Identification */
   orderNumber: string;
   channel: OrderChannel;
-
-  /* Customer — all optional for POS sales */
   user?: mongoose.Types.ObjectId;
   guestEmail?: string;
   guestName?: string;
   guestPhone?: string;
   customerSnapshot?: ICustomerSnapshot;
-
-  /* Items */
   items: IOrderItem[];
-
-  /* Financial */
   subtotal: number;
   discountTotal: number;
   taxTotal: number;
   shippingFee: number;
   totalAmount: number;
-
-  /* Profit */
   costTotal: number;
   profitTotal: number;
-
-  /* Status */
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod?: PaymentMethod;
-
-  /* Delivery */
   shippingAddress?: string;
   trackingNumber?: string;
   orderDate: Date;
   deliveredDate?: Date;
-
-  /* Staff / audit */
   createdBy?: mongoose.Types.ObjectId;
   notes?: string;
-
-  /* Soft delete */
   deletedAt?: Date | null;
-
   createdAt: Date;
   updatedAt: Date;
 }
 
 /* ============================================================
- * Schemas
+ * Sub-schemas
  * ============================================================ */
+
+const LocalizedSnapshotSchema = new Schema<ILocalizedSnapshot>(
+  {
+    en: { type: String, trim: true, default: "" },
+    bn: { type: String, trim: true, default: "" },
+  },
+  { _id: false },
+);
 
 const OrderItemSchema = new Schema<IOrderItem>(
   {
@@ -129,8 +127,13 @@ const OrderItemSchema = new Schema<IOrderItem>(
       ref: "Product",
       required: true,
     },
-    nameSnapshot: { type: String, required: true, trim: true },
+    // Mixed so legacy string snapshots keep loading; new code writes
+    // the bilingual object form. See normalizeNameSnapshot() in
+    // order.service.ts.
+    nameSnapshot: { type: Schema.Types.Mixed, required: true },
     skuSnapshot: { type: String, default: "", trim: true },
+    colorName: { type: LocalizedSnapshotSchema, default: undefined },
+    colorHex: { type: String, trim: true },
     quantity: { type: Number, required: true, min: 1 },
     priceAtTime: { type: Number, required: true, min: 0 },
     costPriceAtTime: { type: Number, required: true, min: 0, default: 0 },
@@ -151,28 +154,13 @@ const CustomerSnapshotSchema = new Schema<ICustomerSnapshot>(
 
 const OrderSchema = new Schema<IOrder>(
   {
-    orderNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    channel: {
-      type: String,
-      enum: [...ORDER_CHANNELS],
-      default: "online",
-    },
-
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    orderNumber: { type: String, required: true, unique: true, trim: true },
+    channel: { type: String, enum: [...ORDER_CHANNELS], default: "online" },
+    user: { type: Schema.Types.ObjectId, ref: "User", default: null },
     guestEmail: { type: String, trim: true, lowercase: true },
     guestName: { type: String, trim: true },
     guestPhone: { type: String, trim: true },
     customerSnapshot: { type: CustomerSnapshotSchema },
-
     items: {
       type: [OrderItemSchema],
       required: true,
@@ -181,16 +169,13 @@ const OrderSchema = new Schema<IOrder>(
         message: "Order must have at least one item",
       },
     },
-
     subtotal: { type: Number, required: true, min: 0, default: 0 },
     discountTotal: { type: Number, default: 0, min: 0 },
     taxTotal: { type: Number, default: 0, min: 0 },
     shippingFee: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true, min: 0, default: 0 },
-
     costTotal: { type: Number, default: 0, min: 0 },
     profitTotal: { type: Number, default: 0 },
-
     status: {
       type: String,
       enum: [...ORDER_STATUSES],
@@ -201,22 +186,13 @@ const OrderSchema = new Schema<IOrder>(
       enum: [...PAYMENT_STATUSES],
       default: "pending",
     },
-    paymentMethod: {
-      type: String,
-      enum: [...PAYMENT_METHODS],
-    },
-
+    paymentMethod: { type: String, enum: [...PAYMENT_METHODS] },
     shippingAddress: { type: String, trim: true },
     trackingNumber: { type: String, trim: true },
     orderDate: { type: Date, default: Date.now },
     deliveredDate: { type: Date },
-
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     notes: { type: String, trim: true, maxlength: 1000 },
-
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
@@ -229,9 +205,7 @@ const OrderSchema = new Schema<IOrder>(
 OrderSchema.pre("validate", function () {
   const walkInChannels: OrderChannel[] = ["pos", "walk-in"];
   const isWalkIn = walkInChannels.includes(this.channel);
-
   if (isWalkIn) return;
-
   if (
     !this.user &&
     !this.customerSnapshot &&
@@ -247,17 +221,14 @@ OrderSchema.pre("validate", function () {
   let subtotal = 0;
   let costTotal = 0;
   let lineDiscounts = 0;
-
   for (const item of this.items) {
     const gross = item.priceAtTime * item.quantity;
     const lineTotal = Math.max(0, gross - (item.discount ?? 0));
-
     item.lineTotal = lineTotal;
     subtotal += gross;
     lineDiscounts += item.discount ?? 0;
     costTotal += (item.costPriceAtTime ?? 0) * item.quantity;
   }
-
   this.subtotal = subtotal;
   this.costTotal = costTotal;
   this.discountTotal = lineDiscounts;

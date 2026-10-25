@@ -23,6 +23,11 @@ const checkoutSchema = z.object({
     z.object({
       productId: z.string(),
       quantity: z.number().int().min(1),
+      colorHex: z
+        .string()
+        .trim()
+        .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid color hex")
+        .optional(),
     }),
   ),
 });
@@ -47,9 +52,10 @@ export const POST = withDb(async (request: NextRequest) => {
       return {
         product: item.productId,
         quantity: item.quantity,
-        priceAtTime: dbProduct.price, // Use the DB price!
-        costPriceAtTime: 0, // Added this line. Service will auto-fill from DB costPrice.
+        priceAtTime: dbProduct.price,
+        costPriceAtTime: 0,
         discount: 0,
+        colorHex: item.colorHex,
       };
     });
 

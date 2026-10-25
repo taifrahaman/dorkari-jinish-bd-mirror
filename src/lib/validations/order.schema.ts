@@ -57,6 +57,11 @@ export const orderItemInputSchema = z.object({
   priceAtTime: z.coerce.number().nonnegative(),
   costPriceAtTime: z.coerce.number().nonnegative().default(0),
   discount: z.coerce.number().nonnegative().default(0),
+  colorHex: z
+    .string()
+    .trim()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid color hex")
+    .optional(),
 });
 
 export type OrderItemInput = z.infer<typeof orderItemInputSchema>;
@@ -161,6 +166,11 @@ export type OrderListQuery = z.infer<typeof orderListQuerySchema>;
  * Response
  * ============================================================ */
 
+const localizedSnapshotSchema = z.object({
+  en: z.string(),
+  bn: z.string(),
+});
+
 export const orderItemResponseSchema = z.object({
   product: z.union([
     z.string(),
@@ -179,8 +189,10 @@ export const orderItemResponseSchema = z.object({
         .optional(),
     }),
   ]),
-  nameSnapshot: z.string(),
+  nameSnapshot: localizedSnapshotSchema,
   skuSnapshot: z.string(),
+  colorName: localizedSnapshotSchema.optional(),
+  colorHex: z.string().optional(),
   quantity: z.number(),
   priceAtTime: z.number(),
   costPriceAtTime: z.number(),
