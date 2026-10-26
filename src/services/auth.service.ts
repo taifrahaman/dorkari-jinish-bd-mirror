@@ -92,6 +92,7 @@ export async function loginUser(identifier: string, password: string) {
     userId: user._id.toString(),
     email: emailForToken,
     role: user.role,
+    canCreateProduct: user.role === "admin" || user.canCreateProduct,
   });
 
   const userWithoutPassword = user.toObject();
@@ -157,6 +158,7 @@ export async function loginAdmin(email: string, password: string) {
     userId: user._id.toString(),
     email: user.email || email, // Fallback to the email provided in the login form
     role: user.role,
+    canCreateProduct: user.role === "admin" || user.canCreateProduct,
   });
 
   const userWithoutPassword = user.toObject();

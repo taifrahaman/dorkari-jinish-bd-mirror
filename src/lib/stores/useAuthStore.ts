@@ -16,6 +16,7 @@ export type AuthUser = {
   email: string;
   phone?: string;
   role: "customer" | "admin" | "moderator";
+  canCreateProduct?: boolean;
   addresses?: UserAddress[];
   wishlist?: string[];
 };

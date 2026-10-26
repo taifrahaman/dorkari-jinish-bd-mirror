@@ -23,10 +23,10 @@ export const GET = withDb(async (request: NextRequest) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      canCreateProduct: user.role === "admin" || user.canCreateProduct,
       addresses: user.addresses || [],
       wishlist: user.wishlist || [],
     };
-
     return NextResponse.json({ success: true, user: safeUser });
   } catch (err) {
     return handleApiError(err);

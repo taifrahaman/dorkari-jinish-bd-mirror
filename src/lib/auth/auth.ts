@@ -1,4 +1,4 @@
-// src/lib/auth.ts
+// src/lib/auth/auth.ts
 
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import bcrypt from "bcrypt";
@@ -17,6 +17,7 @@ export type AuthPayload = JWTPayload & {
   userId: string;
   email: string;
   role: "admin" | "moderator" | "customer";
+  canCreateProduct?: boolean;
 };
 
 /**

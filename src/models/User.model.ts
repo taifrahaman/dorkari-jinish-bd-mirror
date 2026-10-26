@@ -30,6 +30,7 @@ export interface IUser extends Document {
   phoneNormalized?: string;
   password?: string;
   role: UserRole;
+  canCreateProduct: boolean;
   isShadow: boolean;
   source: CustomerSource;
   createdBy?: mongoose.Types.ObjectId | IUser;
@@ -78,6 +79,7 @@ const UserSchema = new Schema<IUser>(
       enum: ["admin", "moderator", "customer"],
       default: "customer",
     },
+    canCreateProduct: { type: Boolean, default: false },
     isShadow: { type: Boolean, default: false },
     source: { type: String, enum: [...CUSTOMER_SOURCES], default: "online" },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },

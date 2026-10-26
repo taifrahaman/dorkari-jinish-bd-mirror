@@ -40,6 +40,8 @@ export const authOptions: NextAuthOptions = {
           userId: existingUser._id.toString(),
           email: user.email,
           role: existingUser.role,
+          canCreateProduct:
+            existingUser.role === "admin" || existingUser.canCreateProduct,
         });
 
         // customToken is now recognized on User
