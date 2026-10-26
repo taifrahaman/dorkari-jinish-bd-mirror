@@ -13,3 +13,4 @@ export * from "./use-settings";
 export * from "./use-spec-suggestions";
 export * from "./use-brands";
 export * from "./use-media";
+export * from "./use-staff";

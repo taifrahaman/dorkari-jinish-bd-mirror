@@ -10,6 +10,7 @@ import {
   Receipt,
   Settings,
   Tag,
+  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -113,6 +114,12 @@ export const NAV: NavItem[] = [
       { href: "/admin/reports/inventory", label: "Inventory" },
       { href: "/admin/reports/vat", label: "VAT" },
     ],
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    icon: UserCog,
+    href: "/admin/staff",
   },
   {
     id: "settings",
