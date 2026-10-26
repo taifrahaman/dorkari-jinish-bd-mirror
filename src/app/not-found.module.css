@@ -1,0 +1,177 @@
+/* src/app/not-found.module.css */
+
+.root {
+  --rgb: 251, 167, 5;
+  --lamp-w: 96px;
+  --pt: calc(var(--nav-h-mobile, 56px) + var(--nav-top-mobile, 12px));
+  --glow: min(150vw, 900px);
+  --fg: var(--foreground, #0f172a);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 88svh;
+  padding: var(--pt) 20px 64px;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    #fffaf0 0%,
+    var(--background, #faf8f5) 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .root {
+    --lamp-w: 116px;
+    --pt: calc(var(--nav-h-desktop, 68px) + var(--nav-top-desktop, 16px));
+    padding-inline: 48px;
+  }
+}
+
+/* ---------- glow behind the bulb ---------- */
+
+.glow {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: var(--glow);
+  height: var(--glow);
+  /* bulb centre = pt + (128 / 120) * lamp width */
+  top: calc(var(--pt) + var(--lamp-w) * 1.067 - var(--glow) / 2);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgba(var(--rgb), 0.5) 0%,
+    rgba(var(--rgb), 0.3) 14%,
+    rgba(var(--rgb), 0.15) 28%,
+    rgba(var(--rgb), 0.06) 42%,
+    rgba(var(--rgb), 0.02) 54%,
+    rgba(var(--rgb), 0) 64%
+  );
+  animation: flicker 5s linear infinite;
+}
+
+/* ---------- lamp ---------- */
+
+.lamp {
+  position: relative;
+  z-index: 1;
+  width: var(--lamp-w);
+  color: var(--fg);
+  transform-origin: 50% 0;
+  animation: sway 3.4s ease-in-out infinite alternate;
+}
+
+.lampSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.shade {
+  fill: #f1f5f9;
+}
+
+.shadeOn {
+  fill: rgba(var(--rgb), 0.28);
+  animation: flicker 5s linear infinite;
+}
+
+.bulbOff {
+  fill: #cbd5e1;
+}
+
+.bulbOn {
+  fill: rgb(var(--rgb));
+  filter: drop-shadow(0 0 10px rgba(var(--rgb), 0.9));
+  animation: flicker 5s linear infinite;
+}
+
+/* ---------- content ---------- */
+
+.content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 640px;
+}
+
+/* big "404" that fades out toward the bottom */
+.numeral {
+  margin: 4px 0 0;
+  font-family: var(--font-heading);
+  font-size: clamp(5.5rem, 24vw, 11rem);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  background: linear-gradient(180deg, var(--fg) 15%, transparent 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  user-select: none;
+}
+
+@keyframes flicker {
+  0%,
+  19%,
+  23%,
+  54%,
+  58%,
+  100% {
+    opacity: 0.2;
+  }
+  20%,
+  22% {
+    opacity: 1;
+  }
+  21% {
+    opacity: 0.3;
+  }
+  55%,
+  57% {
+    opacity: 0.85;
+  }
+  56% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes sway {
+  from {
+    transform: rotate(-1.8deg);
+  }
+  to {
+    transform: rotate(1.8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .shadeOn,
+  .bulbOn {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .lamp {
+    animation: none;
+  }
+}
