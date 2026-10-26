@@ -10,6 +10,7 @@ import {
   updateOrder,
   archiveOrder,
 } from "@/services/order.service";
+import { redactOrderForModerator } from "@/lib/auth/redact";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -19,7 +20,12 @@ export const GET = withDb(async (request: NextRequest, context: Context) => {
     requireRole(payload, ["admin", "moderator"]);
 
     const { id } = await context.params;
-    const data = await getOrderById(id);
+    let data = await getOrderById(id);
+
+    // Redact financial data for moderators
+    if (payload.role === "moderator") {
+      data = redactOrderForModerator(data);
+    }
 
     return NextResponse.json({ success: true, data });
   } catch (err) {

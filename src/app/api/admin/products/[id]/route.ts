@@ -10,7 +10,7 @@ import {
   updateProduct,
   archiveProduct,
 } from "@/services/product.service";
-
+import { redactProductForModerator } from "@/lib/auth/redact";
 type Context = { params: Promise<{ id: string }> };
 
 export const GET = withDb(async (request: NextRequest, context: Context) => {
@@ -19,7 +19,12 @@ export const GET = withDb(async (request: NextRequest, context: Context) => {
     requireRole(payload, ["admin", "moderator"]);
 
     const { id } = await context.params;
-    const data = await getProductById(id);
+    let data = await getProductById(id);
+
+    // Redact financial data for moderators
+    if (payload.role === "moderator") {
+      data = redactProductForModerator(data);
+    }
 
     return NextResponse.json({ success: true, data });
   } catch (err) {

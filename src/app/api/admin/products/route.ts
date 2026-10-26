@@ -9,6 +9,7 @@ import {
   productListQuerySchema,
 } from "@/lib/validations/product.schema";
 import { createProduct, listProducts } from "@/services/product.service";
+import { redactProductsForModerator } from "@/lib/auth/redact";
 
 export const GET = withDb(async (request: NextRequest) => {
   try {
@@ -18,7 +19,16 @@ export const GET = withDb(async (request: NextRequest) => {
     const raw = Object.fromEntries(request.nextUrl.searchParams);
     const query = productListQuerySchema.parse(raw);
 
-    const data = await listProducts(query);
+    let data = await listProducts(query);
+
+    // Redact financial data for moderators
+    if (payload.role === "moderator") {
+      data = {
+        ...data,
+        items: redactProductsForModerator(data.items),
+      };
+    }
+
     return NextResponse.json({ success: true, data });
   } catch (err) {
     return handleApiError(err);
