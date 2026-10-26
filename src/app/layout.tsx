@@ -43,9 +43,44 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "Dorkari Jinish BD",
+  // Replace with your actual production domain when deployed
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "https://dorkari.com",
+  ),
+  title: {
+    default: "Dorkari Jinish BD",
+    template: "%s | Dorkari Jinish BD",
+  },
   description: "আপনার প্রয়োজনীয় জিনিসপত্রের বিশ্বস্ত মার্কেটপ্লেস",
   manifest: "/manifest.json",
+  keywords: [
+    "Dorkari",
+    "Jinish",
+    "BD",
+    "ecommerce",
+    "Bangladesh",
+    "online shopping",
+  ],
+  authors: [{ name: "Dorkari Jinish BD" }],
+  openGraph: {
+    type: "website",
+    locale: "bn_BD",
+    alternateLocale: "en_US",
+    siteName: "Dorkari Jinish BD",
+    title: "Dorkari Jinish BD",
+    description: "আপনার প্রয়োজনীয় জিনিসপত্রের বিশ্বস্ত মার্কেটপ্লেস",
+    // You can add a default image here later:
+    // images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dorkari Jinish BD",
+    description: "আপনার প্রয়োজনীয় জিনিসপত্রের বিশ্বস্ত মার্কেটপ্লেস",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {
@@ -61,7 +96,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={cn("font-sans", geist.variable)}>
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body
         className={`${spaceGrotesk.variable} ${dmSans.variable} ${atma.variable} ${hindSiliguri.variable}`}
       >
