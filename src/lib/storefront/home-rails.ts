@@ -27,6 +27,7 @@ function toCard(p: StorefrontProduct): ProductCardData {
     colors: p.colors.map((c) => ({ hex: c.hex, name: c.name ?? undefined })),
     image: p.images[0]?.url ?? "/placeholder-product.svg",
     href: `/product/${p.slug}`,
+    inStock: p.inStock,
   };
 }
 

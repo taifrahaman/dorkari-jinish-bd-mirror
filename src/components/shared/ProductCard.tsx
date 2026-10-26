@@ -323,6 +323,7 @@ export default function ProductCard({
               <button
                 type="button"
                 onClick={handleAddToCart}
+                disabled={product.inStock === false}
                 aria-label={
                   product.inStock === false
                     ? isBangla
@@ -333,7 +334,9 @@ export default function ProductCard({
                       : "Add to cart"
                 }
                 className={`${styles.tabBtn} ${styles.tabBtnPrimary} ${
-                  product.inStock === false ? "opacity-60" : ""
+                  product.inStock === false
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
                 <ShoppingBag className="h-4 w-4" strokeWidth={1.7} />
