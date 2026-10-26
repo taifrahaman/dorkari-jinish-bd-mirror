@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { Toaster } from "@/components/ui/sonner"; // <-- ADDED IMPORT
+import { Toaster } from "@/components/ui/sonner";
 import { verifyJwt } from "@/lib/auth";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 export const dynamic = "force-dynamic";
 
@@ -32,16 +33,19 @@ export default async function AdminDashboardLayout({
   if (!ADMIN_ROLES.includes(role)) {
     redirect("/admin/login");
   }
-
   return (
     <QueryProvider>
-      <div className="flex min-h-screen bg-muted/30">
-        <AdminSidebar />
-        <main className="flex-1 overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">{children}</div>
-        </main>
-      </div>
-      <Toaster />
+      <AuthProvider>
+        <div className="flex min-h-screen bg-muted/30">
+          <AdminSidebar />
+          <main className="flex-1 overflow-x-hidden">
+            <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+              {children}
+            </div>
+          </main>
+        </div>
+        <Toaster />
+      </AuthProvider>
     </QueryProvider>
   );
 }

@@ -22,6 +22,8 @@ import {
 export type NavChild = {
   href: string;
   label: string;
+  /** Hidden unless the user has canCreateProduct = true */
+  requiresCreateProduct?: boolean;
 };
 
 export type NavItem = {
@@ -30,6 +32,8 @@ export type NavItem = {
   icon: LucideIcon;
   href?: string;
   children?: NavChild[];
+  /** Hidden unless the user is an admin */
+  adminOnly?: boolean;
 };
 
 /* ============================================================
@@ -67,8 +71,16 @@ export const NAV: NavItem[] = [
     icon: Package,
     children: [
       { href: "/admin/products", label: "All products" },
-      { href: "/admin/products/new", label: "New product" },
-      { href: "/admin/products/import", label: "Import" },
+      {
+        href: "/admin/products/new",
+        label: "New product",
+        requiresCreateProduct: true,
+      },
+      {
+        href: "/admin/products/import",
+        label: "Import",
+        requiresCreateProduct: true,
+      },
     ],
   },
   {
@@ -108,6 +120,7 @@ export const NAV: NavItem[] = [
     id: "reports",
     label: "Reports",
     icon: BarChart3,
+    adminOnly: true,
     children: [
       { href: "/admin/reports", label: "All reports" },
       { href: "/admin/reports/profit", label: "Profit" },
@@ -119,12 +132,14 @@ export const NAV: NavItem[] = [
     id: "staff",
     label: "Staff",
     icon: UserCog,
+    adminOnly: true,
     href: "/admin/staff",
   },
   {
     id: "settings",
     label: "Settings",
     icon: Settings,
+    adminOnly: true,
     href: "/admin/settings",
   },
 ];

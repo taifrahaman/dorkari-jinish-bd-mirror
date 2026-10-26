@@ -14,6 +14,7 @@ import type { ProductStats } from "@/lib/admin/api";
 export type ProductSalesStatsProps = {
   stats: ProductStats;
   className?: string;
+  isAdmin?: boolean;
 };
 
 /* ============================================================
@@ -23,11 +24,18 @@ export type ProductSalesStatsProps = {
 export function ProductSalesStats({
   stats,
   className,
+  isAdmin = false,
 }: ProductSalesStatsProps) {
   const { totals } = stats;
 
   return (
-    <div className={cn("grid grid-cols-2 gap-3 lg:grid-cols-4", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-3",
+        isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3",
+        className,
+      )}
+    >
       <StatCard
         icon={Package}
         label="Units sold"
@@ -46,12 +54,14 @@ export function ProductSalesStats({
         value={formatPrice(totals.revenue)}
         tone="default"
       />
-      <StatCard
-        icon={TrendingUp}
-        label="Profit"
-        value={formatPrice(totals.profit)}
-        tone={totals.profit >= 0 ? "success" : "warning"}
-      />
+      {isAdmin && (
+        <StatCard
+          icon={TrendingUp}
+          label="Profit"
+          value={formatPrice(totals.profit)}
+          tone={totals.profit >= 0 ? "success" : "warning"}
+        />
+      )}
     </div>
   );
 }

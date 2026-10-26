@@ -22,6 +22,7 @@ import { useProducts, useCategoryTree, useExportProducts } from "@/hooks/admin";
 import type { ProductResponse } from "@/lib/validations/product.schema";
 import type { CategoryTreeNode } from "@/lib/validations/category.schema";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 
 /* ============================================================
  * Component
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 
 export function ProductList() {
   const router = useRouter();
+  const canCreate = useAuthStore((s) => s.user?.canCreateProduct === true);
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -138,22 +140,28 @@ export function ProductList() {
     <EmptyState
       icon={Package}
       title="No products yet"
-      description="Add your first product or import a batch from CSV."
+      description={
+        canCreate
+          ? "Add your first product or import a batch from CSV."
+          : "No products have been added yet."
+      }
       action={
-        <div className="flex gap-2">
-          <Link
-            href="/admin/products/import"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Import from CSV
-          </Link>
-          <Link
-            href="/admin/products/new"
-            className={cn(buttonVariants({ variant: "default" }))}
-          >
-            New product
-          </Link>
-        </div>
+        canCreate ? (
+          <div className="flex gap-2">
+            <Link
+              href="/admin/products/import"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Import from CSV
+            </Link>
+            <Link
+              href="/admin/products/new"
+              className={cn(buttonVariants({ variant: "default" }))}
+            >
+              New product
+            </Link>
+          </div>
+        ) : undefined
       }
     />
   );
@@ -179,21 +187,25 @@ export function ProductList() {
               Export
             </Button>
 
-            <Link
-              href="/admin/products/import"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <Upload className="mr-2 h-4 w-4" aria-hidden="true" />
-              Import
-            </Link>
+            {canCreate && (
+              <>
+                <Link
+                  href="/admin/products/import"
+                  className={cn(buttonVariants({ variant: "outline" }))}
+                >
+                  <Upload className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Import
+                </Link>
 
-            <Link
-              href="/admin/products/new"
-              className={cn(buttonVariants({ variant: "default" }))}
-            >
-              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-              New product
-            </Link>
+                <Link
+                  href="/admin/products/new"
+                  className={cn(buttonVariants({ variant: "default" }))}
+                >
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                  New product
+                </Link>
+              </>
+            )}
           </>
         }
       />
@@ -255,9 +267,7 @@ export default ProductList;
  * Helpers
  * ============================================================ */
 
-function flattenTree(
-  nodes: CategoryTreeNode[],
-): Array<{
+function flattenTree(nodes: CategoryTreeNode[]): Array<{
   _id: string;
   name: string;
   path?: string;

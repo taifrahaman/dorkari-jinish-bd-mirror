@@ -20,6 +20,8 @@ import {
   itemBase,
   type NavItem,
 } from "./constants";
+import { useFilteredNav } from "@/hooks/admin/use-filtered-nav";
+
 import {
   prefersReducedMotion,
   isActive,
@@ -37,6 +39,7 @@ import {
 export function DesktopSidebar() {
   const pathname = usePathname();
   const logout = useLogout();
+  const filteredNav = useFilteredNav();
 
   const rootRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
@@ -109,7 +112,9 @@ export function DesktopSidebar() {
    * Which top-level item is active? (link or section)
    * ---------------------------------------------------------- */
 
-  const activeIndex = NAV.findIndex((item) => isSectionActive(pathname, item));
+  const activeIndex = filteredNav.findIndex((item) =>
+    isSectionActive(pathname, item),
+  );
 
   /* ----------------------------------------------------------
    * Animate sidebar width on collapse toggle — unchanged
@@ -277,7 +282,7 @@ export function DesktopSidebar() {
             <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-brand-accent" />
           </span>
 
-          {NAV.map((item, i) => {
+          {filteredNav.map((item, i) => {
             const active = i === activeIndex;
 
             /* ---------- Direct link (Dashboard) ---------- */

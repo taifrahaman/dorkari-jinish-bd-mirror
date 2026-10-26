@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/admin/page-header";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import type { ProductResponse } from "@/lib/validations/product.schema";
 
 /* ============================================================
@@ -48,6 +49,8 @@ export function ProductDetailHeader({
   onArchive,
   onRestore,
 }: ProductDetailHeaderProps) {
+  const user = useAuthStore((s) => s.user);
+  const canEdit = user?.role === "admin" || user?.canCreateProduct === true;
   const archived = Boolean(product.deletedAt);
   const category = getCategoryLabel(product);
   const brand = getBrandRef(product);
@@ -73,7 +76,7 @@ export function ProductDetailHeader({
       ]}
       actions={
         <>
-          {!archived && (
+          {!archived && canEdit && (
             <Link
               href={`/admin/products/${product._id}/edit`}
               className={cn(buttonVariants({ variant: "outline" }))}

@@ -11,7 +11,8 @@ import { ChevronRight, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/shared/admin";
 
-import { NAV, type NavItem } from "./constants";
+import { type NavItem } from "./constants";
+import { useFilteredNav } from "@/hooks/admin/use-filtered-nav";
 import {
   prefersReducedMotion,
   isActive,
@@ -27,6 +28,7 @@ import {
 export function MobileSidebar() {
   const pathname = usePathname();
   const logout = useLogout();
+  const filteredNav = useFilteredNav();
 
   const [open, setOpen] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -231,7 +233,7 @@ export function MobileSidebar() {
             Menu
           </p>
           <div className="space-y-1">
-            {NAV.map((item) => (
+            {filteredNav.map((item) => (
               <MobileNavItem
                 key={item.id}
                 item={item}

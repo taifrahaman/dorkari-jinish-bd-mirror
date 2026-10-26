@@ -6,6 +6,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Loader2, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,8 @@ export type ProductDetailProps = {
 
 export function ProductDetail({ productId }: ProductDetailProps) {
   const [range, setRange] = useState<ProductStatsRange>("30d");
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
 
   const productQuery = useProduct(productId);
   const statsQuery = useProductStats(productId, range);
@@ -81,7 +84,7 @@ export function ProductDetail({ productId }: ProductDetailProps) {
     <div className="space-y-6">
       <ProductDetailHeader product={product} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className={cn("grid gap-6", isAdmin && "lg:grid-cols-[1fr_360px]")}>
         {/* Left column */}
         <div className="space-y-6">
           {/* Images */}
@@ -123,7 +126,7 @@ export function ProductDetail({ productId }: ProductDetailProps) {
                 ))}
               </div>
             ) : statsQuery.data ? (
-              <ProductSalesStats stats={statsQuery.data} />
+              <ProductSalesStats stats={statsQuery.data} isAdmin={isAdmin} />
             ) : null}
           </div>
 
@@ -134,14 +137,16 @@ export function ProductDetail({ productId }: ProductDetailProps) {
           {statsQuery.data && <ProductRecentOrders stats={statsQuery.data} />}
         </div>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          {statsQuery.data && <ProductEconomics stats={statsQuery.data} />}
-          <ProductCostHistory
-            history={product.costHistory ?? []}
-            currentCost={product.costPrice ?? null}
-          />
-        </div>
+        {/* Right column - Admin Only */}
+        {isAdmin && (
+          <div className="space-y-6">
+            {statsQuery.data && <ProductEconomics stats={statsQuery.data} />}
+            <ProductCostHistory
+              history={product.costHistory ?? []}
+              currentCost={product.costPrice ?? null}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
