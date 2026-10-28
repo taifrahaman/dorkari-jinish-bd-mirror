@@ -43,9 +43,12 @@ export function useCreateStaff() {
       fetchApi("/api/admin/staff", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin", "staff"] });
+      }) as Promise<StaffMember>,
+    onSuccess: (newStaff) => {
+      // Instantly add the new staff member to the cached list
+      qc.setQueryData(["admin", "staff"], (old: StaffMember[] | undefined) => {
+        return old ? [newStaff, ...old] : [newStaff];
+      });
       toast.success("Moderator account created");
     },
     onError: (err) => {

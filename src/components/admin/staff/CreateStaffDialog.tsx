@@ -22,7 +22,6 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-// Securely generate a strong password
 function generateStrongPassword(length = 14) {
   const charset =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
@@ -54,16 +53,12 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
     e.preventDefault();
     try {
       await createMutation.mutateAsync(formData);
-      // Save the plaintext password to show the admin before closing
       setSuccessData({ email: formData.email, password: formData.password });
-    } catch {
-      // Error is handled by the hook's toast
-    }
+    } catch {}
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset state after close animation
     setTimeout(() => {
       setSuccessData(null);
       setFormData({
@@ -82,10 +77,6 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleGeneratePassword = () => {
-    setFormData((s) => ({ ...s, password: generateStrongPassword() }));
   };
 
   return (
@@ -140,8 +131,9 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>Full Name</Label>
+              <Label htmlFor="staff-name">Full Name</Label>
               <Input
+                id="staff-name"
                 required
                 value={formData.name}
                 onChange={(e) =>
@@ -152,8 +144,9 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
             </div>
 
             <div className="space-y-2">
-              <Label>Email Address</Label>
+              <Label htmlFor="staff-email">Email Address</Label>
               <Input
+                id="staff-email"
                 type="email"
                 required
                 value={formData.email}
@@ -165,9 +158,10 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
             </div>
 
             <div className="space-y-2">
-              <Label>Temporary Password</Label>
+              <Label htmlFor="staff-password">Temporary Password</Label>
               <div className="flex gap-2">
                 <Input
+                  id="staff-password"
                   type="text"
                   required
                   minLength={8}
@@ -181,7 +175,12 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleGeneratePassword}
+                  onClick={() =>
+                    setFormData((s) => ({
+                      ...s,
+                      password: generateStrongPassword(),
+                    }))
+                  }
                   className="shrink-0"
                   title="Generate strong password"
                 >
@@ -192,12 +191,18 @@ export function CreateStaffDialog({ open, onOpenChange }: Props) {
 
             <div className="flex items-center justify-between rounded-md border border-brand-border p-3 mt-4">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Product Creation</Label>
+                <Label
+                  htmlFor="staff-can-create"
+                  className="text-sm font-medium"
+                >
+                  Product Creation
+                </Label>
                 <p className="text-xs text-brand-text-secondary">
                   Allow this moderator to create and edit products.
                 </p>
               </div>
               <Switch
+                id="staff-can-create"
                 checked={formData.canCreateProduct}
                 onCheckedChange={(v) =>
                   setFormData((s) => ({ ...s, canCreateProduct: v }))
