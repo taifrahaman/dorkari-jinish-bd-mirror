@@ -83,7 +83,7 @@ export function getProductColumns(
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-brand-border bg-muted">
               {image ? (
                 <img
-                  src={image.url}
+                  src={`${image.url}?v=${new Date(product.updatedAt).getTime()}`}
                   alt={image.alt || product.name.en}
                   className="h-full w-full object-cover"
                   loading="lazy"

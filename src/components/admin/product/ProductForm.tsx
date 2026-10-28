@@ -216,9 +216,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         // fresh data. No redirect, no refresh.
         await updateMutation.mutateAsync(values);
       } else {
-        // Create: navigate back to the products list.
+        // Create: navigate back to the products list, preserving filters.
         await createMutation.mutateAsync(values);
-        router.push("/admin/products");
+        const search =
+          typeof window !== "undefined" ? window.location.search : "";
+        router.push(`/admin/products${search}`);
         router.refresh();
       }
     } catch (err) {
@@ -649,7 +651,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push("/admin/products")}
+          onClick={() =>
+            router.push(
+              `/admin/products${typeof window !== "undefined" ? window.location.search : ""}`,
+            )
+          }
           disabled={isPending}
         >
           Cancel

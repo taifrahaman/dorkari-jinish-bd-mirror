@@ -87,7 +87,11 @@ export function ProductList() {
   const columns = useMemo(
     () =>
       getProductColumns({
-        onEdit: (p) => router.push(`/admin/products/${p._id}/edit`),
+        // Keep the current URL search params when navigating
+        onEdit: (p) =>
+          router.push(
+            `/admin/products/${p._id}/edit${typeof window !== "undefined" ? window.location.search : ""}`,
+          ),
         onArchive: (p) => setDialog({ product: p, mode: "archive" }),
         onRestore: (p) => setDialog({ product: p, mode: "restore" }),
         onPermanentDelete: (p) =>
@@ -95,7 +99,6 @@ export function ProductList() {
       } satisfies ProductColumnActions),
     [router],
   );
-
   const clearFilters = () => {
     setFilters({});
     setQ("");
@@ -226,7 +229,11 @@ export function ProductList() {
         pageCount={totalPages}
         onPageChange={(p) => setPage(p + 1)}
         onPageSizeChange={handlePageSizeChange}
-        onRowClick={(p) => router.push(`/admin/products/${p._id}`)}
+        onRowClick={(p) =>
+          router.push(
+            `/admin/products/${p._id}${typeof window !== "undefined" ? window.location.search : ""}`,
+          )
+        }
         toolbar={(table) => (
           <DataTableToolbar
             table={table}

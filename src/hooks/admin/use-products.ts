@@ -17,8 +17,14 @@ import type {
  * ============================================================ */
 
 function invalidateProductCaches(qc: ReturnType<typeof useQueryClient>) {
-  qc.invalidateQueries({ queryKey: adminKeys.products.all() });
-  qc.invalidateQueries({ queryKey: adminKeys.categories.all() });
+  qc.invalidateQueries({
+    queryKey: adminKeys.products.all(),
+    refetchType: "all",
+  });
+  qc.invalidateQueries({
+    queryKey: adminKeys.categories.all(),
+    refetchType: "all",
+  });
 }
 
 function errorMessage(err: unknown): string | null {
