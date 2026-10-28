@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { SortingState, RowSelectionState } from "@tanstack/react-table";
 import { Download, Plus, Upload, Package, Search } from "lucide-react";
@@ -31,11 +31,27 @@ import { useAuthStore } from "@/lib/stores/useAuthStore";
 export function ProductList() {
   const router = useRouter();
   const canCreate = useAuthStore((s) => s.user?.canCreateProduct === true);
+  const searchParams = useSearchParams();
 
+  // Initialize state from URL if present
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [q, setQ] = useState("");
-  const [filters, setFilters] = useState<ProductFiltersValue>({});
+  const [q, setQ] = useState(searchParams.get("q") || "");
+  const [filters, setFilters] = useState<ProductFiltersValue>(() => ({
+    category: searchParams.get("category") || undefined,
+    stockStatus:
+      (searchParams.get("stockStatus") as "in" | "low" | "out") || undefined,
+    isActive:
+      searchParams.get("isActive") === "true"
+        ? true
+        : searchParams.get("isActive") === "false"
+          ? false
+          : undefined,
+    isFeatured: searchParams.get("isFeatured") === "true" ? true : undefined,
+    includeDeleted:
+      searchParams.get("includeDeleted") === "true" ? true : undefined,
+  }));
+
   const [sorting, setSorting] = useState<SortingState>([
     { id: "updatedAt", desc: true },
   ]);
@@ -45,6 +61,30 @@ export function ProductList() {
     product: ProductResponse;
     mode: ProductDialogMode;
   } | null>(null);
+
+  // Sync state to URL on change
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== false && value !== "") {
+        url.searchParams.set(key, String(value));
+      } else {
+        url.searchParams.delete(key);
+      }
+    });
+
+    if (q.trim()) url.searchParams.set("q", q.trim());
+    else url.searchParams.delete("q");
+
+    const next = url.pathname + url.search + url.hash;
+    const current =
+      window.location.pathname + window.location.search + window.location.hash;
+
+    if (next !== current) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [filters, q]);
 
   const sortBy = useMemo(() => {
     const first = sorting[0];
@@ -87,7 +127,7 @@ export function ProductList() {
   const columns = useMemo(
     () =>
       getProductColumns({
-        // Keep the current URL search params when navigating
+        // Read the URL dynamically when clicking, so we don't lose it
         onEdit: (p) =>
           router.push(
             `/admin/products/${p._id}/edit${typeof window !== "undefined" ? window.location.search : ""}`,
@@ -99,6 +139,7 @@ export function ProductList() {
       } satisfies ProductColumnActions),
     [router],
   );
+
   const clearFilters = () => {
     setFilters({});
     setQ("");
