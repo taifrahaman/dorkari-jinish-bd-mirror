@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
 import type { ProductResponse } from "@/lib/validations/product.schema";
+import { useSearchParams } from "next/navigation";
 
 /* ============================================================
  * Types
@@ -49,6 +50,10 @@ export function ProductDetailHeader({
   onArchive,
   onRestore,
 }: ProductDetailHeaderProps) {
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+  const querySuffix = queryString ? `?${queryString}` : "";
+
   const user = useAuthStore((s) => s.user);
   const canEdit = user?.role === "admin" || user?.canCreateProduct === true;
   const archived = Boolean(product.deletedAt);
@@ -66,19 +71,19 @@ export function ProductDetailHeader({
 
   return (
     <PageHeader
-      backHref="/admin/products"
+      backHref={`/admin/products${querySuffix}`}
       title={product.name.en}
       description={product.name.bn}
       breadcrumbs={[
         { label: "Dashboard", href: "/admin" },
-        { label: "Products", href: "/admin/products" },
+        { label: "Products", href: `/admin/products${querySuffix}` },
         { label: product.name.en },
       ]}
       actions={
         <>
           {!archived && canEdit && (
             <Link
-              href={`/admin/products/${product._id}/edit`}
+              href={`/admin/products/${product._id}/edit${querySuffix}`}
               className={cn(buttonVariants({ variant: "outline" }))}
             >
               <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />

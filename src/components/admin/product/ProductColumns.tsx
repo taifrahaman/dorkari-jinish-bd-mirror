@@ -37,6 +37,7 @@ import type { ProductResponse } from "@/lib/validations/product.schema";
  * ============================================================ */
 
 export type ProductColumnActions = {
+  searchSuffix?: string;
   onEdit: (product: ProductResponse) => void;
   onArchive: (product: ProductResponse) => void;
   onRestore: (product: ProductResponse) => void;
@@ -97,7 +98,7 @@ export function getProductColumns(
 
             <div className="min-w-0">
               <Link
-                href={`/admin/products/${product._id}`}
+                href={`/admin/products/${product._id}${actions.searchSuffix || ""}`}
                 className="block truncate text-sm font-medium text-brand-primary hover:underline"
               >
                 {product.name.en}
@@ -294,7 +295,11 @@ export function getProductColumns(
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  render={<Link href={`/admin/products/${product._id}`} />}
+                  render={
+                    <Link
+                      href={`/admin/products/${product._id}${actions.searchSuffix || ""}`}
+                    />
+                  }
                 >
                   <Eye className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
                   View details

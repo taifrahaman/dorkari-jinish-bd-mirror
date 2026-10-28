@@ -124,22 +124,22 @@ export function ProductList() {
     [treeQuery.data],
   );
 
+  const queryString = searchParams.toString();
+  const searchSuffix = queryString ? `?${queryString}` : "";
+
   const columns = useMemo(
     () =>
       getProductColumns({
-        // Read the URL dynamically when clicking, so we don't lose it
+        searchSuffix, // <-- Pass this down
         onEdit: (p) =>
-          router.push(
-            `/admin/products/${p._id}/edit${typeof window !== "undefined" ? window.location.search : ""}`,
-          ),
+          router.push(`/admin/products/${p._id}/edit${searchSuffix}`),
         onArchive: (p) => setDialog({ product: p, mode: "archive" }),
         onRestore: (p) => setDialog({ product: p, mode: "restore" }),
         onPermanentDelete: (p) =>
           setDialog({ product: p, mode: "permanent-delete" }),
       } satisfies ProductColumnActions),
-    [router],
+    [router, searchSuffix], // <-- Add searchSuffix here
   );
-
   const clearFilters = () => {
     setFilters({});
     setQ("");
@@ -271,9 +271,7 @@ export function ProductList() {
         onPageChange={(p) => setPage(p + 1)}
         onPageSizeChange={handlePageSizeChange}
         onRowClick={(p) =>
-          router.push(
-            `/admin/products/${p._id}${typeof window !== "undefined" ? window.location.search : ""}`,
-          )
+          router.push(`/admin/products/${p._id}${searchSuffix}`)
         }
         toolbar={(table) => (
           <DataTableToolbar
