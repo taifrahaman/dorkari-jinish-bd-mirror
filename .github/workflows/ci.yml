@@ -74,3 +74,28 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  # ==========================================
+  # NEW MIRROR JOB
+  # ==========================================
+  mirror:
+    # 1. Only run on the main org repo
+    # 2. Only run on pushes to the main branch (not PRs)
+    # 3. Wait for ALL other jobs to succeed (needs)
+    if: |
+      github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    needs: [lint, type-check, build, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to Personal Repo
+        run: |
+          git remote add mirror https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/taifrahaman/dorkari-jinish-bd-mirror.git
+          git push mirror HEAD:main --force
