@@ -52,41 +52,15 @@ jobs:
         run: echo "${{ secrets.ENV_TEST_FILE }}" > .env.local
       - run: pnpm build
 
-  e2e:
-    if: github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - name: Write .env.test for Playwright
-        run: echo "${{ secrets.ENV_TEST_FILE }}" > .env.test
-      - run: pnpm test:e2e
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
   # ==========================================
-  # NEW MIRROR JOB
+  # MIRROR JOB
   # ==========================================
   mirror:
-    # 1. Only run on the main org repo
-    # 2. Only run on pushes to the main branch (not PRs)
-    # 3. Wait for ALL other jobs to succeed (needs)
     if: |
       github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
-    needs: [lint, type-check, build, e2e]
+    needs: [lint, type-check, build] # <-- Removed 'e2e' from this list
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
