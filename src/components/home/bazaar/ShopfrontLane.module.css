@@ -1,0 +1,131 @@
+/* src/components/home/bazaar/ShopfrontLane.module.css */
+.section {
+  padding: 32px 0 28px;
+  background: #fff;
+}
+.title {
+  margin: 0 20px 16px;
+  font-family: var(--font-heading);
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1c1240;
+}
+:global([lang="bn"]) .title {
+  font-family: var(--font-heading-bn);
+  line-height: 1.45;
+}
+
+/* phones: one swipeable row of shopfronts */
+.row {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 4px 20px 14px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.row::-webkit-scrollbar {
+  display: none;
+}
+.shop {
+  flex: none;
+  width: 104px;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 1024px) {
+  .title {
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-inline: 28px;
+  }
+  .row {
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-inline: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    gap: 20px 16px;
+    overflow: visible;
+  }
+  .shop {
+    width: auto;
+  }
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  color: #1c1240;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* the awning: a coloured bar with scalloped edge */
+.awning {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 14px;
+  border-radius: 8px 8px 0 0;
+  background: var(--c);
+}
+.awning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 9px;
+  background: radial-gradient(
+      circle at 50% 0,
+      var(--c) 0 8px,
+      transparent 8.5px
+    )
+    0 0 / 18px 9px repeat-x;
+}
+
+.front {
+  display: grid;
+  place-items: center;
+  height: 84px;
+  margin-top: -8px;
+  padding-top: 10px;
+  border: 2px solid var(--c);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  background: var(--c-soft);
+  color: #1c1240;
+  transition: transform 0.2s ease;
+}
+.img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+@media (hover: hover) {
+  .link:hover .front {
+    transform: translateY(-3px);
+  }
+}
+.link:active .front {
+  transform: scale(0.96);
+}
+.link:focus-visible {
+  outline: 2px solid #1c1240;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+.name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-wrap: balance;
+}

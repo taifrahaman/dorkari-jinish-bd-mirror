@@ -25,6 +25,8 @@ export type CategoryRailProps = {
   products: ProductCardData[];
   locale?: Locale;
   palette?: "cream" | "sage" | "neutral" | "slate";
+  /** Skip the section's own background so a parent can colour it. */
+  bare?: boolean;
 };
 
 /* ------------------------------------------------------------
@@ -66,6 +68,7 @@ export default function CategoryRail({
   products,
   locale = "en",
   palette = "cream",
+  bare = false,
 }: CategoryRailProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -448,7 +451,7 @@ export default function CategoryRail({
       ref={sectionRef}
       className={`${styles.section} ${
         revealed ? styles.revealed : ""
-      } w-full bg-brand-background py-10 sm:py-12 md:py-14`}
+      } w-full ${bare ? "" : "bg-brand-background"} py-10 sm:py-12 md:py-14`}
     >
       {/* ---------------- Header ---------------- */}
       <header

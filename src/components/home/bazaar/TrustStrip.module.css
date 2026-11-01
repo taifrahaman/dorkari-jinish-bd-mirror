@@ -1,0 +1,38 @@
+/* src/components/home/bazaar/TrustStrip.module.css */
+.strip {
+  background: #1c1240;
+  color: #fff;
+  padding: 28px 20px;
+}
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+a.link:focus-visible {
+  outline: 2px solid #ffb400;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c);
+  color: var(--c-on);
+}

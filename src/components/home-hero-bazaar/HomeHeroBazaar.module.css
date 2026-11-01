@@ -1,0 +1,668 @@
+/* src/components/home-hero-bazaar/HomeHeroBazaar.module.css */
+
+.root {
+  --pt: calc(var(--nav-h-mobile, 56px) + var(--nav-top-mobile, 12px));
+  --ink: #1c1240;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-top: var(--pt);
+  padding-inline: 20px;
+  padding-bottom: 48px;
+  text-align: center;
+  color: #fff;
+  background: radial-gradient(120% 70% at 50% 0, #3b2488 0%, #1c1240 62%);
+}
+@media (min-width: 1024px) {
+  .root {
+    --pt: calc(var(--nav-h-desktop, 68px) + var(--nav-top-desktop, 16px));
+    padding-inline: 48px;
+    padding-bottom: 64px;
+  }
+}
+
+/* ---------- stars (fade in once, then stay still) ---------- */
+.stars {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 300px;
+  z-index: 0;
+  pointer-events: none;
+}
+.twinkle {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff8e6;
+  opacity: 0; /* GSAP fades them in */
+}
+
+/* ---------- flags (GSAP unfurls and sways them) ---------- */
+.bunting {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  margin-inline: -20px;
+  padding-top: 2px;
+}
+.bunting::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: rgba(255, 248, 230, 0.7);
+}
+.bunting span {
+  flex: 1;
+  height: 26px;
+  margin-inline: 1px;
+  clip-path: polygon(4% 0, 96% 0, 50% 100%);
+  transform: scaleY(0); /* unfurled by GSAP; purely decorative */
+  transform-origin: 50% 0;
+}
+@media (min-width: 1024px) {
+  .bunting {
+    margin-inline: -48px;
+  }
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+/* ---------- signboard (swings on its two ropes) ---------- */
+.signWrap {
+  position: relative;
+  display: inline-block;
+  margin-top: 26px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.signWrap::before,
+.signWrap::after {
+  content: "";
+  position: absolute;
+  top: -18px;
+  width: 2px;
+  height: 18px;
+  background: rgba(255, 248, 230, 0.7);
+}
+.signWrap::before {
+  inset-inline-start: 22%;
+}
+.signWrap::after {
+  inset-inline-end: 22%;
+}
+.brand {
+  position: relative;
+  margin: 0;
+  padding: 10px 30px;
+  border-radius: 10px;
+  background: #ffb400;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: clamp(1.25rem, 4.2vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+.brand::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 2px dashed rgba(28, 18, 64, 0.5);
+  border-radius: 6px;
+  pointer-events: none;
+}
+:global([lang="bn"]) .brand {
+  font-family: var(--font-heading-bn);
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.headline {
+  margin: 20px auto 0;
+  max-width: 18ch;
+  font-family: var(--font-heading);
+  font-size: clamp(1.9rem, 6.5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+@media (min-width: 1024px) {
+  .headline {
+    max-width: none;
+    font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+  }
+}
+:global([lang="bn"]) .headline {
+  font-family: var(--font-heading-bn);
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+.searchWrap {
+  position: relative;
+  z-index: 5;
+  max-width: 760px;
+  margin: 20px auto 0;
+  text-align: start;
+}
+.searchWrap > * {
+  margin-top: 0 !important;
+  margin-inline: 0 !important;
+}
+
+/* ---------- today's best price: shown on phones too ---------- */
+.burst {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: -2px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  text-decoration: none;
+  transform: rotate(8deg);
+  -webkit-tap-highlight-color: transparent;
+}
+.burst:focus-visible {
+  outline: 3px solid #ffb400;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+.star {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+}
+.star::before,
+.star::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: #e63b2e;
+}
+.star::after {
+  transform: rotate(45deg);
+}
+.starText {
+  position: relative;
+  z-index: 1;
+  font-size: 0.9375rem;
+  font-weight: 900;
+}
+/* the text label only fits next to the signboard on wider screens */
+.burstTag {
+  display: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffb400;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+@media (max-width: 400px) {
+  .star {
+    width: 54px;
+    height: 54px;
+  }
+}
+@media (min-width: 640px) {
+  .burst {
+    top: 8px;
+    inset-inline-end: 0;
+  }
+  .star {
+    width: 92px;
+    height: 92px;
+    filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4));
+  }
+  .star::before,
+  .star::after {
+    inset: 10px;
+  }
+  .starText {
+    font-size: 1.125rem;
+  }
+  .burstTag {
+    display: block;
+  }
+}
+
+/* ---------- festival bulbs (tap them) ---------- */
+.street {
+  max-width: 860px;
+  margin: 18px auto 0;
+  text-align: start;
+}
+
+.bulbs {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 36px;
+  margin: 0 8px 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+/* the wire sags like a real string of lights */
+.bulbs::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 14px;
+  border-bottom: 2px solid rgba(255, 248, 230, 0.55);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+.bulb {
+  position: relative;
+  flex: none;
+  width: 12px;
+  height: 17px;
+  margin-top: calc(var(--sag, 0px) + 6px);
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: var(--b);
+  box-shadow: 0 0 12px var(--b);
+  opacity: 0.25; /* switched on by GSAP */
+  transform: scale(0.85);
+}
+.bulb::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 2px;
+  height: 5px;
+  background: rgba(255, 248, 230, 0.55);
+  transform: translateX(-50%);
+}
+
+/* ---------- stalls (tabs) ---------- */
+.stalls {
+  display: flex;
+  gap: 10px;
+  margin: 0 -20px;
+  padding: 8px 20px 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+}
+.stalls::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .stalls {
+    margin-inline: 0;
+    padding-inline: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+/* centre when it fits, scroll from the start when it doesn't */
+.stall:first-child {
+  margin-inline-start: auto;
+}
+.stall:last-child {
+  margin-inline-end: auto;
+}
+
+.stall {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-width: 108px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  scroll-snap-align: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease;
+  /* first-paint moment: stalls drop in one after another (CSS, so it
+     does not wait for JavaScript) */
+  animation: drop 0.5s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+.awning {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 14px;
+  border-radius: 8px 8px 0 0;
+  background: var(--c);
+  transform-origin: 50% 0; /* the squash-and-spring hangs from the top */
+  will-change: transform; /* scale a ready-made layer, don't redraw it every frame */
+}
+/* The scallops start 1px INSIDE the bar. Two shapes that share an edge leave
+ * a faint hairline when scaled (worse on high-density phone screens). */
+.awning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 1px);
+  height: 10px;
+  background: radial-gradient(
+      circle at 50% 1px,
+      var(--c) 0 8px,
+      transparent 8.5px
+    )
+    0 0 / 18px 10px repeat-x;
+}
+.counter {
+  display: grid;
+  place-items: center;
+  min-height: 50px;
+  margin-top: -8px;
+  padding: 14px 14px 12px;
+  border: 2px solid var(--c);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+:global([lang="bn"]) .counter {
+  font-family: var(--font-heading-bn);
+}
+.stall:active {
+  transform: scale(0.96);
+}
+.stall[aria-selected="true"] {
+  transform: translateY(-4px);
+}
+.stall[aria-selected="true"] .counter {
+  background: var(--c-soft);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+.stall:focus-visible {
+  outline: 2px solid #ffb400;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* auto-play progress: a thin line that fills along the active stall */
+.progress {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--c);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+/* ---------- counter board ---------- */
+.panels {
+  display: grid; /* every collection shares one cell: no layout jump */
+  margin-top: 8px;
+  touch-action: pan-y; /* vertical scroll stays native, horizontal drags switch */
+}
+.panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+  will-change: transform, opacity;
+}
+
+/* first paint: the first collection's picks pop onto the counter (CSS) */
+.panelFirst .pick {
+  animation: pickIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: calc(0.35s + var(--k, 0) * 70ms);
+}
+@keyframes pickIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+}
+
+.board {
+  padding: 16px;
+  border: 3px solid var(--c);
+  border-radius: 22px;
+  background: #fff8e6;
+  color: var(--ink);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.35);
+}
+.boardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+:global([lang="bn"]) .name {
+  font-family: var(--font-heading-bn);
+  line-height: 1.45;
+}
+.seeAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--c);
+  color: var(--c-on);
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.seeAll:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.picks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1024px) {
+  .picks {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+.pick {
+  will-change:
+    transform, opacity; /* moves as a ready-made layer: crisp edges on phones */
+}
+/* phones show 3 picks, desktop shows 4 */
+.pick:nth-child(4) {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .pick:nth-child(4) {
+    display: block;
+  }
+}
+
+.pickLink {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 8px;
+  border: 2px solid var(--c-soft);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pickLink:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--c-soft);
+}
+@media (min-width: 1024px) {
+  .thumb {
+    aspect-ratio: 4 / 3;
+  }
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 14%;
+  object-fit: contain;
+}
+.thumb img[data-real="true"] {
+  padding: 0;
+  object-fit: cover;
+}
+.off {
+  position: absolute;
+  top: 6px;
+  inset-inline-start: 6px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e63b2e;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 900;
+  transform: rotate(-6deg);
+}
+
+.pickName {
+  display: -webkit-box;
+  min-height: 2.6em;
+  padding-inline: 2px;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+:global([lang="bn"]) .pickName {
+  min-height: 3em;
+  line-height: 1.5;
+}
+@media (min-width: 1024px) {
+  .pickName {
+    font-size: 0.875rem;
+  }
+}
+.price {
+  padding-inline: 2px;
+  color: #c4271b;
+  font-size: 0.9375rem;
+  font-weight: 900;
+}
+.price s {
+  margin-inline-start: 6px;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+/* ============================================================
+ * Mouse-only extras. Phones never see these.
+ * ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .burst:hover {
+    transform: rotate(3deg) scale(1.05);
+  }
+  .stall:hover .counter {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .stall[aria-selected="true"]:hover .counter {
+    background: var(--c-soft);
+  }
+  .pickLink {
+    transition:
+      transform 0.22s ease,
+      border-color 0.22s ease;
+  }
+  .pickLink:hover {
+    transform: translateY(-4px);
+    border-color: var(--c);
+  }
+}
+
+/* ============================================================
+ * Reduced motion: no animation, everything simply shows
+ * ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .stall,
+  .panelFirst .pick {
+    animation: none;
+  }
+  .stall,
+  .counter,
+  .pickLink {
+    transition: none;
+  }
+}

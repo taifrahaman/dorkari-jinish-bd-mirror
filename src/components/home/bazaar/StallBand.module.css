@@ -1,0 +1,46 @@
+/* src/components/home/bazaar/StallBand.module.css */
+.band {
+  position: relative;
+  padding-top: 26px; /* clears the awning and its scallops */
+  background: var(--c-soft);
+  border-bottom: 2px dashed color-mix(in oklab, var(--c) 45%, transparent);
+}
+.awning {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  background: var(--c);
+}
+.awning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 10px;
+  background: radial-gradient(
+      circle at 50% 0,
+      var(--c) 0 9px,
+      transparent 9.5px
+    )
+    0 0 / 20px 10px repeat-x;
+}
+.sign {
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 20px;
+  z-index: 1;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: #1c1240;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 1024px) {
+  .sign {
+    inset-inline-start: 48px;
+  }
+}

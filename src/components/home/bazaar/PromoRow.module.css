@@ -1,0 +1,118 @@
+/* src/components/home/bazaar/PromoRow.module.css */
+.section {
+  padding: 36px 20px;
+  background: #fff;
+}
+@media (min-width: 1024px) {
+  .section {
+    padding: 48px 48px;
+  }
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 160px;
+  overflow: hidden;
+  padding: 20px;
+  border: 3px solid #1c1240;
+  border-radius: 22px;
+  background: var(--c);
+  color: var(--c-on);
+  text-decoration: none;
+  box-shadow: 5px 5px 0 #1c1240;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .tile:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 #1c1240;
+  }
+}
+.tile:active {
+  transform: translate(2px, 2px);
+  box-shadow: 3px 3px 0 #1c1240;
+}
+.tile:focus-visible {
+  outline: 3px solid #ffb400;
+  outline-offset: 3px;
+}
+
+.text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 58%;
+}
+.label {
+  font-family: var(--font-heading);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+:global([lang="bn"]) .label {
+  font-family: var(--font-heading-bn);
+  line-height: 1.4;
+}
+.cta {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  color: #1c1240;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.pics {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 46%;
+}
+.pics img {
+  position: absolute;
+  width: 92px;
+  height: 92px;
+  border: 3px solid #fff;
+  border-radius: 16px;
+  background: #fff;
+  object-fit: cover;
+  box-shadow: 3px 3px 0 rgba(28, 18, 64, 0.35);
+}
+.picA {
+  top: 16px;
+  inset-inline-end: 22px;
+  transform: rotate(6deg);
+}
+.picB {
+  bottom: 14px;
+  inset-inline-end: 62px;
+  transform: rotate(-7deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+}
