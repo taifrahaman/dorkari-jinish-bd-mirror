@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -53,6 +53,61 @@ jobs:
       - run: pnpm build
 
   # ==========================================
+  # NEW DEPLOY JOB
+  # ==========================================
+  deploy:
+    # Only run on a push to the main branch of the official repo
+    if: |
+      github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    # This is the magic line: Wait for these jobs to succeed first!
+    needs: [lint, type-check, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      
+      - run: pnpm install --frozen-lockfile
+      
+      - name: Create .env.production for Build
+        run: echo "${{ secrets.ENV_FILE }}" > .env.production
+        
+      - name: Build project for production
+        run: pnpm build
+        
+      - name: Prepare standalone folder
+        run: |
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          cp ecosystem.config.js .next/standalone/
+
+      - name: Copy files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: ".next/standalone/*"
+          target: "/var/www/dorkari-jinish-bd"
+
+      - name: Deploy and restart on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/dorkari-jinish-bd
+            echo "${{ secrets.ENV_FILE }}" > .env.production
+            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+            pm2 save
+
+  # ==========================================
   # MIRROR JOB
   # ==========================================
   mirror:
@@ -60,7 +115,7 @@ jobs:
       github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
-    needs: [lint, type-check, build] # <-- Removed 'e2e' from this list
+    needs: [deploy] # We will mirror the code ONLY after it successfully deploys
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
