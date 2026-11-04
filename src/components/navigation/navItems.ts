@@ -20,7 +20,7 @@ export const primaryNavLinks: NavLink[] = [
   { id: "home", label: "Home", href: "/" },
   { id: "shop", label: "Shop All", href: "/shop" },
   { id: "deals", label: "Deals", href: "/deals" },
-  { id: "chat", label: "Chat", href: "https://wa.me/8801700000000" },
+  { id: "chat", label: "Chat", href: "https://wa.me/8801941702904" },
 ];
 
 /** Mobile bottom nav — glass, stays 5 items. */
@@ -31,7 +31,7 @@ export const bottomNavItems = [
   {
     id: "chat",
     label: "Chat",
-    href: "https://wa.me/8801700000000",
+    href: "https://wa.me/8801941702904",
     icon: "MessageCircle",
   },
   { id: "account", label: "Account", href: "/account", icon: "User" },
