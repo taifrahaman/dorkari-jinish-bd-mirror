@@ -79,7 +79,8 @@ jobs:
         run: |
           cp -r public .next/standalone/
           cp -r .next/static .next/standalone/.next/
-          cp ecosystem.config.js .next/standalone/
+          # CHANGED: Copying the .cjs file instead of .js
+          cp ecosystem.config.cjs .next/standalone/
           cp .env.production .next/standalone/
 
       - name: Setup SSH
@@ -95,7 +96,8 @@ jobs:
 
       - name: Deploy and restart on VPS
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/dorkari-jinish-bd && pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production && pm2 save"
+          # CHANGED: Pointing PM2 to the .cjs file
+          ssh -i ~/.ssh/id_rsa ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/dorkari-jinish-bd && pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production && pm2 save"
 
   mirror:
     if: |
