@@ -8,7 +8,6 @@ import { useState } from "react";
 import { Menu, ShoppingCart, User } from "lucide-react";
 import { useLocale } from "next-intl";
 
-import NotificationBell from "@/components/shared/NotificationBell";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 import CategoryDrawer from "./CategoryDrawer";
 import { primaryNavLinks, type CategoryNode } from "./navItems";

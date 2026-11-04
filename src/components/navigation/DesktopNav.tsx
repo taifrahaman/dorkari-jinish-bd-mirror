@@ -13,7 +13,7 @@ import {
   User,
   Package,
   LogOut,
-  Search, // <-- Added Search icon
+  Search,
 } from "lucide-react";
 
 import CategoryMenu from "./CategoryMenu";
@@ -111,16 +111,34 @@ export default function DesktopNav({ categories }: Props) {
           />
         </button>
 
-        {primaryNavLinks.map((link) => (
-          <Link
-            key={link.id}
-            href={`/${locale}${link.href === "/" ? "" : link.href}`}
-            className={styles.navLink}
-            data-active={isActive(link.href)}
-          >
-            {link.label}
-          </Link>
-        ))}
+        {primaryNavLinks.map((link) => {
+          // Check if it's an external link (like WhatsApp)
+          if (link.href.startsWith("http")) {
+            return (
+              <a
+                key={link.id}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.navLink}
+              >
+                {link.label}
+              </a>
+            );
+          }
+
+          // Normal internal Next.js links
+          return (
+            <Link
+              key={link.id}
+              href={`/${locale}${link.href === "/" ? "" : link.href}`}
+              className={styles.navLink}
+              data-active={isActive(link.href)}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
 
         <CategoryMenu
           open={categoryOpen}
@@ -190,8 +208,6 @@ export default function DesktopNav({ categories }: Props) {
             </div>
           )}
         </div>
-
-        <NotificationBell />
 
         <button
           type="button"

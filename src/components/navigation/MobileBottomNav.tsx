@@ -79,7 +79,26 @@ export default function MobileBottomNav() {
             );
           }
 
-          // Handle normal links
+          // Handle external links (like WhatsApp)
+          if (item.href.startsWith("http")) {
+            return (
+              <li key={item.id} className={styles.item}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.link}
+                >
+                  <span className={styles.iconWrap}>
+                    <Icon size={20} strokeWidth={1.9} />
+                  </span>
+                  <span className={styles.label}>{item.label}</span>
+                </a>
+              </li>
+            );
+          }
+
+          // Handle normal internal links
           const active = isActive(item.href);
           return (
             <li key={item.id} className={styles.item}>

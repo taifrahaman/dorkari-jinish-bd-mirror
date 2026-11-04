@@ -100,18 +100,12 @@ function ProductGalleryInner({
     }
   }, [index]);
 
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = (clientX: number, clientY: number) => {
     const rect = stageRef.current?.getBoundingClientRect();
     if (!rect) return;
     setPos({
-      x: Math.max(
-        0,
-        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100),
-      ),
-      y: Math.max(
-        0,
-        Math.min(100, ((e.clientY - rect.top) / rect.height) * 100),
-      ),
+      x: Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)),
+      y: Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100)),
     });
   };
 
@@ -163,8 +157,18 @@ function ProductGalleryInner({
           ref={stageRef}
           onMouseEnter={() => setZoomed(true)}
           onMouseLeave={() => setZoomed(false)}
-          onMouseMove={handleMove}
-          className="group relative aspect-square overflow-hidden rounded-3xl bg-brand-navbar"
+          onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+          onTouchStart={(e) => {
+            setZoomed(true);
+            if (e.touches[0])
+              handleMove(e.touches[0].clientX, e.touches[0].clientY);
+          }}
+          onTouchMove={(e) => {
+            if (e.touches[0])
+              handleMove(e.touches[0].clientX, e.touches[0].clientY);
+          }}
+          onTouchEnd={() => setZoomed(false)}
+          className="group relative aspect-square overflow-hidden rounded-3xl bg-brand-navbar touch-none"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -176,7 +180,7 @@ function ProductGalleryInner({
 
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 hidden opacity-0 transition-opacity duration-150 sm:block"
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 block"
             style={{
               backgroundImage: `url(${active.url})`,
               backgroundSize: "220%",
@@ -185,9 +189,9 @@ function ProductGalleryInner({
             }}
           />
 
-          <span className="pointer-events-none absolute bottom-3 right-3 hidden items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white sm:flex">
+          <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white">
             <ZoomIn className="h-3.5 w-3.5" aria-hidden />
-            {locale === "bn" ? "হভার করে জুম করুন" : "Hover to zoom"}
+            {locale === "bn" ? "জুম করতে টাচ/হভার করুন" : "Touch/Hover to zoom"}
           </span>
         </div>
 

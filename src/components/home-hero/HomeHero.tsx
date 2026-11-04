@@ -415,7 +415,7 @@ export default function HomeHero({
         <h1 className={styles.headline}>{copy.headline}</h1>
 
         <div className={styles.searchWrap}>
-          <HeroSearch categories={categories} />
+          <HeroSearch />
         </div>
 
         <ul className={styles.chips}>

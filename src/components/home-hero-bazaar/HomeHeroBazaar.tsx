@@ -813,7 +813,7 @@ export default function HomeHeroBazaar({
         <h1 className={styles.headline}>{copy.headline}</h1>
 
         <div className={styles.searchWrap}>
-          <HeroSearch categories={categories} />
+          <HeroSearch />
         </div>
 
         <div className={styles.street}>

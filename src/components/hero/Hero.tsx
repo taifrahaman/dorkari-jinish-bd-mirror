@@ -26,7 +26,7 @@ export default function Hero({ categories }: Props) {
         <p className={styles.brand}>{brand}</p>
         <HeroHeadline items={headlines} />
 
-        <HeroSearch categories={categories} />
+        <HeroSearch />
       </div>
     </section>
   );

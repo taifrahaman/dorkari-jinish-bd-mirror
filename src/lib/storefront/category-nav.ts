@@ -49,14 +49,14 @@ export function toCategoryNav(
     id: node._id,
     slug: node.slug,
     label: node.name[locale] || node.name.en,
-    href: `/c/${node.slug}`,
+    href: `/${locale}/shop?category=${encodeURIComponent(node.slug)}`,
     image: node.image?.url, // <-- Add this
     children: node.children?.length
       ? node.children.map((child) => ({
           id: child._id,
           slug: child.slug,
           label: child.name[locale] || child.name.en,
-          href: `/c/${child.slug}`,
+          href: `/${locale}/shop?category=${encodeURIComponent(child.slug)}`,
         }))
       : undefined,
   }));
