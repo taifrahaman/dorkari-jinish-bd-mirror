@@ -53,15 +53,13 @@ jobs:
       - run: pnpm build
 
   # ==========================================
-  # NEW DEPLOY JOB
+  # DEPLOY JOB
   # ==========================================
   deploy:
-    # Only run on a push to the main branch of the official repo
     if: |
       github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
-    # This is the magic line: Wait for these jobs to succeed first!
     needs: [lint, type-check, build]
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +85,7 @@ jobs:
           cp ecosystem.config.js .next/standalone/
 
       - name: Copy files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
@@ -96,7 +94,7 @@ jobs:
           target: "/var/www/dorkari-jinish-bd"
 
       - name: Deploy and restart on VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
@@ -115,7 +113,7 @@ jobs:
       github.repository == 'Creative-Engineering-Bangladesh/dorkari-jinish-bd' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
-    needs: [deploy] # We will mirror the code ONLY after it successfully deploys
+    needs: [deploy]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
