@@ -29,15 +29,34 @@ export async function generateMetadata({
   }
 
   const title = product.name[locale];
-  const description = product.description?.[locale] ?? "";
+  const rawDescription = product.description?.[locale] ?? "";
+  const description = rawDescription.trim()
+    ? rawDescription.slice(0, 155)
+    : locale === "bn"
+      ? `${title} — বাংলাদেশে সেরা দামে কিনুন। সারা দেশে ডেলিভারি।`
+      : `Buy ${title} in Bangladesh at the best price. Delivery nationwide.`;
   const image = product.images[0]?.url;
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://dorkarijinish.bd";
+  const path = `/product/${slug}`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `${siteUrl}/${locale}${path}`,
+      languages: {
+        en: `${siteUrl}/en${path}`,
+        bn: `${siteUrl}/bn${path}`,
+        "x-default": `${siteUrl}/en${path}`,
+      },
+    },
     openGraph: {
       title,
       description,
+      url: `${siteUrl}/${locale}${path}`,
+      type: "website",
       images: image
         ? [{ url: image, width: 900, height: 900, alt: title }]
         : undefined,

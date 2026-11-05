@@ -17,12 +17,23 @@ export async function generateMetadata({
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://dorkarijinish.bd";
+
   return {
     title: locale === "bn" ? "দোকান | সকল পণ্য" : "Shop all products",
     description:
       locale === "bn"
         ? "রান্নাঘর, আলো, উপহার, খেলনা ও আরও অনেক কিছু, সব এক জায়গায়।"
         : "Kitchen, lights, gifts, toys and more, all in one place.",
+    alternates: {
+      canonical: `${siteUrl}/${locale}/shop`,
+      languages: {
+        en: `${siteUrl}/en/shop`,
+        bn: `${siteUrl}/bn/shop`,
+        "x-default": `${siteUrl}/en/shop`,
+      },
+    },
   };
 }
 

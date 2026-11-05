@@ -16,6 +16,9 @@ export async function generateMetadata({
   const { locale: raw } = await params;
   const locale: Locale = raw === "bn" ? "bn" : "en";
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://dorkarijinish.bd";
+
   return {
     title:
       locale === "bn"
@@ -25,6 +28,14 @@ export async function generateMetadata({
       locale === "bn"
         ? "সর্বোচ্চ ছাড়ের পণ্যগুলো কিনুন।"
         : "Shop the best discounts and offers.",
+    alternates: {
+      canonical: `${siteUrl}/${locale}/deals`,
+      languages: {
+        en: `${siteUrl}/en/deals`,
+        bn: `${siteUrl}/bn/deals`,
+        "x-default": `${siteUrl}/en/deals`,
+      },
+    },
   };
 }
 

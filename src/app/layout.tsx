@@ -8,6 +8,7 @@ import {
   Hind_Siliguri,
   Geist,
 } from "next/font/google";
+import { getLocale } from "next-intl/server";
 
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
@@ -90,13 +91,20 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let locale = "en";
+  try {
+    locale = await getLocale();
+  } catch {
+    // Fall back to English when no locale context is available (e.g. /admin).
+  }
+
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang={locale} className={cn("font-sans", geist.variable)}>
       <body
         className={`${spaceGrotesk.variable} ${dmSans.variable} ${atma.variable} ${hindSiliguri.variable}`}
       >
