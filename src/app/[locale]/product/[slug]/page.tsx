@@ -33,7 +33,7 @@ export async function generateMetadata({
   const image = product.images[0]?.url;
 
   return {
-    title: `${title} | Dorkari Jinish BD`,
+    title,
     description,
     openGraph: {
       title,

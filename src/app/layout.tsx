@@ -45,7 +45,7 @@ const hindSiliguri = Hind_Siliguri({
 export const metadata: Metadata = {
   // Replace with your actual production domain when deployed
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://dorkari.com",
+    process.env.NEXT_PUBLIC_BASE_URL || "https://dorkarijinish.bd",
   ),
   title: {
     default: "Dorkari Jinish BD",
