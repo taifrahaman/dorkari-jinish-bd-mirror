@@ -8,6 +8,7 @@ import {
   getRelatedProducts,
   getStorefrontProductBySlug,
   listStorefrontProducts,
+  listStorefrontProductsByCategorySlug,
 } from "@/services/product.service";
 import { listProductFaqs } from "@/services/faq.service";
 import { listProductReviews } from "@/services/review.service";
@@ -112,6 +113,23 @@ export const getCachedRelatedProducts = unstable_cache(
     return getRelatedProducts(slug, limit);
   },
   ["storefront:related"],
+  {
+    tags: [STOREFRONT_PRODUCTS_TAG],
+    revalidate: 60 * 60,
+  },
+);
+
+/* ============================================================
+ * Category page — one category + its products.
+ * Shares the products tag so any product write invalidates.
+ * ============================================================ */
+
+export const getCachedProductsByCategorySlug = unstable_cache(
+  async (categorySlug: string) => {
+    await connectToDatabase();
+    return listStorefrontProductsByCategorySlug(categorySlug);
+  },
+  ["storefront:category"],
   {
     tags: [STOREFRONT_PRODUCTS_TAG],
     revalidate: 60 * 60,

@@ -479,6 +479,54 @@ export async function getRelatedProducts(
 
   return rankRelated(current, candidates, limit);
 }
+
+/* ============================================================
+ * Storefront — products by category slug
+ * ============================================================ */
+
+export async function listStorefrontProductsByCategorySlug(
+  categorySlug: string,
+): Promise<{
+  category: {
+    name: { en: string; bn: string };
+    slug: string;
+    description: string | null;
+  } | null;
+  products: StorefrontProduct[];
+}> {
+  const category = await Category.findOne({
+    slug: categorySlug,
+    isActive: true,
+    deletedAt: null,
+  })
+    .select("_id name slug description")
+    .lean<{
+      _id: mongoose.Types.ObjectId;
+      name: { en: string; bn: string };
+      slug: string;
+      description?: string;
+    } | null>();
+
+  if (!category) return { category: null, products: [] };
+
+  const docs = await Product.find({
+    $or: [{ category: category._id }, { mainCategory: category._id }],
+    isActive: true,
+    deletedAt: null,
+  })
+    .sort({ createdAt: -1 })
+    .populate(POPULATE)
+    .lean<Parameters<typeof toStorefrontProduct>[0][]>();
+
+  return {
+    category: {
+      name: category.name,
+      slug: category.slug,
+      description: category.description ?? null,
+    },
+    products: docs.map(toStorefrontProduct),
+  };
+}
 /* ============================================================
  * Get by ID
  * ============================================================ */

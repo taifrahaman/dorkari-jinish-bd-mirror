@@ -96,7 +96,7 @@ export default function ProductPage({ slug, locale = "en" }: ProductPageProps) {
           },
           {
             label: categoryLabel[locale],
-            href: `/${locale}/shop?category=${categorySlug}`,
+            href: `/${locale}/category/${categorySlug}`,
           },
           { label: product.name[locale] },
         ]}

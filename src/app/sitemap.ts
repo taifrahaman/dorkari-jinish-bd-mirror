@@ -3,6 +3,7 @@
 import type { MetadataRoute } from "next";
 
 import { connectToDatabase } from "@/lib/db";
+import Category from "@/models/Category.model";
 import Product from "@/models/Product.model";
 
 const BASE_URL = (
@@ -33,9 +34,14 @@ function localized(path: string, lastModified?: Date): MetadataRoute.Sitemap {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connectToDatabase();
 
-  const products = await Product.find({ isActive: true, deletedAt: null })
-    .select("slug updatedAt")
-    .lean();
+  const [products, categories] = await Promise.all([
+    Product.find({ isActive: true, deletedAt: null })
+      .select("slug updatedAt")
+      .lean(),
+    Category.find({ isActive: true, deletedAt: null })
+      .select("slug updatedAt")
+      .lean(),
+  ]);
 
   // The listing pages change whenever any product does.
   const latest = products.reduce<Date | undefined>((max, p) => {
@@ -49,6 +55,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localized("/deals", latest),
   ];
 
+  const categoryPages: MetadataRoute.Sitemap = categories
+    .filter((c) => Boolean(c.slug))
+    .flatMap((c) =>
+      localized(
+        `/category/${encodeURIComponent(c.slug)}`,
+        c.updatedAt ? new Date(c.updatedAt) : undefined,
+      ),
+    );
+
   const productPages: MetadataRoute.Sitemap = products
     .filter((p) => Boolean(p.slug))
     .flatMap((p) =>
@@ -58,5 +73,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ),
     );
 
-  return [...staticPages, ...productPages];
+  return [...staticPages, ...categoryPages, ...productPages];
 }
