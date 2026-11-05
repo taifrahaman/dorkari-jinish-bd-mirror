@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : "Shop kitchen, lights, gifts, toys and more at the best prices. Delivery across Bangladesh.";
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: `${siteUrl}/${locale}`,
