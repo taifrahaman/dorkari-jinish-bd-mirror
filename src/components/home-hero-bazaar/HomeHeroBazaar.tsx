@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useLocale } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import gsap from "gsap";
+import Image from "next/image";
 
 import HeroSearch from "@/components/hero/HeroSearch";
 import type { CategoryNode } from "@/components/navigation/navItems";
@@ -918,14 +919,14 @@ export default function HomeHeroBazaar({
                               data-press
                             >
                               <span className={styles.thumb}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                   src={p.image || PLACEHOLDER_IMAGE}
-                                  alt=""
+                                  alt={p.name[locale]}
                                   width={160}
                                   height={160}
+                                  sizes="160px"
+                                  priority={i === 0 && k < 4}
                                   loading={i === 0 ? "eager" : "lazy"}
-                                  decoding="async"
                                   data-real={Boolean(p.image)}
                                 />
                                 {off > 0 && (

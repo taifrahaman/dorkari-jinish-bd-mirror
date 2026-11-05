@@ -44,9 +44,8 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  // Replace with your actual production domain when deployed
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://dorkarijinish.bd",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://dorkarijinish.bd",
   ),
   title: {
     default: "Dorkari Jinish BD",
@@ -88,7 +87,6 @@ export const viewport: Viewport = {
   themeColor: "#1E293B",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default async function RootLayout({
